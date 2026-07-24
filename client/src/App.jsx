@@ -6,6 +6,7 @@ import DoctorDashboard from './pages/dashboards/DoctorDashboard'
 import StaffDashboard from './pages/dashboards/StaffDashboard'
 import AdminDashboard from './pages/dashboards/AdminDashboard'
 import ProtectedRoute from './components/ProtectedRoute'
+import MaternalRecord from './pages/MaternalRecord'
 
 function Protected({ children }) {
   return <ProtectedRoute>{children}</ProtectedRoute>
@@ -20,6 +21,7 @@ export default function App() {
       <Route path="/dashboard/doctor" element={<Protected><DoctorDashboard /></Protected>} />
       <Route path="/dashboard/staff" element={<Protected><StaffDashboard /></Protected>} />
       <Route path="/dashboard/admin" element={<Protected><AdminDashboard /></Protected>} />
+      <Route path="/maternal" element={<Protected><MaternalRecord /></Protected>} />
       <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes>
   )

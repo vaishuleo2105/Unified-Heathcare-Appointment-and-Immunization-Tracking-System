@@ -6,6 +6,7 @@ const navItems = {
     { label: 'Overview', icon: 'dashboard', path: '/dashboard' },
     { label: 'My Appointments', icon: 'calendar_month', path: '/dashboard/appointments' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
+    { label: 'Maternal ID', icon: 'pregnant_woman', path: '/maternal' },
     { label: 'My Profile', icon: 'person', path: '/dashboard/profile' },
   ],
   doctor: [
@@ -13,6 +14,7 @@ const navItems = {
     { label: "Today's Appointments", icon: 'calendar_month', path: '/dashboard/appointments' },
     { label: 'Patient List', icon: 'group', path: '/dashboard/patients' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
+    { label: 'Maternal ID', icon: 'pregnant_woman', path: '/maternal' },
     { label: 'My Profile', icon: 'person', path: '/dashboard/profile' },
   ],
   staff: [
@@ -20,6 +22,7 @@ const navItems = {
     { label: 'Manage Appointments', icon: 'calendar_month', path: '/dashboard/appointments' },
     { label: 'Patient Records', icon: 'folder_shared', path: '/dashboard/patients' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
+    { label: 'Maternal ID', icon: 'pregnant_woman', path: '/maternal' },
     { label: 'My Profile', icon: 'person', path: '/dashboard/profile' },
   ],
   admin: [
