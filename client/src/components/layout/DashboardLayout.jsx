@@ -3,11 +3,11 @@ import { useNavigate, useLocation } from 'react-router-dom'
 
 const navItems = {
   patient: [
-    { label: 'Overview', icon: 'dashboard', path: '/dashboard' },
-    { label: 'My Appointments', icon: 'calendar_month', path: '/dashboard/appointments' },
-    { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
+    { label: 'Overview', icon: 'dashboard', path: '/dashboard/patient' },
+    { label: 'My Appointments', icon: 'calendar_month', path: '/dashboard/patient/appointments' },
+    { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/patient/immunization' },
     { label: 'Maternal ID', icon: 'pregnant_woman', path: '/maternal' },
-    { label: 'My Profile', icon: 'person', path: '/dashboard/profile' },
+    { label: 'My Profile', icon: 'person', path: '/dashboard/patient/profile' },
   ],
   doctor: [
     { label: 'Overview', icon: 'dashboard', path: '/dashboard' },

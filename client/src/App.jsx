@@ -5,6 +5,9 @@ import PatientDashboard from './pages/dashboards/PatientDashboard'
 import DoctorDashboard from './pages/dashboards/DoctorDashboard'
 import StaffDashboard from './pages/dashboards/StaffDashboard'
 import AdminDashboard from './pages/dashboards/AdminDashboard'
+import PatientAppointments from './pages/patient/PatientAppointments'
+import PatientImmunization from './pages/patient/PatientImmunization'
+import PatientProfile from './pages/patient/PatientProfile'
 import ProtectedRoute from './components/ProtectedRoute'
 import MaternalRecord from './pages/MaternalRecord'
 
@@ -17,7 +20,14 @@ export default function App() {
     <Routes>
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+
+      {/* Patient Routes */}
       <Route path="/dashboard/patient" element={<Protected><PatientDashboard /></Protected>} />
+      <Route path="/dashboard/patient/appointments" element={<Protected><PatientAppointments /></Protected>} />
+      <Route path="/dashboard/patient/immunization" element={<Protected><PatientImmunization /></Protected>} />
+      <Route path="/dashboard/patient/profile" element={<Protected><PatientProfile /></Protected>} />
+
+      {/* Other Role Routes */}
       <Route path="/dashboard/doctor" element={<Protected><DoctorDashboard /></Protected>} />
       <Route path="/dashboard/staff" element={<Protected><StaffDashboard /></Protected>} />
       <Route path="/dashboard/admin" element={<Protected><AdminDashboard /></Protected>} />
