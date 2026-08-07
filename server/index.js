@@ -5,16 +5,20 @@ const dotenv = require('dotenv')
 
 dotenv.config()
 
-const authRoutes = require('./routes/auth')
-const maternalRoutes = require('./routes/maternal')
+const authRoutes         = require('./routes/auth')
+const maternalRoutes     = require('./routes/maternal')
+const appointmentRoutes  = require('./routes/appointments')
+const immunizationRoutes = require('./routes/immunizations')
 
 const app = express()
 
 app.use(cors())
 app.use(express.json())
 
-app.use('/api/auth', authRoutes)
-app.use('/api/maternal', maternalRoutes)
+app.use('/api/auth',          authRoutes)
+app.use('/api/maternal',      maternalRoutes)
+app.use('/api/appointments',  appointmentRoutes)
+app.use('/api/immunizations', immunizationRoutes)
 
 app.get('/', (req, res) => {
   res.json({ message: 'Unified Health API running' })
