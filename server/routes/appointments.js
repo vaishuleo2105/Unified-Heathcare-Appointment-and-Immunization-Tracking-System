@@ -4,19 +4,24 @@ const Doctor = require('../models/Doctor')
 const protect = require('../middleware/auth')
 
 const router = express.Router()
+router.use(protect)
 
-// GET all appointments for logged-in patient
-router.get('/', protect, async (req, res) => {
+// GET /api/appointments — role-based fetch
+router.get('/', async (req, res) => {
   try {
-    const appointments = await Appointment.find({ patient: req.user._id }).sort({ createdAt: -1 })
+    let query = {}
+    if (req.user.role === 'patient') query.patient = req.user._id
+    else if (req.user.role === 'doctor') query.doctorId = req.user._id
+
+    const appointments = await Appointment.find(query).sort({ createdAt: -1 })
     res.json(appointments)
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
 })
 
-// POST book new appointment
-router.post('/', protect, async (req, res) => {
+// POST /api/appointments — patient books appointment
+router.post('/', async (req, res) => {
   try {
     const { doctorId, date, time, type, notes } = req.body
     if (!doctorId || !date || !time || !type) {
@@ -26,7 +31,6 @@ router.post('/', protect, async (req, res) => {
     const doctor = await Doctor.findById(doctorId)
     if (!doctor) return res.status(404).json({ message: 'Doctor not found' })
 
-    // Check slot is still available
     const conflict = await Appointment.findOne({
       doctorId,
       date,
@@ -48,11 +52,34 @@ router.post('/', protect, async (req, res) => {
   }
 })
 
-// DELETE cancel appointment
-router.delete('/:id', protect, async (req, res) => {
+// PATCH /api/appointments/:id/status — staff/doctor/admin update status
+router.patch('/:id/status', async (req, res) => {
+  const { status } = req.body
+  const allowed = ['Pending', 'Confirmed', 'Completed', 'Cancelled']
+  if (!allowed.includes(status))
+    return res.status(400).json({ message: 'Invalid status' })
+  if (!['staff', 'doctor', 'admin'].includes(req.user.role))
+    return res.status(403).json({ message: 'Not authorized to update appointment status' })
   try {
-    const apt = await Appointment.findOne({ _id: req.params.id, patient: req.user._id })
+    const appointment = await Appointment.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    )
+    if (!appointment) return res.status(404).json({ message: 'Appointment not found' })
+    res.json(appointment)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+})
+
+// DELETE /api/appointments/:id — patient cancels own, admin cancels any
+router.delete('/:id', async (req, res) => {
+  try {
+    const apt = await Appointment.findById(req.params.id)
     if (!apt) return res.status(404).json({ message: 'Appointment not found' })
+    if (req.user.role !== 'admin' && apt.patient.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: 'Not authorized' })
     apt.status = 'Cancelled'
     await apt.save()
     res.json({ message: 'Appointment cancelled' })

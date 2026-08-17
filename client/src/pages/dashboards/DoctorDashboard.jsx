@@ -1,45 +1,51 @@
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import StatCard from '../../components/StatCard'
+import api from '../../api'
 
-const todayAppointments = [
-  { id: 1, patient: 'Vaishali S', time: '09:00 AM', type: 'General Checkup', status: 'Completed' },
-  { id: 2, patient: 'Ravi Kumar', time: '10:30 AM', type: 'Follow-up', status: 'In Progress' },
-  { id: 3, patient: 'Meena Devi', time: '12:00 PM', type: 'Vaccination', status: 'Waiting' },
-  { id: 4, patient: 'Arjun Patel', time: '02:00 PM', type: 'Consultation', status: 'Scheduled' },
-]
-
-const recentPatients = [
-  { name: 'Vaishali S', age: 24, lastVisit: 'Jul 16, 2026', condition: 'Routine Checkup' },
-  { name: 'Ravi Kumar', age: 45, lastVisit: 'Jul 15, 2026', condition: 'Hypertension' },
-  { name: 'Meena Devi', age: 32, lastVisit: 'Jul 14, 2026', condition: 'Vaccination' },
-]
-
-const statusColors = {
-  Completed: 'bg-secondary-container text-on-secondary-container',
+const STATUS_COLORS = {
+  Completed:   'bg-surface-container-high text-on-surface-variant',
   'In Progress': 'bg-primary-fixed text-primary',
-  Waiting: 'bg-tertiary-fixed text-on-tertiary-container',
-  Scheduled: 'bg-surface-container-high text-on-surface-variant',
+  Pending:     'bg-tertiary-fixed text-on-tertiary-container',
+  Confirmed:   'bg-secondary-container text-on-secondary-container',
+  Cancelled:   'bg-error-container text-on-error-container',
 }
 
 export default function DoctorDashboard() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const navigate = useNavigate()
+  const [appointments, setAppointments] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.get('/appointments').then(r => setAppointments(r.data)).finally(() => setLoading(false))
+  }, [])
+
+  const today = new Date().toISOString().split('T')[0]
+  const todayApts = appointments.filter(a => a.date === today)
+  const completed = todayApts.filter(a => a.status === 'Completed').length
+
+  async function handleStatus(id, status) {
+    const { data } = await api.patch(`/appointments/${id}/status`, { status })
+    setAppointments(appointments.map(a => a._id === id ? data : a))
+  }
 
   return (
     <DashboardLayout>
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-on-surface">Good Morning, Dr. {user.firstName}! 👨‍⚕️</h1>
-        <p className="text-on-surface-variant mt-1">You have 4 appointments scheduled today.</p>
+        <p className="text-on-surface-variant mt-1">You have {todayApts.length} appointments scheduled today.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon="today" label="Today's Appointments" value="4" color="primary" />
-        <StatCard icon="group" label="Total Patients" value="128" color="secondary" />
-        <StatCard icon="vaccines" label="Vaccinations Today" value="3" color="tertiary" />
-        <StatCard icon="check_circle" label="Completed Today" value="1" color="secondary" />
+        <StatCard icon="today" label="Today's Appointments" value={loading ? '…' : todayApts.length} color="primary" />
+        <StatCard icon="group" label="Total Appointments" value={loading ? '…' : appointments.length} color="secondary" />
+        <StatCard icon="check_circle" label="Completed Today" value={loading ? '…' : completed} color="secondary" />
+        <StatCard icon="pending_actions" label="Pending Today" value={loading ? '…' : todayApts.filter(a => a.status === 'Pending').length} color="tertiary" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-
         {/* Today's Appointments */}
         <div className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
           <div className="flex items-center justify-between mb-5">
@@ -48,47 +54,61 @@ export default function DoctorDashboard() {
               {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
             </span>
           </div>
-          <div className="space-y-3">
-            {todayAppointments.map((apt) => (
-              <div key={apt.id} className="flex items-center gap-4 p-4 bg-surface-container-low rounded-xl">
-                <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center flex-shrink-0">
-                  <span className="text-primary font-bold text-sm">{apt.patient[0]}</span>
+          {loading ? (
+            <p className="text-sm text-on-surface-variant">Loading...</p>
+          ) : todayApts.length === 0 ? (
+            <p className="text-sm text-on-surface-variant">No appointments today.</p>
+          ) : (
+            <div className="space-y-3">
+              {todayApts.map(apt => (
+                <div key={apt._id} className="flex items-center gap-4 p-4 bg-surface-container-low rounded-xl">
+                  <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary font-bold text-sm">{apt.patientId?.firstName?.[0]}</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-on-surface">{apt.patientId?.firstName} {apt.patientId?.lastName}</p>
+                    <p className="text-xs text-on-surface-variant">{apt.type} • {apt.time}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${STATUS_COLORS[apt.status]}`}>{apt.status}</span>
+                    {apt.status === 'Confirmed' && (
+                      <button onClick={() => handleStatus(apt._id, 'Completed')} className="text-xs px-2 py-1 bg-secondary-container text-on-secondary-container rounded-lg font-semibold hover:bg-secondary hover:text-white transition-colors">
+                        Done
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-on-surface">{apt.patient}</p>
-                  <p className="text-xs text-on-surface-variant">{apt.type} • {apt.time}</p>
-                </div>
-                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${statusColors[apt.status]}`}>
-                  {apt.status}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Recent Patients */}
+        {/* All Upcoming */}
         <div className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-base font-bold text-on-surface">Recent Patients</h2>
-            <button className="text-xs font-semibold text-primary hover:underline">View All</button>
+            <h2 className="text-base font-bold text-on-surface">Upcoming Appointments</h2>
+            <button onClick={() => navigate('/dashboard/appointments')} className="text-xs font-semibold text-primary hover:underline">View All</button>
           </div>
-          <div className="space-y-3">
-            {recentPatients.map((p, i) => (
-              <div key={i} className="flex items-center gap-4 p-4 bg-surface-container-low rounded-xl">
-                <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center flex-shrink-0">
-                  <span className="text-secondary font-bold text-sm">{p.name[0]}</span>
+          {loading ? (
+            <p className="text-sm text-on-surface-variant">Loading...</p>
+          ) : appointments.filter(a => ['Pending', 'Confirmed'].includes(a.status)).length === 0 ? (
+            <p className="text-sm text-on-surface-variant">No upcoming appointments.</p>
+          ) : (
+            <div className="space-y-3">
+              {appointments.filter(a => ['Pending', 'Confirmed'].includes(a.status)).slice(0, 4).map(apt => (
+                <div key={apt._id} className="flex items-center gap-4 p-4 bg-surface-container-low rounded-xl">
+                  <div className="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center flex-shrink-0">
+                    <span className="text-secondary font-bold text-sm">{apt.patientId?.firstName?.[0]}</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-on-surface">{apt.patientId?.firstName} {apt.patientId?.lastName}</p>
+                    <p className="text-xs text-on-surface-variant">{apt.type}</p>
+                  </div>
+                  <p className="text-xs text-on-surface-variant">{apt.date}</p>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-on-surface">{p.name}</p>
-                  <p className="text-xs text-on-surface-variant">Age {p.age} • {p.condition}</p>
-                </div>
-                <p className="text-xs text-on-surface-variant">{p.lastVisit}</p>
-              </div>
-            ))}
-          </div>
-          <button className="mt-4 w-full py-3 border border-primary text-primary text-sm font-semibold rounded-xl hover:bg-primary-fixed transition-colors">
-            View All Patients
-          </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>

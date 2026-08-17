@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import LanguageSwitcher from '../LanguageSwitcher'
 
 const navItems = {
   patient: [
@@ -7,31 +9,31 @@ const navItems = {
     { label: 'My Appointments', icon: 'calendar_month', path: '/dashboard/patient/appointments' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/patient/immunization' },
     { label: 'Maternal ID', icon: 'pregnant_woman', path: '/maternal' },
+    { label: 'ABHA Health ID', icon: 'health_and_safety', path: '/abha' },
     { label: 'My Profile', icon: 'person', path: '/dashboard/patient/profile' },
   ],
   doctor: [
     { label: 'Overview', icon: 'dashboard', path: '/dashboard' },
     { label: "Today's Appointments", icon: 'calendar_month', path: '/dashboard/appointments' },
-    { label: 'Patient List', icon: 'group', path: '/dashboard/patients' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
     { label: 'Maternal ID', icon: 'pregnant_woman', path: '/maternal' },
+    { label: 'ABHA Health ID', icon: 'health_and_safety', path: '/abha' },
     { label: 'My Profile', icon: 'person', path: '/dashboard/profile' },
   ],
   staff: [
     { label: 'Overview', icon: 'dashboard', path: '/dashboard' },
     { label: 'Manage Appointments', icon: 'calendar_month', path: '/dashboard/appointments' },
-    { label: 'Patient Records', icon: 'folder_shared', path: '/dashboard/patients' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
     { label: 'Maternal ID', icon: 'pregnant_woman', path: '/maternal' },
+    { label: 'ABHA Health ID', icon: 'health_and_safety', path: '/abha' },
     { label: 'My Profile', icon: 'person', path: '/dashboard/profile' },
   ],
   admin: [
     { label: 'Overview', icon: 'dashboard', path: '/dashboard' },
-    { label: 'Manage Users', icon: 'manage_accounts', path: '/dashboard/users' },
     { label: 'All Appointments', icon: 'calendar_month', path: '/dashboard/appointments' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
-    { label: 'Reports', icon: 'bar_chart', path: '/dashboard/reports' },
-    { label: 'Settings', icon: 'settings', path: '/dashboard/settings' },
+    { label: 'Maternal ID', icon: 'pregnant_woman', path: '/maternal' },
+    { label: 'ABHA Health ID', icon: 'health_and_safety', path: '/abha' },
   ],
 }
 
@@ -40,6 +42,7 @@ export default function DashboardLayout({ children }) {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const { t } = useTranslation()
   const items = navItems[user.role] || navItems.patient
 
   function handleLogout() {
@@ -60,7 +63,7 @@ export default function DashboardLayout({ children }) {
             health_and_safety
           </span>
           <span className={`text-base font-bold text-primary whitespace-nowrap overflow-hidden transition-all ${sidebarOpen ? 'opacity-100' : 'opacity-0 md:opacity-100'}`}>
-            Unified Health
+            {t('appName')}
           </span>
         </div>
 
@@ -108,7 +111,7 @@ export default function DashboardLayout({ children }) {
           >
             <span className="material-symbols-outlined text-xl flex-shrink-0">logout</span>
             <span className={`whitespace-nowrap overflow-hidden transition-all ${sidebarOpen ? 'opacity-100' : 'opacity-0 md:opacity-100'}`}>
-              Logout
+              {t('logout')}
             </span>
           </button>
         </div>
@@ -130,6 +133,7 @@ export default function DashboardLayout({ children }) {
             <span className="text-sm text-on-surface-variant">Rural Health Center</span>
           </div>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <button className="relative p-2 rounded-full hover:bg-surface-container text-on-surface-variant transition-colors">
               <span className="material-symbols-outlined text-xl">notifications</span>
               <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>

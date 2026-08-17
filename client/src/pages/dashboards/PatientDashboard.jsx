@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import StatCard from '../../components/StatCard'
 import BookAppointmentModal from '../../components/BookAppointmentModal'
+import api from '../../api'
 
 const healthTips = [
   { icon: 'water_drop', tip: 'Drink at least 8 glasses of water daily.' },
@@ -13,7 +13,7 @@ const healthTips = [
 
 const statusColors = {
   Confirmed: 'bg-secondary-container text-on-secondary-container',
-  Pending: 'bg-tertiary-fixed text-on-tertiary-container',
+  Pending:   'bg-tertiary-fixed text-on-tertiary-container',
   Completed: 'bg-surface-container-high text-on-surface-variant',
   Cancelled: 'bg-error-container text-on-error-container',
 }
@@ -21,22 +21,24 @@ const statusColors = {
 export default function PatientDashboard() {
   const navigate = useNavigate()
   const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const token = localStorage.getItem('token')
 
   const [appointments, setAppointments] = useState([])
+  const [immunizations, setImmunizations] = useState([])
   const [loading, setLoading] = useState(true)
   const [showBookModal, setShowBookModal] = useState(false)
 
   useEffect(() => {
-    fetchAppointments()
+    fetchData()
   }, [])
 
-  async function fetchAppointments() {
+  async function fetchData() {
     try {
-      const { data } = await axios.get('/api/appointments', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      setAppointments(data)
+      const [apptRes, immRes] = await Promise.all([
+        api.get('/appointments'),
+        api.get('/immunizations'),
+      ])
+      setAppointments(apptRes.data)
+      setImmunizations(immRes.data)
     } catch (err) {
       console.error(err)
     } finally {
@@ -44,22 +46,19 @@ export default function PatientDashboard() {
     }
   }
 
-
-
   async function handleCancel(id) {
     try {
-      await axios.delete(`/api/appointments/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      fetchAppointments()
+      await api.delete(`/appointments/${id}`)
+      fetchData()
     } catch (err) {
       console.error(err)
     }
   }
 
-  const upcoming = appointments.filter(a => a.status === 'Pending' || a.status === 'Confirmed')
+  const upcoming  = appointments.filter(a => a.status === 'Pending' || a.status === 'Confirmed')
   const completed = appointments.filter(a => a.status === 'Completed').length
-  const cancelled = appointments.filter(a => a.status === 'Cancelled').length
+  const immDone   = immunizations.filter(i => i.status === 'Completed').length
+  const immPending = immunizations.filter(i => i.status === 'Upcoming').length
 
   return (
     <DashboardLayout>
@@ -75,12 +74,12 @@ export default function PatientDashboard() {
         </span>
       </div>
 
-      {/* Stats */}
+      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon="calendar_month" label="Upcoming Appointments" value={upcoming.length} color="primary" />
-        <StatCard icon="vaccines" label="Immunizations Done" value="5" color="secondary" />
-        <StatCard icon="pending_actions" label="Pending Vaccines" value="1" color="tertiary" />
-        <StatCard icon="check_circle" label="Completed Visits" value={completed} color="secondary" />
+        <StatCard icon="calendar_month" label="Upcoming Appointments" value={loading ? '…' : upcoming.length} color="primary" />
+        <StatCard icon="vaccines"       label="Immunizations Done"    value={loading ? '…' : immDone}         color="secondary" />
+        <StatCard icon="pending_actions" label="Pending Vaccines"     value={loading ? '…' : immPending}      color="tertiary" />
+        <StatCard icon="check_circle"   label="Completed Visits"      value={loading ? '…' : completed}       color="secondary" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -127,10 +126,7 @@ export default function PatientDashboard() {
                       {apt.status}
                     </span>
                     {apt.status !== 'Cancelled' && (
-                      <button
-                        onClick={() => handleCancel(apt._id)}
-                        className="text-xs text-error hover:underline"
-                      >
+                      <button onClick={() => handleCancel(apt._id)} className="text-xs text-error hover:underline">
                         Cancel
                       </button>
                     )}
@@ -142,7 +138,7 @@ export default function PatientDashboard() {
 
           <button
             onClick={() => setShowBookModal(true)}
-            className="mt-5 w-full py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary-container transition-colors flex items-center justify-center gap-2"
+            className="mt-5 w-full py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-xl">add</span>
             Book New Appointment
@@ -157,10 +153,10 @@ export default function PatientDashboard() {
             <h2 className="text-base font-bold text-on-surface mb-4">Quick Actions</h2>
             <div className="space-y-2">
               {[
-                { icon: 'add_circle', label: 'Book Appointment', action: () => setShowBookModal(true), color: 'text-primary' },
-                { icon: 'vaccines', label: 'Immunization Records', action: () => navigate('/dashboard/patient/immunization'), color: 'text-secondary' },
-                { icon: 'person', label: 'My Profile', action: () => navigate('/dashboard/patient/profile'), color: 'text-tertiary' },
-                { icon: 'history', label: 'Visit History', action: () => navigate('/dashboard/patient/appointments'), color: 'text-on-surface-variant' },
+                { icon: 'add_circle',      label: 'Book Appointment',      action: () => setShowBookModal(true),                              color: 'text-primary' },
+                { icon: 'vaccines',        label: 'Immunization Records',  action: () => navigate('/dashboard/patient/immunization'),         color: 'text-secondary' },
+                { icon: 'health_and_safety', label: 'ABHA Health ID',      action: () => navigate('/abha'),                                   color: 'text-tertiary' },
+                { icon: 'person',          label: 'My Profile',            action: () => navigate('/dashboard/patient/profile'),              color: 'text-on-surface-variant' },
               ].map((item, i) => (
                 <button
                   key={i}
@@ -201,32 +197,34 @@ export default function PatientDashboard() {
             View All
           </button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            { name: 'COVID-19 (Dose 2)', date: 'Jan 15, 2024', status: 'Completed' },
-            { name: 'Influenza', date: 'Mar 10, 2024', status: 'Completed' },
-            { name: 'Hepatitis B (Dose 3)', date: 'Aug 01, 2026', status: 'Upcoming' },
-          ].map((imm, i) => (
-            <div key={i} className="flex items-center gap-3 p-4 bg-surface-container-low rounded-xl">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${imm.status === 'Completed' ? 'bg-secondary-container' : 'bg-primary-fixed'}`}>
-                <span className={`material-symbols-outlined text-xl ${imm.status === 'Completed' ? 'text-secondary' : 'text-primary'}`}>vaccines</span>
+        {loading ? (
+          <p className="text-sm text-on-surface-variant">Loading...</p>
+        ) : immunizations.length === 0 ? (
+          <p className="text-sm text-on-surface-variant">No immunization records found.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {immunizations.slice(0, 3).map((imm) => (
+              <div key={imm._id} className="flex items-center gap-3 p-4 bg-surface-container-low rounded-xl">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${imm.status === 'Completed' ? 'bg-secondary-container' : 'bg-primary-fixed'}`}>
+                  <span className={`material-symbols-outlined text-xl ${imm.status === 'Completed' ? 'text-secondary' : 'text-primary'}`}>vaccines</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-on-surface">{imm.vaccineName}{imm.dose ? ` — ${imm.dose}` : ''}</p>
+                  <p className="text-xs text-on-surface-variant">{imm.date}</p>
+                </div>
+                <span className={`text-xs font-semibold px-2 py-1 rounded-full ${imm.status === 'Completed' ? 'bg-secondary-container text-on-secondary-container' : 'bg-primary-fixed text-primary'}`}>
+                  {imm.status}
+                </span>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-on-surface">{imm.name}</p>
-                <p className="text-xs text-on-surface-variant">{imm.date}</p>
-              </div>
-              <span className={`text-xs font-semibold px-2 py-1 rounded-full ${imm.status === 'Completed' ? 'bg-secondary-container text-on-secondary-container' : 'bg-primary-fixed text-primary'}`}>
-                {imm.status}
-              </span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {showBookModal && (
         <BookAppointmentModal
           onClose={() => setShowBookModal(false)}
-          onSuccess={fetchAppointments}
+          onSuccess={fetchData}
         />
       )}
 

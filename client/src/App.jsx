@@ -10,6 +10,10 @@ import PatientImmunization from './pages/patient/PatientImmunization'
 import PatientProfile from './pages/patient/PatientProfile'
 import ProtectedRoute from './components/ProtectedRoute'
 import MaternalRecord from './pages/MaternalRecord'
+import AppointmentsPage from './pages/Appointments'
+import ImmunizationPage from './pages/Immunization'
+import ProfilePage from './pages/Profile'
+import AbhaPage from './pages/AbhaPage'
 
 function Protected({ children }) {
   return <ProtectedRoute>{children}</ProtectedRoute>
@@ -31,7 +35,11 @@ export default function App() {
       <Route path="/dashboard/doctor" element={<Protected><DoctorDashboard /></Protected>} />
       <Route path="/dashboard/staff" element={<Protected><StaffDashboard /></Protected>} />
       <Route path="/dashboard/admin" element={<Protected><AdminDashboard /></Protected>} />
+      <Route path="/dashboard/appointments" element={<Protected><AppointmentsPage /></Protected>} />
+      <Route path="/dashboard/immunization" element={<Protected><ImmunizationPage /></Protected>} />
+      <Route path="/dashboard/profile" element={<Protected><ProfilePage /></Protected>} />
       <Route path="/maternal" element={<Protected><MaternalRecord /></Protected>} />
+      <Route path="/abha" element={<Protected><AbhaPage /></Protected>} />
       <Route path="*" element={<Navigate to="/auth" replace />} />
     </Routes>
   )
