@@ -5,6 +5,7 @@ server/node_modules/
 
 # Environment variables
 server/.env
+CREDENTIALS.txt
 
 # Build output
 client/dist/
