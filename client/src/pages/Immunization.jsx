@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import api from '../api'
 
@@ -15,6 +16,7 @@ const VACCINES = [
 ]
 
 export default function ImmunizationPage() {
+  const { t } = useTranslation()
   const [records, setRecords] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -48,7 +50,7 @@ export default function ImmunizationPage() {
     try {
       const { data } = await api.post('/immunizations', form)
       setRecords([data, ...records])
-      setSuccess('Immunization record added successfully!')
+      setSuccess(t('recordAdded'))
       setShowForm(false)
       setForm({ patientId: '', vaccineName: 'BCG', date: '', status: 'Completed', dose: '', notes: '' })
     } catch (err) {
@@ -71,9 +73,9 @@ export default function ImmunizationPage() {
     <DashboardLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-on-surface">Immunization Records</h1>
+          <h1 className="text-2xl font-bold text-on-surface">{t('immunization')}</h1>
           <p className="text-on-surface-variant mt-1">
-            {user.role === 'patient' ? 'Your vaccination history' : 'Manage patient immunization records'}
+            {user.role === 'patient' ? t('yourVaccinations') : t('manageImmunizations')}
           </p>
         </div>
         {canAdd && (
@@ -82,7 +84,7 @@ export default function ImmunizationPage() {
             className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors"
           >
             <span className="material-symbols-outlined text-xl">add</span>
-            Add Record
+            {t('addRecord')}
           </button>
         )}
       </div>
@@ -98,13 +100,12 @@ export default function ImmunizationPage() {
         </div>
       )}
 
-      {/* Add Form */}
       {showForm && canAdd && (
         <form onSubmit={handleAdd} className="bg-white border border-outline-variant rounded-xl p-6 mb-6 shadow-sm">
-          <h2 className="text-base font-bold text-on-surface mb-4">Add Immunization Record</h2>
+          <h2 className="text-base font-bold text-on-surface mb-4">{t('addImmunizationRecord')}</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-semibold text-on-surface-variant">Patient ID (MongoDB ID) *</label>
+              <label className="text-xs font-semibold text-on-surface-variant">{t('patientId')} *</label>
               <input
                 value={form.patientId}
                 onChange={e => setForm({ ...form, patientId: e.target.value })}
@@ -113,7 +114,7 @@ export default function ImmunizationPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-on-surface-variant">Vaccine *</label>
+              <label className="text-xs font-semibold text-on-surface-variant">{t('vaccine')} *</label>
               <select
                 value={form.vaccineName}
                 onChange={e => setForm({ ...form, vaccineName: e.target.value })}
@@ -123,7 +124,7 @@ export default function ImmunizationPage() {
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-on-surface-variant">Date *</label>
+              <label className="text-xs font-semibold text-on-surface-variant">{t('date')} *</label>
               <input
                 type="date"
                 value={form.date}
@@ -132,7 +133,7 @@ export default function ImmunizationPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-on-surface-variant">Status</label>
+              <label className="text-xs font-semibold text-on-surface-variant">{t('status')}</label>
               <select
                 value={form.status}
                 onChange={e => setForm({ ...form, status: e.target.value })}
@@ -144,7 +145,7 @@ export default function ImmunizationPage() {
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-on-surface-variant">Dose</label>
+              <label className="text-xs font-semibold text-on-surface-variant">{t('dose')}</label>
               <input
                 value={form.dose}
                 onChange={e => setForm({ ...form, dose: e.target.value })}
@@ -153,7 +154,7 @@ export default function ImmunizationPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-on-surface-variant">Notes</label>
+              <label className="text-xs font-semibold text-on-surface-variant">{t('notes')}</label>
               <input
                 value={form.notes}
                 onChange={e => setForm({ ...form, notes: e.target.value })}
@@ -168,32 +169,31 @@ export default function ImmunizationPage() {
               disabled={submitting}
               className="px-6 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60"
             >
-              {submitting ? 'Saving...' : 'Save Record'}
+              {submitting ? t('savingRecord') : t('saveRecord')}
             </button>
             <button
               type="button"
               onClick={() => setShowForm(false)}
               className="px-6 py-2.5 border border-outline-variant text-on-surface-variant text-sm font-semibold rounded-xl hover:bg-surface-container transition-colors"
             >
-              Cancel
+              {t('cancel')}
             </button>
           </div>
         </form>
       )}
 
-      {/* Records */}
       {loading ? (
         <div className="flex items-center justify-center py-16 text-on-surface-variant">
           <svg className="animate-spin h-6 w-6 mr-3 text-primary" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          Loading records...
+          {t('loading')}
         </div>
       ) : records.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-on-surface-variant">
           <span className="material-symbols-outlined text-5xl mb-3 text-outline">vaccines</span>
-          <p className="text-sm font-medium">No immunization records found</p>
+          <p className="text-sm font-medium">{t('noRecordsFound')}</p>
         </div>
       ) : (
         <div className="space-y-3">

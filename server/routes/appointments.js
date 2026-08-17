@@ -84,6 +84,60 @@ router.patch('/:id/status', async (req, res) => {
   }
 })
 
+// GET /api/appointments/suggest-type  — ML: frequency-based appointment type suggestion
+router.get('/suggest-type', async (req, res) => {
+  try {
+    const history = await Appointment.find({ patientId: req.user._id })
+    if (history.length === 0) return res.json({ suggestedType: 'General Checkup', confidence: 0 })
+
+    const freq = {}
+    history.forEach(a => { freq[a.type] = (freq[a.type] || 0) + 1 })
+    const suggestedType = Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0]
+    const confidence = Math.round((freq[suggestedType] / history.length) * 100)
+
+    return res.json({ suggestedType, confidence, totalAppointments: history.length })
+  } catch (err) {
+    return res.status(500).json({ message: err.message })
+  }
+})
+
+// GET /api/appointments/doctor-workload  — ML: doctor workload balancing
+router.get('/doctor-workload', async (req, res) => {
+  try {
+    const doctors = await User.find({ role: 'doctor' }).select('firstName lastName email')
+    const activeStatuses = ['Pending', 'Confirmed']
+
+    const workloads = await Promise.all(doctors.map(async (doc) => {
+      const total = await Appointment.countDocuments({ doctorId: doc._id })
+      const active = await Appointment.countDocuments({ doctorId: doc._id, status: { $in: activeStatuses } })
+      const today = new Date().toISOString().split('T')[0]
+      const todayCount = await Appointment.countDocuments({ doctorId: doc._id, date: today })
+
+      // Load score: weighted sum — active appointments matter most
+      const loadScore = (active * 2) + todayCount
+
+      return {
+        _id: doc._id,
+        firstName: doc.firstName,
+        lastName: doc.lastName,
+        email: doc.email,
+        totalAppointments: total,
+        activeAppointments: active,
+        todayAppointments: todayCount,
+        loadScore,
+        recommendation: loadScore === 0 ? 'Available' : loadScore <= 3 ? 'Low Load' : loadScore <= 7 ? 'Moderate' : 'High Load',
+      }
+    }))
+
+    // Sort by load score ascending — least loaded first
+    workloads.sort((a, b) => a.loadScore - b.loadScore)
+
+    return res.json(workloads)
+  } catch (err) {
+    return res.status(500).json({ message: err.message })
+  }
+})
+
 // DELETE /api/appointments/:id  — patient cancels their own appointment
 router.delete('/:id', async (req, res) => {
   try {

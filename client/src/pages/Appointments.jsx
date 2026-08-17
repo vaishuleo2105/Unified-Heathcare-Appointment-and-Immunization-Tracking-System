@@ -9,23 +9,38 @@ const STATUS_COLORS = {
   Completed: 'bg-surface-container-high text-on-surface-variant',
   Cancelled: 'bg-error-container text-on-error-container',
 }
+const LOAD_COLORS = {
+  'Available':  'text-secondary bg-secondary-container',
+  'Low Load':   'text-primary bg-primary-fixed',
+  'Moderate':   'text-on-tertiary-container bg-tertiary-fixed',
+  'High Load':  'text-on-error-container bg-error-container',
+}
 
-const user = () => JSON.parse(localStorage.getItem('user') || '{}')
+const getUser = () => JSON.parse(localStorage.getItem('user') || '{}')
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState([])
   const [doctors, setDoctors] = useState([])
+  const [workload, setWorkload] = useState([])
+  const [suggestedType, setSuggestedType] = useState('')
+  const [suggestionConfidence, setSuggestionConfidence] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ doctorId: '', date: '', time: '', type: 'General Checkup', notes: '' })
   const [submitting, setSubmitting] = useState(false)
-  const role = user().role
+  const role = getUser().role
 
   useEffect(() => {
     fetchAppointments()
-    if (role === 'patient') fetchDoctors()
+    if (role === 'patient') {
+      fetchDoctors()
+      fetchSuggestion()
+    }
+    if (['staff', 'admin'].includes(role)) {
+      fetchWorkload()
+    }
   }, [])
 
   async function fetchAppointments() {
@@ -47,6 +62,24 @@ export default function AppointmentsPage() {
     } catch {}
   }
 
+  async function fetchSuggestion() {
+    try {
+      const { data } = await api.get('/appointments/suggest-type')
+      if (data.suggestedType) {
+        setSuggestedType(data.suggestedType)
+        setSuggestionConfidence(data.confidence)
+        setForm(f => ({ ...f, type: data.suggestedType }))
+      }
+    } catch {}
+  }
+
+  async function fetchWorkload() {
+    try {
+      const { data } = await api.get('/appointments/doctor-workload')
+      setWorkload(data)
+    } catch {}
+  }
+
   async function handleBook(e) {
     e.preventDefault()
     setError(''); setSuccess('')
@@ -57,7 +90,7 @@ export default function AppointmentsPage() {
       setAppointments([data, ...appointments])
       setSuccess('Appointment booked successfully!')
       setShowForm(false)
-      setForm({ doctorId: '', date: '', time: '', type: 'General Checkup', notes: '' })
+      setForm({ doctorId: '', date: '', time: '', type: suggestedType || 'General Checkup', notes: '' })
     } catch (err) {
       setError(err.response?.data?.message || 'Booking failed')
     } finally {
@@ -81,6 +114,13 @@ export default function AppointmentsPage() {
     } catch (err) {
       setError(err.response?.data?.message || 'Cancel failed')
     }
+  }
+
+  // When a doctor is selected from workload panel, pre-fill the form
+  function selectDoctorFromWorkload(docId) {
+    setForm(f => ({ ...f, doctorId: docId }))
+    setShowForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
@@ -114,10 +154,79 @@ export default function AppointmentsPage() {
         </div>
       )}
 
-      {/* Booking Form */}
+      {/* ── ML: Doctor Workload Panel (staff/admin) ── */}
+      {['staff', 'admin'].includes(role) && workload.length > 0 && (
+        <div className="bg-white border border-outline-variant rounded-xl p-5 shadow-sm mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="material-symbols-outlined text-primary text-xl">insights</span>
+            <h2 className="text-sm font-bold text-on-surface">Doctor Workload Analysis</h2>
+            <span className="text-xs bg-primary-fixed text-primary px-2 py-0.5 rounded-full font-semibold ml-auto">AI Assisted</span>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {workload.map(doc => (
+              <div key={doc._id} className="p-4 bg-surface-container-low rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold text-on-surface">Dr. {doc.firstName} {doc.lastName}</p>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${LOAD_COLORS[doc.recommendation]}`}>
+                    {doc.recommendation}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center mb-3">
+                  <div>
+                    <p className="text-lg font-bold text-on-surface">{doc.activeAppointments}</p>
+                    <p className="text-xs text-on-surface-variant">Active</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-on-surface">{doc.todayAppointments}</p>
+                    <p className="text-xs text-on-surface-variant">Today</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-on-surface">{doc.totalAppointments}</p>
+                    <p className="text-xs text-on-surface-variant">Total</p>
+                  </div>
+                </div>
+                {/* Load bar */}
+                <div className="w-full bg-surface-container-high rounded-full h-1.5 mb-3">
+                  <div
+                    className={`h-1.5 rounded-full transition-all ${
+                      doc.recommendation === 'Available' ? 'bg-secondary' :
+                      doc.recommendation === 'Low Load' ? 'bg-primary' :
+                      doc.recommendation === 'Moderate' ? 'bg-tertiary' : 'bg-error'
+                    }`}
+                    style={{ width: `${Math.min((doc.loadScore / 10) * 100, 100)}%` }}
+                  />
+                </div>
+                <button
+                  onClick={() => selectDoctorFromWorkload(doc._id)}
+                  className="w-full py-1.5 text-xs font-semibold bg-primary-fixed text-primary rounded-lg hover:bg-primary hover:text-white transition-colors"
+                >
+                  Book with this Doctor
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Booking Form ── */}
       {showForm && role === 'patient' && (
         <form onSubmit={handleBook} className="bg-white border border-outline-variant rounded-xl p-6 mb-6 shadow-sm">
           <h2 className="text-base font-bold text-on-surface mb-4">New Appointment</h2>
+
+          {/* ML Suggestion Banner */}
+          {suggestedType && (
+            <div className="flex items-center gap-3 bg-primary-fixed border border-outline-variant rounded-xl p-3 mb-4">
+              <span className="material-symbols-outlined text-primary text-xl">auto_awesome</span>
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-on-surface">AI Suggestion</p>
+                <p className="text-xs text-on-surface-variant">
+                  Based on your history, <span className="font-semibold text-primary">{suggestedType}</span> is pre-selected
+                  {suggestionConfidence > 0 && ` (${suggestionConfidence}% of your past appointments)`}
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-semibold text-on-surface-variant">Doctor *</label>
@@ -133,7 +242,14 @@ export default function AppointmentsPage() {
               </select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-on-surface-variant">Type *</label>
+              <label className="text-xs font-semibold text-on-surface-variant flex items-center gap-1">
+                Type *
+                {suggestedType && form.type === suggestedType && (
+                  <span className="text-primary text-xs font-normal flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-sm">auto_awesome</span> suggested
+                  </span>
+                )}
+              </label>
               <select
                 value={form.type}
                 onChange={e => setForm({ ...form, type: e.target.value })}
@@ -191,7 +307,7 @@ export default function AppointmentsPage() {
         </form>
       )}
 
-      {/* Appointments List */}
+      {/* ── Appointments List ── */}
       {loading ? (
         <div className="flex items-center justify-center py-16 text-on-surface-variant">
           <svg className="animate-spin h-6 w-6 mr-3 text-primary" fill="none" viewBox="0 0 24 24">

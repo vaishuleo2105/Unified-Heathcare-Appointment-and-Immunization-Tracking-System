@@ -2,11 +2,14 @@ import { useState } from 'react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import api from '../api'
 
-const STEPS = ['Enter Aadhaar', 'Verify OTP', 'Create ABHA ID', 'Done']
+const STEPS = ['Enter Aadhaar', 'Verify OTP', 'Create Health ID', 'Done']
 
 export default function AbhaPage() {
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+
   const [step, setStep] = useState(0)
   const [aadhaar, setAadhaar] = useState('')
+  const [email, setEmail] = useState(user.email || '')
   const [otp, setOtp] = useState('')
   const [txnId, setTxnId] = useState('')
   const [healthId, setHealthId] = useState('')
@@ -14,8 +17,9 @@ export default function AbhaPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [mockOtp, setMockOtp] = useState('')
+  const [otpSentTo, setOtpSentTo] = useState('')
 
-  // Link to maternal record
   const [govtMaternalId, setGovtMaternalId] = useState('')
   const [linkLoading, setLinkLoading] = useState(false)
   const [linkMsg, setLinkMsg] = useState('')
@@ -23,30 +27,30 @@ export default function AbhaPage() {
   function reset() {
     setStep(0); setAadhaar(''); setOtp(''); setTxnId('')
     setHealthId(''); setAbhaResult(null); setError(''); setSuccess('')
+    setMockOtp(''); setOtpSentTo('')
   }
-
-  const [mockOtp, setMockOtp] = useState('')
 
   async function handleGenerateOtp(e) {
     e.preventDefault()
     setError('')
     const clean = aadhaar.replace(/\s/g, '')
     if (!/^\d{12}$/.test(clean)) return setError('Enter a valid 12-digit Aadhaar number')
+    if (!email.trim()) return setError('Enter your email address to receive the OTP')
     setLoading(true)
     try {
-      const { data } = await api.post('/maternal/abha/generate-otp', { aadhaar: clean })
+      const { data } = await api.post('/maternal/abha/generate-otp', { aadhaar: clean, email: email.trim() })
       setTxnId(data.txnId)
+      setOtpSentTo(email.trim())
       if (data.mock) {
-        // Extract OTP from demo message and auto-fill it
         const match = data.message.match(/OTP is: (\d{6})/)
         if (match) setMockOtp(match[1])
-        setSuccess(data.message)
+        setSuccess(`OTP generated. Check the box below.`)
       } else {
-        setSuccess(data.message)
+        setSuccess(`OTP sent to ${email.trim()}. Check your inbox.`)
       }
       setStep(1)
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send OTP. Check ABHA credentials in server .env')
+      setError(err.response?.data?.message || 'Failed to send OTP')
     } finally {
       setLoading(false)
     }
@@ -60,7 +64,7 @@ export default function AbhaPage() {
     try {
       const { data } = await api.post('/maternal/abha/verify-otp', { txnId, otp })
       setTxnId(data.txnId)
-      setSuccess('OTP verified! You can now create your ABHA Health ID.')
+      setSuccess('OTP verified! You can now create your Health ID.')
       setStep(2)
     } catch (err) {
       setError(err.response?.data?.message || 'OTP verification failed')
@@ -82,7 +86,7 @@ export default function AbhaPage() {
       setSuccess(data.message)
       setStep(3)
     } catch (err) {
-      setError(err.response?.data?.message || 'ABHA creation failed')
+      setError(err.response?.data?.message || 'Health ID creation failed')
     } finally {
       setLoading(false)
     }
@@ -98,7 +102,7 @@ export default function AbhaPage() {
         govtMaternalId: govtMaternalId.trim(),
         abhaId: abhaResult.abhaId,
       })
-      setLinkMsg(`✓ ABHA ID linked to maternal record ${govtMaternalId.toUpperCase()}`)
+      setLinkMsg(`✓ Health ID linked to maternal record ${govtMaternalId.toUpperCase()}`)
     } catch (err) {
       setLinkMsg(err.response?.data?.message || 'Linking failed')
     } finally {
@@ -111,19 +115,17 @@ export default function AbhaPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-on-surface">ABHA Health ID</h1>
         <p className="text-on-surface-variant mt-1">
-          Create or link your Ayushman Bharat Health Account (ABHA) using Aadhaar
+          Create your digital health identity using Aadhaar verification
         </p>
       </div>
 
       {/* Info Banner */}
       <div className="flex items-start gap-3 bg-primary-fixed border border-outline-variant rounded-xl p-4 mb-6">
-        <span className="material-symbols-outlined text-primary text-2xl mt-0.5">info</span>
+        <span className="material-symbols-outlined text-primary text-2xl mt-0.5">verified_user</span>
         <div>
-          <p className="text-sm font-semibold text-on-surface">About ABHA (Ayushman Bharat Health Account)</p>
+          <p className="text-sm font-semibold text-on-surface">Secure Aadhaar-based Verification</p>
           <p className="text-xs text-on-surface-variant mt-1">
-            ABHA is a 14-digit unique health ID issued by the Government of India under ABDM.
-            Currently running in <span className="font-bold text-primary">Demo Mode</span> — the OTP will be shown on screen.
-            To enable real ABHA creation, add your ABDM sandbox credentials to <span className="font-mono">server/.env</span>.
+            Enter your 12-digit Aadhaar number and email address. An OTP will be sent to verify your identity before creating your Health ID.
           </p>
         </div>
       </div>
@@ -156,11 +158,10 @@ export default function AbhaPage() {
 
       <div className="max-w-md">
 
-        {/* Step 0: Aadhaar */}
+        {/* Step 0: Aadhaar + Email */}
         {step === 0 && (
           <form onSubmit={handleGenerateOtp} className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm space-y-4">
-            <h2 className="text-base font-bold text-on-surface">Enter Aadhaar Number</h2>
-            <p className="text-xs text-on-surface-variant">An OTP will be sent to your Aadhaar-linked mobile number.</p>
+            <h2 className="text-base font-bold text-on-surface">Enter Aadhaar & Email</h2>
             <div>
               <label className="text-xs font-semibold text-on-surface-variant">Aadhaar Number *</label>
               <input
@@ -172,12 +173,36 @@ export default function AbhaPage() {
               />
               <p className="text-xs text-on-surface-variant mt-1">{aadhaar.length}/12 digits</p>
             </div>
+            <div>
+              <label className="text-xs font-semibold text-on-surface-variant">Email Address *</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="w-full mt-1 px-4 py-3 border border-outline-variant rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none"
+              />
+              <p className="text-xs text-on-surface-variant mt-1">OTP will be sent to this email</p>
+            </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60"
+              className="w-full py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              {loading ? 'Sending OTP...' : 'Send OTP'}
+              {loading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                  </svg>
+                  Sending OTP...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-lg">send</span>
+                  Send OTP
+                </>
+              )}
             </button>
           </form>
         )}
@@ -186,13 +211,15 @@ export default function AbhaPage() {
         {step === 1 && (
           <form onSubmit={handleVerifyOtp} className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm space-y-4">
             <h2 className="text-base font-bold text-on-surface">Verify OTP</h2>
-            <p className="text-xs text-on-surface-variant">Enter the OTP sent to your Aadhaar-linked mobile number.</p>
+            <p className="text-xs text-on-surface-variant">
+              Enter the OTP sent to <span className="font-semibold text-primary">{otpSentTo}</span>
+            </p>
 
             {mockOtp && (
               <div className="flex items-center gap-3 bg-primary-fixed border border-outline-variant rounded-xl p-4">
-                <span className="material-symbols-outlined text-primary text-2xl">simulation</span>
+                <span className="material-symbols-outlined text-primary text-2xl">mark_email_read</span>
                 <div>
-                  <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Demo Mode — Your OTP</p>
+                  <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Your OTP</p>
                   <p className="text-2xl font-bold tracking-widest text-primary">{mockOtp}</p>
                 </div>
               </div>
@@ -212,9 +239,17 @@ export default function AbhaPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60"
+                className="flex-1 py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
               >
-                {loading ? 'Verifying...' : 'Verify OTP'}
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    Verifying...
+                  </>
+                ) : 'Verify OTP'}
               </button>
               <button type="button" onClick={reset} className="px-4 py-3 border border-outline-variant text-on-surface-variant text-sm font-semibold rounded-xl hover:bg-surface-container transition-colors">
                 Back
@@ -223,15 +258,15 @@ export default function AbhaPage() {
           </form>
         )}
 
-        {/* Step 2: Create ABHA */}
+        {/* Step 2: Create Health ID */}
         {step === 2 && (
           <form onSubmit={handleCreateAbha} className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm space-y-4">
-            <h2 className="text-base font-bold text-on-surface">Create ABHA Health ID</h2>
+            <h2 className="text-base font-bold text-on-surface">Create Health ID</h2>
             <p className="text-xs text-on-surface-variant">
-              Optionally choose a custom ABHA address (e.g. yourname@abdm). Leave blank for auto-generated.
+              Optionally choose a custom address (e.g. yourname@abdm). Leave blank for auto-generated.
             </p>
             <div>
-              <label className="text-xs font-semibold text-on-surface-variant">Preferred ABHA Address (optional)</label>
+              <label className="text-xs font-semibold text-on-surface-variant">Preferred Health Address (optional)</label>
               <div className="flex items-center mt-1 border border-outline-variant rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-primary">
                 <input
                   value={healthId}
@@ -246,9 +281,17 @@ export default function AbhaPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60"
+                className="flex-1 py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
               >
-                {loading ? 'Creating...' : 'Create ABHA ID'}
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    Creating...
+                  </>
+                ) : 'Create Health ID'}
               </button>
               <button type="button" onClick={reset} className="px-4 py-3 border border-outline-variant text-on-surface-variant text-sm font-semibold rounded-xl hover:bg-surface-container transition-colors">
                 Back
@@ -266,16 +309,15 @@ export default function AbhaPage() {
                   <span className="material-symbols-outlined text-secondary text-2xl">verified</span>
                 </div>
                 <div>
-                  <p className="text-base font-bold text-on-surface">ABHA ID Created!</p>
-                  <p className="text-xs text-on-surface-variant">Your health account is ready</p>
+                  <p className="text-base font-bold text-on-surface">Health ID Created!</p>
+                  <p className="text-xs text-on-surface-variant">Your digital health account is ready</p>
                 </div>
               </div>
               <div className="space-y-3">
                 {[
-                  { label: 'ABHA Address', value: abhaResult.abhaId, icon: 'badge' },
-                  { label: 'ABHA Number', value: abhaResult.abhaNumber, icon: 'pin' },
+                  { label: 'Health ID Address', value: abhaResult.abhaId, icon: 'badge' },
+                  { label: 'Health ID Number', value: abhaResult.abhaNumber, icon: 'pin' },
                   { label: 'Name', value: abhaResult.name, icon: 'person' },
-                  { label: 'Gender', value: abhaResult.gender, icon: 'wc' },
                   { label: 'Year of Birth', value: abhaResult.yearOfBirth, icon: 'cake' },
                 ].filter(f => f.value).map(({ label, value, icon }) => (
                   <div key={label} className="flex items-center gap-3 p-3 bg-surface-container-low rounded-xl">
@@ -289,10 +331,9 @@ export default function AbhaPage() {
               </div>
             </div>
 
-            {/* Link to Maternal Record */}
             <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm">
               <h3 className="text-sm font-bold text-on-surface mb-1">Link to Maternal Record</h3>
-              <p className="text-xs text-on-surface-variant mb-4">Optionally link this ABHA ID to a government maternal record (RCH/MCTS ID).</p>
+              <p className="text-xs text-on-surface-variant mb-4">Optionally link this Health ID to a government maternal record (RCH/MCTS ID).</p>
               <form onSubmit={handleLink} className="flex gap-3">
                 <input
                   value={govtMaternalId}
@@ -316,7 +357,7 @@ export default function AbhaPage() {
             </div>
 
             <button onClick={reset} className="w-full py-3 border border-outline-variant text-on-surface-variant text-sm font-semibold rounded-xl hover:bg-surface-container transition-colors">
-              Create Another ABHA ID
+              Create Another Health ID
             </button>
           </div>
         )}
