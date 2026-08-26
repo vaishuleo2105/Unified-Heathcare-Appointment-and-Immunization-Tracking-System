@@ -1,7 +1,10 @@
 const express = require('express')
+const axios = require('axios')
 const Appointment = require('../models/Appointment')
 const User = require('../models/User')
 const protect = require('../middleware/auth')
+
+const ML_SERVICE = 'http://localhost:5001'
 
 const router = express.Router()
 router.use(protect)
@@ -84,37 +87,109 @@ router.patch('/:id/status', async (req, res) => {
   }
 })
 
-// GET /api/appointments/suggest-type  — ML: frequency-based appointment type suggestion
+// GET /api/appointments/suggest-type  — ML: predict appointment type + best doctor + time
 router.get('/suggest-type', async (req, res) => {
   try {
-    const history = await Appointment.find({ patientId: req.user._id })
-    if (history.length === 0) return res.json({ suggestedType: 'General Checkup', confidence: 0 })
+    const user = req.user
+    const payload = {
+      age: user.age || 30,
+      gender: user.gender || 'Male',
+      bloodType: user.bloodType || 'O+',
+      medicalCondition: user.medicalCondition || 'None',
+      medication: user.medication || 'None',
+      testResults: user.testResults || 'Normal',
+    }
 
-    const freq = {}
-    history.forEach(a => { freq[a.type] = (freq[a.type] || 0) + 1 })
-    const suggestedType = Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0]
-    const confidence = Math.round((freq[suggestedType] / history.length) * 100)
+    // 1. Predict appointment type from ML
+    let suggestedType = 'General Checkup'
+    let confidence = 0
+    let probabilities = {}
+    let source = 'fallback'
+    try {
+      const { data } = await axios.post(`${ML_SERVICE}/predict-type`, payload, { timeout: 3000 })
+      suggestedType = data.predictedType
+      confidence = data.confidence
+      probabilities = data.probabilities
+      source = 'ml_model'
+    } catch {
+      const history = await Appointment.find({ patientId: user._id })
+      if (history.length > 0) {
+        const freq = {}
+        history.forEach(a => { freq[a.type] = (freq[a.type] || 0) + 1 })
+        suggestedType = Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0]
+        confidence = Math.round((freq[suggestedType] / history.length) * 100)
+        source = 'frequency'
+      }
+    }
 
-    return res.json({ suggestedType, confidence, totalAppointments: history.length })
+    // 2. Suggest best doctor (lowest active load)
+    const doctors = await User.find({ role: 'doctor' }).select('firstName lastName _id')
+    const activeStatuses = ['Pending', 'Confirmed']
+    const doctorLoads = await Promise.all(doctors.map(async (doc) => {
+      const active = await Appointment.countDocuments({ doctorId: doc._id, status: { $in: activeStatuses } })
+      return { _id: doc._id, firstName: doc.firstName, lastName: doc.lastName, active }
+    }))
+    doctorLoads.sort((a, b) => a.active - b.active)
+    const suggestedDoctor = doctorLoads[0] || null
+
+    // 3. Suggest next available date (tomorrow) and a smart time based on appointment type
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const suggestedDate = tomorrow.toISOString().split('T')[0]
+    const TIME_BY_TYPE = {
+      'Emergency': '08:00',
+      'Consultation': '10:00',
+      'Follow-up': '11:00',
+      'General Checkup': '14:00',
+      'Vaccination': '09:00',
+    }
+    const suggestedTime = TIME_BY_TYPE[suggestedType] || '10:00'
+
+    return res.json({
+      suggestedType,
+      confidence,
+      probabilities,
+      source,
+      suggestedDoctor,
+      suggestedDate,
+      suggestedTime,
+      profileComplete: !!(user.age && user.gender && user.medicalCondition),
+    })
   } catch (err) {
     return res.status(500).json({ message: err.message })
   }
 })
 
-// GET /api/appointments/doctor-workload  — ML: doctor workload balancing
+// GET /api/appointments/doctor-workload  — ML-assisted doctor workload balancing
 router.get('/doctor-workload', async (req, res) => {
   try {
     const doctors = await User.find({ role: 'doctor' }).select('firstName lastName email')
     const activeStatuses = ['Pending', 'Confirmed']
+    const today = new Date().toISOString().split('T')[0]
 
     const workloads = await Promise.all(doctors.map(async (doc) => {
-      const total = await Appointment.countDocuments({ doctorId: doc._id })
+      const total  = await Appointment.countDocuments({ doctorId: doc._id })
       const active = await Appointment.countDocuments({ doctorId: doc._id, status: { $in: activeStatuses } })
-      const today = new Date().toISOString().split('T')[0]
       const todayCount = await Appointment.countDocuments({ doctorId: doc._id, date: today })
-
-      // Load score: weighted sum — active appointments matter most
       const loadScore = (active * 2) + todayCount
+
+      // Try to get ML risk score for this doctor's active patients
+      let riskLevel = 'Low'
+      let riskScore = 0
+      try {
+        const activeApts = await Appointment.find({ doctorId: doc._id, status: { $in: activeStatuses } })
+          .populate('patientId', 'age medicalCondition testResults')
+        const patients = activeApts.map(a => ({
+          age: a.patientId?.age || 30,
+          medicalCondition: a.patientId?.medicalCondition || 'None',
+          testResults: a.patientId?.testResults || 'Normal',
+        }))
+        if (patients.length > 0) {
+          const { data } = await axios.post(`${ML_SERVICE}/doctor-risk-score`, { patients }, { timeout: 3000 })
+          riskLevel = data.riskLevel
+          riskScore = data.riskScore
+        }
+      } catch {}
 
       return {
         _id: doc._id,
@@ -125,13 +200,13 @@ router.get('/doctor-workload', async (req, res) => {
         activeAppointments: active,
         todayAppointments: todayCount,
         loadScore,
+        riskLevel,
+        riskScore,
         recommendation: loadScore === 0 ? 'Available' : loadScore <= 3 ? 'Low Load' : loadScore <= 7 ? 'Moderate' : 'High Load',
       }
     }))
 
-    // Sort by load score ascending — least loaded first
     workloads.sort((a, b) => a.loadScore - b.loadScore)
-
     return res.json(workloads)
   } catch (err) {
     return res.status(500).json({ message: err.message })

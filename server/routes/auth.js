@@ -9,6 +9,22 @@ function generateToken(id) {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' })
 }
 
+function userPayload(user) {
+  return {
+    id: user._id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    role: user.role,
+    age: user.age,
+    gender: user.gender,
+    bloodType: user.bloodType,
+    medicalCondition: user.medicalCondition,
+    medication: user.medication,
+    testResults: user.testResults,
+  }
+}
+
 // REGISTER
 router.post('/register', async (req, res) => {
   try {
@@ -28,16 +44,7 @@ router.post('/register', async (req, res) => {
 
     const token = generateToken(user._id)
 
-    return res.status(201).json({
-      token,
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-      },
-    })
+    return res.status(201).json({ token, user: userPayload(user) })
   } catch (err) {
     console.error('Register error:', err.message)
     return res.status(500).json({ message: 'Server error: ' + err.message })
@@ -69,16 +76,7 @@ router.post('/login', async (req, res) => {
 
     const token = generateToken(user._id)
 
-    return res.json({
-      token,
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        role: user.role,
-      },
-    })
+    return res.json({ token, user: userPayload(user) })
   } catch (err) {
     console.error('Login error:', err.message)
     return res.status(500).json({ message: 'Server error: ' + err.message })
@@ -87,15 +85,22 @@ router.post('/login', async (req, res) => {
 
 // VERIFY TOKEN
 router.get('/verify', protect, (req, res) => {
-  res.json({
-    user: {
-      id: req.user._id,
-      firstName: req.user.firstName,
-      lastName: req.user.lastName,
-      email: req.user.email,
-      role: req.user.role,
-    },
-  })
+  res.json({ user: userPayload(req.user) })
+})
+
+// UPDATE MEDICAL PROFILE
+router.put('/profile', protect, async (req, res) => {
+  try {
+    const { age, gender, bloodType, medicalCondition, medication, testResults } = req.body
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { age, gender, bloodType, medicalCondition, medication, testResults },
+      { new: true }
+    )
+    return res.json({ user: userPayload(user) })
+  } catch (err) {
+    return res.status(500).json({ message: err.message })
+  }
 })
 
 module.exports = router
