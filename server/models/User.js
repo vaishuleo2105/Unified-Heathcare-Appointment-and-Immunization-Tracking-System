@@ -8,6 +8,14 @@ const userSchema = new mongoose.Schema(
     email:     { type: String, required: true, unique: true, lowercase: true, trim: true },
     password:  { type: String, required: true },
     role:      { type: String, enum: ['patient', 'doctor', 'staff', 'admin'], default: 'patient' },
+    resetOtp:         { type: String },
+    resetOtpExpiry:   { type: Date },
+    age:              { type: Number },
+    gender:           { type: String, enum: ['Male', 'Female', 'Other'] },
+    bloodType:        { type: String },
+    medicalCondition: { type: String },
+    medication:       { type: String },
+    testResults:      { type: String, enum: ['Normal', 'Abnormal', 'Inconclusive'] },
   },
   { timestamps: true }
 )

@@ -9,24 +9,50 @@ const STATUS_COLORS = {
   Completed: 'bg-surface-container-high text-on-surface-variant',
   Cancelled: 'bg-error-container text-on-error-container',
 }
+const LOAD_COLORS = {
+  'Available':  'text-secondary bg-secondary-container',
+  'Low Load':   'text-primary bg-primary-fixed',
+  'Moderate':   'text-on-tertiary-container bg-tertiary-fixed',
+  'High Load':  'text-on-error-container bg-error-container',
+}
 
-const user = () => JSON.parse(localStorage.getItem('user') || '{}')
+const getUser = () => JSON.parse(localStorage.getItem('user') || '{}')
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState([])
   const [doctors, setDoctors] = useState([])
+  const [workload, setWorkload] = useState([])
+  const [availableSlots, setAvailableSlots] = useState([])
+  const [suggestedType, setSuggestedType] = useState('')
+  const [suggestionConfidence, setSuggestionConfidence] = useState(0)
+  const [suggestionSource, setSuggestionSource] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ doctorId: '', date: '', time: '', type: 'General Checkup', notes: '' })
   const [submitting, setSubmitting] = useState(false)
-  const role = user().role
+  const [consultationId, setConsultationId] = useState('')
+  const [consultation, setConsultation] = useState({ consultationOutcome: '', consultationNotes: '' })
+  const role = getUser().role
 
   useEffect(() => {
     fetchAppointments()
-    if (role === 'patient') fetchDoctors()
+    if (role === 'patient') {
+      fetchDoctors()
+      fetchSuggestion()
+    }
+    if (['patient', 'staff', 'admin'].includes(role)) {
+      fetchWorkload()
+    }
   }, [])
+
+  useEffect(() => {
+    if (role !== 'patient' || !form.doctorId || !form.date) return setAvailableSlots([])
+    api.get('/slots', { params: { doctorId: form.doctorId, date: form.date } })
+      .then(({ data }) => setAvailableSlots(data))
+      .catch(() => setAvailableSlots([]))
+  }, [form.doctorId, form.date, role])
 
   async function fetchAppointments() {
     setLoading(true)
@@ -47,6 +73,25 @@ export default function AppointmentsPage() {
     } catch {}
   }
 
+  async function fetchSuggestion() {
+    try {
+      const { data } = await api.get('/appointments/suggest-type')
+      if (data.suggestedType) {
+        setSuggestedType(data.suggestedType)
+        setSuggestionConfidence(data.confidence)
+        setSuggestionSource(data.source)
+        setForm(f => ({ ...f, type: data.suggestedType }))
+      }
+    } catch {}
+  }
+
+  async function fetchWorkload() {
+    try {
+      const { data } = await api.get('/appointments/doctor-workload')
+      setWorkload(data)
+    } catch {}
+  }
+
   async function handleBook(e) {
     e.preventDefault()
     setError(''); setSuccess('')
@@ -57,7 +102,7 @@ export default function AppointmentsPage() {
       setAppointments([data, ...appointments])
       setSuccess('Appointment booked successfully!')
       setShowForm(false)
-      setForm({ doctorId: '', date: '', time: '', type: 'General Checkup', notes: '' })
+      setForm({ doctorId: '', date: '', time: '', type: suggestedType || 'General Checkup', notes: '' })
     } catch (err) {
       setError(err.response?.data?.message || 'Booking failed')
     } finally {
@@ -81,6 +126,38 @@ export default function AppointmentsPage() {
     } catch (err) {
       setError(err.response?.data?.message || 'Cancel failed')
     }
+  }
+
+  async function saveConsultation(id) {
+    if (!consultation.consultationOutcome.trim()) return setError('Consultation outcome is required')
+    try {
+      const { data } = await api.patch(`/appointments/${id}/consultation`, consultation)
+      setAppointments(appointments.map(a => a._id === id ? data : a))
+      setConsultationId('')
+      setConsultation({ consultationOutcome: '', consultationNotes: '' })
+      setSuccess('Consultation outcome recorded')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not save consultation outcome')
+    }
+  }
+
+  // When a doctor is selected from workload panel, pre-fill the form
+  function selectDoctorFromWorkload(docId) {
+    setForm(f => ({ ...f, doctorId: docId }))
+    setShowForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function getDoctorWorkload(doctorId) {
+    return workload.find(doc => doc._id === doctorId)
+  }
+
+  function doctorsSortedByWorkload() {
+    return [...doctors].sort((first, second) => {
+      const firstScore = getDoctorWorkload(first._id)?.workloadScore ?? Number.POSITIVE_INFINITY
+      const secondScore = getDoctorWorkload(second._id)?.workloadScore ?? Number.POSITIVE_INFINITY
+      return firstScore - secondScore
+    })
   }
 
   return (
@@ -114,10 +191,82 @@ export default function AppointmentsPage() {
         </div>
       )}
 
-      {/* Booking Form */}
+      {/* ── ML: Doctor Workload Panel (staff/admin) ── */}
+      {['staff', 'admin'].includes(role) && workload.length > 0 && (
+        <div className="bg-white border border-outline-variant rounded-xl p-5 shadow-sm mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="material-symbols-outlined text-primary text-xl">insights</span>
+            <h2 className="text-sm font-bold text-on-surface">Doctor Workload Analysis</h2>
+            <span className="text-xs bg-primary-fixed text-primary px-2 py-0.5 rounded-full font-semibold ml-auto">AI Assisted</span>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {workload.map(doc => (
+              <div key={doc._id} className="p-4 bg-surface-container-low rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold text-on-surface">Dr. {doc.firstName} {doc.lastName}</p>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${LOAD_COLORS[doc.recommendation]}`}>
+                    {doc.recommendation}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center mb-3">
+                  <div>
+                    <p className="text-lg font-bold text-on-surface">{doc.activeAppointments}</p>
+                    <p className="text-xs text-on-surface-variant">Active</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-on-surface">{doc.todayAppointments}</p>
+                    <p className="text-xs text-on-surface-variant">Today</p>
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-on-surface">{doc.totalAppointments}</p>
+                    <p className="text-xs text-on-surface-variant">Total</p>
+                  </div>
+                </div>
+                <p className="text-xs text-on-surface-variant mb-3">
+                  Patient risk: <span className="font-semibold text-on-surface">{doc.riskLevel} ({doc.riskScore}/100)</span>
+                </p>
+                {/* Load bar */}
+                <div className="w-full bg-surface-container-high rounded-full h-1.5 mb-3">
+                  <div
+                    className={`h-1.5 rounded-full transition-all ${
+                      doc.recommendation === 'Available' ? 'bg-secondary' :
+                      doc.recommendation === 'Low Load' ? 'bg-primary' :
+                      doc.recommendation === 'Moderate' ? 'bg-tertiary' : 'bg-error'
+                    }`}
+                    style={{ width: `${Math.min((doc.loadScore / 10) * 100, 100)}%` }}
+                  />
+                </div>
+                <button
+                  onClick={() => selectDoctorFromWorkload(doc._id)}
+                  className="w-full py-1.5 text-xs font-semibold bg-primary-fixed text-primary rounded-lg hover:bg-primary hover:text-white transition-colors"
+                >
+                  Book with this Doctor
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Booking Form ── */}
       {showForm && role === 'patient' && (
         <form onSubmit={handleBook} className="bg-white border border-outline-variant rounded-xl p-6 mb-6 shadow-sm">
           <h2 className="text-base font-bold text-on-surface mb-4">New Appointment</h2>
+
+          {/* ML Suggestion Banner */}
+          {suggestedType && (
+            <div className="flex items-center gap-3 bg-primary-fixed border border-outline-variant rounded-xl p-3 mb-4">
+              <span className="material-symbols-outlined text-primary text-xl">auto_awesome</span>
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-on-surface">AI Suggestion</p>
+                <p className="text-xs text-on-surface-variant">
+                  Based on your {suggestionSource === 'ml_model_plus_history' ? 'medical profile and recent bookings' : 'medical profile'}, <span className="font-semibold text-primary">{suggestedType}</span> is pre-selected
+                  {suggestionConfidence > 0 && ` (${suggestionConfidence}% confidence)`}
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="grid md:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-semibold text-on-surface-variant">Doctor *</label>
@@ -127,13 +276,35 @@ export default function AppointmentsPage() {
                 className="w-full mt-1 px-3 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
               >
                 <option value="">Select a doctor</option>
-                {doctors.map(d => (
-                  <option key={d._id} value={d._id}>Dr. {d.firstName} {d.lastName}</option>
-                ))}
+                {doctorsSortedByWorkload().map(d => {
+                  const doctorWorkload = getDoctorWorkload(d._id)
+                  const loadLabel = doctorWorkload
+                    ? `${doctorWorkload.recommendation} — ${doctorWorkload.activeAppointments} active`
+                    : 'Checking workload...'
+                  return (
+                    <option key={d._id} value={d._id}>
+                      Dr. {d.firstName} {d.lastName} ({loadLabel})
+                    </option>
+                  )
+                })}
               </select>
+              {form.doctorId && getDoctorWorkload(form.doctorId) && (
+                <p className="mt-1.5 text-xs text-on-surface-variant">
+                  Current workload: <span className="font-semibold text-on-surface">{getDoctorWorkload(form.doctorId).recommendation}</span>
+                  {' '}— {getDoctorWorkload(form.doctorId).activeAppointments} active appointment(s),
+                  {' '}patient risk {getDoctorWorkload(form.doctorId).riskLevel}.
+                </p>
+              )}
             </div>
             <div>
-              <label className="text-xs font-semibold text-on-surface-variant">Type *</label>
+              <label className="text-xs font-semibold text-on-surface-variant flex items-center gap-1">
+                Type *
+                {suggestedType && form.type === suggestedType && (
+                  <span className="text-primary text-xs font-normal flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-sm">auto_awesome</span> suggested
+                  </span>
+                )}
+              </label>
               <select
                 value={form.type}
                 onChange={e => setForm({ ...form, type: e.target.value })}
@@ -154,12 +325,14 @@ export default function AppointmentsPage() {
             </div>
             <div>
               <label className="text-xs font-semibold text-on-surface-variant">Time *</label>
-              <input
-                type="time"
-                value={form.time}
-                onChange={e => setForm({ ...form, time: e.target.value })}
-                className="w-full mt-1 px-3 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
-              />
+              {availableSlots.length > 0 ? (
+                <select value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} className="w-full mt-1 px-3 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none">
+                  <option value="">Select an available slot</option>
+                  {availableSlots.map(slot => <option key={slot._id} value={slot.time}>{slot.time}</option>)}
+                </select>
+              ) : (
+                <input type="time" value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} className="w-full mt-1 px-3 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none" />
+              )}
             </div>
             <div className="md:col-span-2">
               <label className="text-xs font-semibold text-on-surface-variant">Notes (optional)</label>
@@ -191,7 +364,7 @@ export default function AppointmentsPage() {
         </form>
       )}
 
-      {/* Appointments List */}
+      {/* ── Appointments List ── */}
       {loading ? (
         <div className="flex items-center justify-center py-16 text-on-surface-variant">
           <svg className="animate-spin h-6 w-6 mr-3 text-primary" fill="none" viewBox="0 0 24 24">
@@ -236,13 +409,16 @@ export default function AppointmentsPage() {
                     Confirm
                   </button>
                 )}
-                {['staff', 'doctor', 'admin'].includes(role) && apt.status === 'Confirmed' && (
+                {['staff', 'admin'].includes(role) && apt.status === 'Confirmed' && (
                   <button
                     onClick={() => handleStatus(apt._id, 'Completed')}
                     className="px-3 py-1.5 bg-primary-fixed text-primary text-xs font-semibold rounded-lg hover:bg-primary hover:text-white transition-colors"
                   >
                     Complete
                   </button>
+                )}
+                {role === 'doctor' && apt.status === 'Confirmed' && (
+                  <button onClick={() => { setConsultationId(consultationId === apt._id ? '' : apt._id); setConsultation({ consultationOutcome: apt.consultationOutcome || '', consultationNotes: apt.consultationNotes || '' }) }} className="px-3 py-1.5 bg-primary-fixed text-primary text-xs font-semibold rounded-lg hover:bg-primary hover:text-white transition-colors">Record outcome</button>
                 )}
                 {(role === 'patient' || role === 'admin') && ['Pending', 'Confirmed'].includes(apt.status) && (
                   <button
@@ -253,6 +429,14 @@ export default function AppointmentsPage() {
                   </button>
                 )}
               </div>
+              {apt.consultationOutcome && <p className="w-full text-xs bg-secondary-container text-on-secondary-container rounded-lg px-2 py-1.5"><span className="font-semibold">Outcome:</span> {apt.consultationOutcome}{apt.consultationNotes && ` — ${apt.consultationNotes}`}</p>}
+              {role === 'doctor' && consultationId === apt._id && (
+                <div className="w-full bg-surface-container-low rounded-xl p-3">
+                  <input value={consultation.consultationOutcome} onChange={e => setConsultation({ ...consultation, consultationOutcome: e.target.value })} placeholder="Consultation outcome / diagnosis *" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-xs outline-none focus:ring-2 focus:ring-primary" />
+                  <textarea value={consultation.consultationNotes} onChange={e => setConsultation({ ...consultation, consultationNotes: e.target.value })} placeholder="Clinical notes, treatment, or follow-up advice" rows={2} className="w-full mt-2 px-3 py-2 border border-outline-variant rounded-lg text-xs outline-none focus:ring-2 focus:ring-primary resize-none" />
+                  <div className="flex gap-2 mt-2"><button onClick={() => saveConsultation(apt._id)} className="px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg">Save and complete</button><button onClick={() => setConsultationId('')} className="px-3 py-1.5 text-xs font-semibold text-on-surface-variant">Cancel</button></div>
+                </div>
+              )}
             </div>
           ))}
         </div>

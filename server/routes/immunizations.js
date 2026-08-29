@@ -22,11 +22,37 @@ router.get('/', async (req, res) => {
   }
 })
 
+// GET /api/immunizations/reminders — due/overdue vaccine reminders for the dashboard
+router.get('/reminders', async (req, res) => {
+  try {
+    let query = { status: 'Upcoming' }
+    if (req.user.role === 'patient') query.patientId = req.user._id
+    const records = await Immunization.find(query)
+      .populate('patientId', 'firstName lastName email')
+      .sort({ dueDate: 1, date: 1 })
+    const today = new Date().toISOString().split('T')[0]
+    const reminders = records.map(record => {
+      const dueDate = record.dueDate || record.date
+      return {
+        _id: record._id,
+        patientId: record.patientId,
+        vaccineName: record.vaccineName,
+        dose: record.dose,
+        dueDate,
+        status: dueDate < today ? 'Overdue' : dueDate === today ? 'Due today' : 'Upcoming',
+      }
+    })
+    return res.json(reminders)
+  } catch (err) {
+    return res.status(500).json({ message: err.message })
+  }
+})
+
 // POST /api/immunizations  — staff/doctor adds immunization record
 router.post('/', async (req, res) => {
   if (!['staff', 'doctor', 'admin'].includes(req.user.role))
     return res.status(403).json({ message: 'Not authorized to add immunization records' })
-  const { patientId, vaccineName, date, status, dose, notes } = req.body
+  const { patientId, vaccineName, date, dueDate, status, dose, notes } = req.body
   if (!patientId || !vaccineName || !date)
     return res.status(400).json({ message: 'patientId, vaccineName, and date are required' })
   try {
@@ -34,6 +60,7 @@ router.post('/', async (req, res) => {
       patientId,
       vaccineName,
       date,
+      dueDate,
       status: status || 'Completed',
       dose,
       notes,

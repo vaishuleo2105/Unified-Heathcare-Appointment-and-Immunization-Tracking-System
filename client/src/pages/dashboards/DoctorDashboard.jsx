@@ -26,11 +26,6 @@ export default function DoctorDashboard() {
   const todayApts = appointments.filter(a => a.date === today)
   const completed = todayApts.filter(a => a.status === 'Completed').length
 
-  async function handleStatus(id, status) {
-    const { data } = await api.patch(`/appointments/${id}/status`, { status })
-    setAppointments(appointments.map(a => a._id === id ? data : a))
-  }
-
   return (
     <DashboardLayout>
       <div className="mb-8">
@@ -72,8 +67,8 @@ export default function DoctorDashboard() {
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-semibold px-2 py-1 rounded-full ${STATUS_COLORS[apt.status]}`}>{apt.status}</span>
                     {apt.status === 'Confirmed' && (
-                      <button onClick={() => handleStatus(apt._id, 'Completed')} className="text-xs px-2 py-1 bg-secondary-container text-on-secondary-container rounded-lg font-semibold hover:bg-secondary hover:text-white transition-colors">
-                        Done
+                      <button onClick={() => navigate('/dashboard/appointments')} className="text-xs px-2 py-1 bg-secondary-container text-on-secondary-container rounded-lg font-semibold hover:bg-secondary hover:text-white transition-colors">
+                        Record outcome
                       </button>
                     )}
                   </div>

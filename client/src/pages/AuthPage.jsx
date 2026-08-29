@@ -32,6 +32,15 @@ export default function AuthPage() {
   const [success, setSuccess] = useState('')
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '' })
 
+  // Forgot password state
+  const [fpStep, setFpStep] = useState(0) // 0=closed, 1=email, 2=otp, 3=newpass
+  const [fpEmail, setFpEmail] = useState('')
+  const [fpOtp, setFpOtp] = useState('')
+  const [fpNewPass, setFpNewPass] = useState('')
+  const [fpLoading, setFpLoading] = useState(false)
+  const [fpError, setFpError] = useState('')
+  const [fpSuccess, setFpSuccess] = useState('')
+
   const isRegister = mode === 'register'
 
   function handleChange(e) {
@@ -44,6 +53,40 @@ export default function AuthPage() {
     setError('')
     setSuccess('')
     setForm({ firstName: '', lastName: '', email: '', password: '' })
+  }
+
+  async function handleFpSubmitEmail(e) {
+    e.preventDefault()
+    setFpError(''); setFpLoading(true)
+    try {
+      await axios.post(`${API}/forgot-password`, { email: fpEmail })
+      setFpStep(2)
+    } catch (err) {
+      setFpError(err.response?.data?.message || 'Failed to send OTP.')
+    } finally { setFpLoading(false) }
+  }
+
+  async function handleFpVerifyOtp(e) {
+    e.preventDefault()
+    setFpError(''); setFpLoading(true)
+    try {
+      await axios.post(`${API}/verify-otp`, { email: fpEmail, otp: fpOtp })
+      setFpStep(3)
+    } catch (err) {
+      setFpError(err.response?.data?.message || 'Invalid OTP.')
+    } finally { setFpLoading(false) }
+  }
+
+  async function handleFpResetPassword(e) {
+    e.preventDefault()
+    setFpError(''); setFpLoading(true)
+    try {
+      const { data } = await axios.post(`${API}/reset-password`, { email: fpEmail, otp: fpOtp, newPassword: fpNewPass })
+      setFpSuccess(data.message)
+      setTimeout(() => { setFpStep(0); setFpEmail(''); setFpOtp(''); setFpNewPass(''); setFpSuccess('') }, 2000)
+    } catch (err) {
+      setFpError(err.response?.data?.message || 'Failed to reset password.')
+    } finally { setFpLoading(false) }
   }
 
   async function handleSubmit(e) {
@@ -230,7 +273,8 @@ export default function AuthPage() {
                   </span>
                 </label>
                 {!isRegister && (
-                  <a href="#" className="text-sm font-semibold text-primary hover:underline">{t('forgotPassword')}</a>
+                  <button type="button" onClick={() => { setFpStep(1); setFpError(''); setFpEmail('') }}
+                    className="text-sm font-semibold text-primary hover:underline">{t('forgotPassword')}</button>
                 )}
               </div>
 
@@ -271,6 +315,75 @@ export default function AuthPage() {
           <a href="#" className="text-xs font-medium hover:text-primary transition-colors">Support</a>
         </div>
       </footer>
+
+      {/* Forgot Password Modal */}
+      {fpStep > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-8 relative">
+            <button onClick={() => setFpStep(0)} className="absolute top-4 right-4 text-outline hover:text-primary">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+
+            <h3 className="text-xl font-bold text-on-surface mb-1">
+              {fpStep === 1 ? 'Forgot Password' : fpStep === 2 ? 'Enter OTP' : 'Set New Password'}
+            </h3>
+            <p className="text-sm text-on-surface-variant mb-6">
+              {fpStep === 1 && 'Enter your registered email to receive an OTP.'}
+              {fpStep === 2 && `Enter the 6-digit OTP sent to ${fpEmail}`}
+              {fpStep === 3 && 'Enter your new password.'}
+            </p>
+
+            {fpError && (
+              <div className="mb-4 flex items-center gap-2 bg-error-container text-on-error-container px-4 py-3 rounded-lg text-sm">
+                <span className="material-symbols-outlined text-base">error</span>{fpError}
+              </div>
+            )}
+            {fpSuccess && (
+              <div className="mb-4 flex items-center gap-2 bg-secondary-container text-on-secondary-container px-4 py-3 rounded-lg text-sm">
+                <span className="material-symbols-outlined text-base">check_circle</span>{fpSuccess}
+              </div>
+            )}
+
+            {fpStep === 1 && (
+              <form onSubmit={handleFpSubmitEmail} className="space-y-4">
+                <input type="email" value={fpEmail} onChange={e => setFpEmail(e.target.value)}
+                  placeholder="email@example.com" required
+                  className="w-full px-4 py-3 border border-outline-variant rounded-lg text-base focus:ring-2 focus:ring-primary outline-none" />
+                <button type="submit" disabled={fpLoading}
+                  className="w-full bg-primary text-white font-semibold py-3 rounded-lg disabled:opacity-70">
+                  {fpLoading ? 'Sending...' : 'Send OTP'}
+                </button>
+              </form>
+            )}
+
+            {fpStep === 2 && (
+              <form onSubmit={handleFpVerifyOtp} className="space-y-4">
+                <input type="text" value={fpOtp} onChange={e => setFpOtp(e.target.value)}
+                  placeholder="6-digit OTP" maxLength={6} required
+                  className="w-full px-4 py-3 border border-outline-variant rounded-lg text-base focus:ring-2 focus:ring-primary outline-none tracking-widest text-center text-lg" />
+                <button type="submit" disabled={fpLoading}
+                  className="w-full bg-primary text-white font-semibold py-3 rounded-lg disabled:opacity-70">
+                  {fpLoading ? 'Verifying...' : 'Verify OTP'}
+                </button>
+                <button type="button" onClick={() => handleFpSubmitEmail({ preventDefault: () => {} })}
+                  className="w-full text-sm text-primary hover:underline">Resend OTP</button>
+              </form>
+            )}
+
+            {fpStep === 3 && (
+              <form onSubmit={handleFpResetPassword} className="space-y-4">
+                <input type="password" value={fpNewPass} onChange={e => setFpNewPass(e.target.value)}
+                  placeholder="New password (min 6 chars)" minLength={6} required
+                  className="w-full px-4 py-3 border border-outline-variant rounded-lg text-base focus:ring-2 focus:ring-primary outline-none" />
+                <button type="submit" disabled={fpLoading}
+                  className="w-full bg-primary text-white font-semibold py-3 rounded-lg disabled:opacity-70">
+                  {fpLoading ? 'Resetting...' : 'Reset Password'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
