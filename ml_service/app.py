@@ -14,6 +14,14 @@ encoders   = joblib.load(os.path.join(BASE, 'encoders.pkl'))
 le_target  = joblib.load(os.path.join(BASE, 'label_encoder.pkl'))
 features   = joblib.load(os.path.join(BASE, 'features.pkl'))
 
+# This is a separate Gradient Boosting model.  Keeping it separate from the
+# appointment-type classifier lets workload balancing use the clinical risk of
+# every active patient, rather than a hand-written points table.
+risk_model = joblib.load(os.path.join(BASE, 'risk_model.pkl'))
+risk_encoders = joblib.load(os.path.join(BASE, 'risk_encoders.pkl'))
+risk_label_encoder = joblib.load(os.path.join(BASE, 'risk_label_encoder.pkl'))
+risk_features = joblib.load(os.path.join(BASE, 'risk_features.pkl'))
+
 print("ML Service ready. Classes:", le_target.classes_.tolist())
 
 def safe_encode(encoder, value, default=0):
@@ -22,6 +30,38 @@ def safe_encode(encoder, value, default=0):
         return int(encoder.transform([str(value).strip().title()])[0])
     except Exception:
         return default
+
+def patient_risk(patient):
+    """Return the model-derived risk level, confidence and a 0-100 score."""
+    values = {
+        'Age': float(patient.get('age', 30)),
+        'Gender': safe_encode(risk_encoders.get('Gender'), patient.get('gender', 'Male')),
+        'Blood Type': safe_encode(risk_encoders.get('Blood Type'), patient.get('bloodType', 'O+')),
+        'Medical Condition': safe_encode(risk_encoders.get('Medical Condition'), patient.get('medicalCondition', 'None')),
+        'Medication': safe_encode(risk_encoders.get('Medication'), patient.get('medication', 'None')),
+        'Test Results': safe_encode(risk_encoders.get('Test Results'), patient.get('testResults', 'Normal')),
+    }
+    X = np.array([[values[feature] for feature in risk_features]])
+    prediction = risk_model.predict(X)[0]
+    probabilities = risk_model.predict_proba(X)[0]
+    raw_label = risk_label_encoder.inverse_transform([prediction])[0]
+    # Older bundled artifacts predict the test-result class.  Map that output
+    # to an urgency level; newly trained artifacts already predict a level.
+    level = {
+        'Normal': 'Low',
+        'Inconclusive': 'Moderate',
+        'Abnormal': 'High',
+    }.get(raw_label, raw_label)
+    confidence = float(probabilities[prediction])
+
+    # Severity gives a consistently interpretable workload contribution while
+    # confidence prevents uncertain predictions from being treated as certain.
+    severity = {'Low': 25, 'Moderate': 50, 'High': 75, 'Critical': 100}.get(level, 25)
+    return {
+        'riskLevel': level,
+        'riskScore': round(severity * confidence, 2),
+        'confidence': round(confidence * 100, 1),
+    }
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -81,25 +121,18 @@ def doctor_risk_score():
     if not patients:
         return jsonify({ 'riskScore': 0, 'riskLevel': 'Low' })
 
-    CONDITION_RISK = {
-        'cancer': 5, 'asthma': 4, 'diabetes': 3,
-        'hypertension': 3, 'obesity': 2, 'arthritis': 1
-    }
-    TEST_RISK = { 'abnormal': 3, 'inconclusive': 2, 'normal': 0 }
-
-    total = 0
-    for p in patients:
-        age   = float(p.get('age', 30))
-        cond  = str(p.get('medicalCondition', '')).lower()
-        test  = str(p.get('testResults', 'normal')).lower()
-        score = CONDITION_RISK.get(cond, 1) + TEST_RISK.get(test, 0)
-        if age > 65: score += 2
-        total += score
-
-    avg = total / len(patients)
-    level = 'Critical' if avg >= 6 else 'High' if avg >= 4 else 'Moderate' if avg >= 2 else 'Low'
-
-    return jsonify({ 'riskScore': round(avg, 2), 'riskLevel': level })
+    try:
+        patient_risks = [patient_risk(patient) for patient in patients]
+        average_score = sum(item['riskScore'] for item in patient_risks) / len(patient_risks)
+        level = 'Critical' if average_score >= 80 else 'High' if average_score >= 55 else 'Moderate' if average_score >= 30 else 'Low'
+        return jsonify({
+            'riskScore': round(average_score, 2),
+            'riskLevel': level,
+            'patientRisks': patient_risks,
+            'source': 'gradient_boosting',
+        })
+    except Exception as e:
+        return jsonify({ 'error': str(e) }), 500
 
 
 if __name__ == '__main__':

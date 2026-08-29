@@ -18,16 +18,17 @@ const VACCINES = [
 export default function ImmunizationPage() {
   const { t } = useTranslation()
   const [records, setRecords] = useState([])
+  const [reminders, setReminders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ patientId: '', vaccineName: 'BCG', date: '', status: 'Completed', dose: '', notes: '' })
+  const [form, setForm] = useState({ patientId: '', vaccineName: 'BCG', date: '', dueDate: '', status: 'Completed', dose: '', notes: '' })
   const [submitting, setSubmitting] = useState(false)
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const canAdd = ['staff', 'doctor', 'admin'].includes(user.role)
 
-  useEffect(() => { fetchRecords() }, [])
+  useEffect(() => { fetchRecords(); fetchReminders() }, [])
 
   async function fetchRecords() {
     setLoading(true)
@@ -41,6 +42,13 @@ export default function ImmunizationPage() {
     }
   }
 
+  async function fetchReminders() {
+    try {
+      const { data } = await api.get('/immunizations/reminders')
+      setReminders(data)
+    } catch {}
+  }
+
   async function handleAdd(e) {
     e.preventDefault()
     setError(''); setSuccess('')
@@ -50,9 +58,10 @@ export default function ImmunizationPage() {
     try {
       const { data } = await api.post('/immunizations', form)
       setRecords([data, ...records])
+      fetchReminders()
       setSuccess(t('recordAdded'))
       setShowForm(false)
-      setForm({ patientId: '', vaccineName: 'BCG', date: '', status: 'Completed', dose: '', notes: '' })
+      setForm({ patientId: '', vaccineName: 'BCG', date: '', dueDate: '', status: 'Completed', dose: '', notes: '' })
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to add record')
     } finally {
@@ -100,6 +109,15 @@ export default function ImmunizationPage() {
         </div>
       )}
 
+      {reminders.length > 0 && (
+        <div className="mb-6 bg-tertiary-fixed border border-outline-variant rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2 text-on-tertiary-container"><span className="material-symbols-outlined">notifications_active</span><h2 className="text-sm font-bold">Vaccine due-date reminders</h2></div>
+          <div className="space-y-1.5 text-xs text-on-tertiary-container">
+            {reminders.map(reminder => <p key={reminder._id}><span className="font-semibold">{reminder.vaccineName}{reminder.dose ? ` (${reminder.dose})` : ''}</span> — {reminder.status} on {reminder.dueDate}{user.role !== 'patient' && reminder.patientId && ` for ${reminder.patientId.firstName} ${reminder.patientId.lastName}`}</p>)}
+          </div>
+        </div>
+      )}
+
       {showForm && canAdd && (
         <form onSubmit={handleAdd} className="bg-white border border-outline-variant rounded-xl p-6 mb-6 shadow-sm">
           <h2 className="text-base font-bold text-on-surface mb-4">{t('addImmunizationRecord')}</h2>
@@ -131,6 +149,10 @@ export default function ImmunizationPage() {
                 onChange={e => setForm({ ...form, date: e.target.value })}
                 className="w-full mt-1 px-3 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
               />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-on-surface-variant">Next due date</label>
+              <input type="date" value={form.dueDate} onChange={e => setForm({ ...form, dueDate: e.target.value })} className="w-full mt-1 px-3 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none" />
             </div>
             <div>
               <label className="text-xs font-semibold text-on-surface-variant">{t('status')}</label>

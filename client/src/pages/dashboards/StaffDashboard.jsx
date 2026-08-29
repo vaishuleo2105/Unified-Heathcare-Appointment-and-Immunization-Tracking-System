@@ -9,12 +9,19 @@ export default function StaffDashboard() {
   const navigate = useNavigate()
   const [appointments, setAppointments] = useState([])
   const [immunizations, setImmunizations] = useState([])
+  const [patients, setPatients] = useState([])
+  const [doctors, setDoctors] = useState([])
+  const [slots, setSlots] = useState([])
+  const [selectedPatient, setSelectedPatient] = useState(null)
+  const [patientRecord, setPatientRecord] = useState(null)
+  const [profile, setProfile] = useState({})
+  const [slotForm, setSlotForm] = useState({ doctorId: '', date: '', time: '' })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    Promise.all([api.get('/appointments'), api.get('/immunizations')])
-      .then(([a, i]) => { setAppointments(a.data); setImmunizations(i.data) })
+    Promise.all([api.get('/appointments'), api.get('/immunizations'), api.get('/patients'), api.get('/appointments/doctors'), api.get('/slots')])
+      .then(([a, i, p, d, s]) => { setAppointments(a.data); setImmunizations(i.data); setPatients(p.data); setDoctors(d.data); setSlots(s.data) })
       .catch(() => setError('Failed to load data'))
       .finally(() => setLoading(false))
   }, [])
@@ -26,6 +33,40 @@ export default function StaffDashboard() {
     } catch (err) {
       setError(err.response?.data?.message || 'Update failed')
     }
+  }
+
+  async function loadPatient(id) {
+    setSelectedPatient(id)
+    if (!id) return setPatientRecord(null)
+    try {
+      const { data } = await api.get(`/patients/${id}`)
+      setPatientRecord(data)
+      setProfile(data.patient)
+    } catch (err) { setError(err.response?.data?.message || 'Could not load patient record') }
+  }
+
+  async function savePatientProfile() {
+    try {
+      const { data } = await api.put(`/patients/${selectedPatient}/medical-profile`, profile)
+      setProfile(data.patient)
+      setPatientRecord({ ...patientRecord, patient: data.patient })
+    } catch (err) { setError(err.response?.data?.message || 'Could not update patient record') }
+  }
+
+  async function addSlot(e) {
+    e.preventDefault()
+    try {
+      const { data } = await api.post('/slots', slotForm)
+      setSlots([...slots, data].sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)))
+      setSlotForm({ doctorId: '', date: '', time: '' })
+    } catch (err) { setError(err.response?.data?.message || 'Could not create slot') }
+  }
+
+  async function removeSlot(id) {
+    try {
+      await api.delete(`/slots/${id}`)
+      setSlots(slots.filter(slot => slot._id !== id))
+    } catch (err) { setError(err.response?.data?.message || 'Could not remove slot') }
   }
 
   const pending = appointments.filter(a => a.status === 'Pending')
@@ -121,6 +162,37 @@ export default function StaffDashboard() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-6 mt-6">
+        <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+          <h2 className="text-base font-bold text-on-surface mb-4">Appointment Slot Management</h2>
+          <form onSubmit={addSlot} className="grid grid-cols-3 gap-2 mb-4">
+            <select required value={slotForm.doctorId} onChange={e => setSlotForm({ ...slotForm, doctorId: e.target.value })} className="px-2 py-2 border border-outline-variant rounded-lg text-xs"><option value="">Doctor</option>{doctors.map(doctor => <option key={doctor._id} value={doctor._id}>Dr. {doctor.firstName} {doctor.lastName}</option>)}</select>
+            <input required type="date" value={slotForm.date} onChange={e => setSlotForm({ ...slotForm, date: e.target.value })} className="px-2 py-2 border border-outline-variant rounded-lg text-xs" />
+            <div className="flex gap-2"><input required type="time" value={slotForm.time} onChange={e => setSlotForm({ ...slotForm, time: e.target.value })} className="min-w-0 flex-1 px-2 py-2 border border-outline-variant rounded-lg text-xs" /><button className="px-2 bg-primary text-white rounded-lg text-xs font-semibold">Add</button></div>
+          </form>
+          <div className="space-y-2 max-h-52 overflow-y-auto">
+            {slots.map(slot => <div key={slot._id} className="flex items-center justify-between text-xs bg-surface-container-low rounded-lg px-3 py-2"><span>Dr. {slot.doctorId?.firstName} {slot.doctorId?.lastName} — {slot.date}, {slot.time}</span>{slot.isBooked ? <span className="font-semibold text-on-surface-variant">Booked</span> : <button onClick={() => removeSlot(slot._id)} className="font-semibold text-error">Remove</button>}</div>)}
+            {slots.length === 0 && <p className="text-xs text-on-surface-variant">No appointment slots created yet.</p>}
+          </div>
+        </section>
+
+        <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+          <h2 className="text-base font-bold text-on-surface mb-4">Patient Record Management</h2>
+          <select value={selectedPatient || ''} onChange={e => loadPatient(e.target.value)} className="w-full px-3 py-2 border border-outline-variant rounded-lg text-sm mb-4"><option value="">Select a patient</option>{patients.map(patient => <option key={patient._id} value={patient._id}>{patient.firstName} {patient.lastName} — {patient.email}</option>)}</select>
+          {patientRecord && <div>
+            <div className="grid grid-cols-2 gap-2">
+              <input type="number" value={profile.age || ''} onChange={e => setProfile({ ...profile, age: e.target.value })} placeholder="Age" className="px-2 py-2 border border-outline-variant rounded-lg text-xs" />
+              <input value={profile.bloodType || ''} onChange={e => setProfile({ ...profile, bloodType: e.target.value })} placeholder="Blood type" className="px-2 py-2 border border-outline-variant rounded-lg text-xs" />
+              <input value={profile.medicalCondition || ''} onChange={e => setProfile({ ...profile, medicalCondition: e.target.value })} placeholder="Medical condition" className="px-2 py-2 border border-outline-variant rounded-lg text-xs" />
+              <input value={profile.medication || ''} onChange={e => setProfile({ ...profile, medication: e.target.value })} placeholder="Medication" className="px-2 py-2 border border-outline-variant rounded-lg text-xs" />
+            </div>
+            <button onClick={savePatientProfile} className="mt-3 px-3 py-2 bg-primary text-white text-xs font-semibold rounded-lg">Save medical profile</button>
+            <p className="mt-3 text-xs text-on-surface-variant">{patientRecord.appointments.length} appointments • {patientRecord.immunizations.length} immunization records • {patientRecord.maternalRecords.length} maternal record(s)</p>
+            {patientRecord.appointments.slice(0, 2).map(appointment => <p key={appointment._id} className="text-xs text-on-surface-variant mt-1">{appointment.date}: {appointment.type} — {appointment.status}{appointment.consultationOutcome && ` (${appointment.consultationOutcome})`}</p>)}
+          </div>}
+        </section>
       </div>
     </DashboardLayout>
   )

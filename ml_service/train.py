@@ -132,3 +132,53 @@ joblib.dump(features,  os.path.join(OUT_DIR, 'features.pkl'))
 
 print(f"\nSaved: model.pkl, encoders.pkl, label_encoder.pkl, features.pkl")
 print(f"Location: {OUT_DIR}")
+
+# ── Train the workload-risk Gradient Boosting model ────────────────────────
+# This model is deliberately separate from appointment-type prediction.  Its
+# target is clinical urgency, which is what matters when distributing active
+# patients between doctors.
+def assign_risk_level(row):
+    condition = str(row['Medical Condition']).lower()
+    result = str(row['Test Results']).lower()
+    age = row['Age']
+
+    if result == 'abnormal' and (condition == 'cancer' or age > 70):
+        return 'Critical'
+    if result == 'abnormal' or (age > 65 and condition in ['asthma', 'diabetes', 'hypertension']):
+        return 'High'
+    if result == 'inconclusive' or condition in ['asthma', 'diabetes', 'hypertension', 'obesity'] or age > 60:
+        return 'Moderate'
+    return 'Low'
+
+risk_features = ['Age', 'Medical Condition', 'Test Results']
+risk_df = df[risk_features].copy()
+risk_df['RiskLevel'] = df.apply(assign_risk_level, axis=1)
+risk_encoders = {}
+for column in ['Medical Condition', 'Test Results']:
+    encoder = LabelEncoder()
+    risk_df[column] = encoder.fit_transform(risk_df[column])
+    risk_encoders[column] = encoder
+
+risk_label_encoder = LabelEncoder()
+risk_y = risk_label_encoder.fit_transform(risk_df['RiskLevel'])
+risk_X = risk_df[risk_features].values
+risk_X_train, risk_X_test, risk_y_train, risk_y_test = train_test_split(
+    risk_X, risk_y, test_size=0.2, random_state=42, stratify=risk_y
+)
+risk_model = GradientBoostingClassifier(
+    n_estimators=200,
+    learning_rate=0.1,
+    max_depth=4,
+    min_samples_split=5,
+    subsample=0.8,
+    random_state=42,
+)
+risk_model.fit(risk_X_train, risk_y_train)
+risk_accuracy = accuracy_score(risk_y_test, risk_model.predict(risk_X_test))
+print(f"Risk-model accuracy: {risk_accuracy:.4f}")
+
+joblib.dump(risk_model, os.path.join(OUT_DIR, 'risk_model.pkl'))
+joblib.dump(risk_encoders, os.path.join(OUT_DIR, 'risk_encoders.pkl'))
+joblib.dump(risk_label_encoder, os.path.join(OUT_DIR, 'risk_label_encoder.pkl'))
+joblib.dump(risk_features, os.path.join(OUT_DIR, 'risk_features.pkl'))
+print("Saved: risk_model.pkl, risk_encoders.pkl, risk_label_encoder.pkl, risk_features.pkl")

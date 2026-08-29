@@ -22,14 +22,18 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState([])
   const [doctors, setDoctors] = useState([])
   const [workload, setWorkload] = useState([])
+  const [availableSlots, setAvailableSlots] = useState([])
   const [suggestedType, setSuggestedType] = useState('')
   const [suggestionConfidence, setSuggestionConfidence] = useState(0)
+  const [suggestionSource, setSuggestionSource] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ doctorId: '', date: '', time: '', type: 'General Checkup', notes: '' })
   const [submitting, setSubmitting] = useState(false)
+  const [consultationId, setConsultationId] = useState('')
+  const [consultation, setConsultation] = useState({ consultationOutcome: '', consultationNotes: '' })
   const role = getUser().role
 
   useEffect(() => {
@@ -38,10 +42,17 @@ export default function AppointmentsPage() {
       fetchDoctors()
       fetchSuggestion()
     }
-    if (['staff', 'admin'].includes(role)) {
+    if (['patient', 'staff', 'admin'].includes(role)) {
       fetchWorkload()
     }
   }, [])
+
+  useEffect(() => {
+    if (role !== 'patient' || !form.doctorId || !form.date) return setAvailableSlots([])
+    api.get('/slots', { params: { doctorId: form.doctorId, date: form.date } })
+      .then(({ data }) => setAvailableSlots(data))
+      .catch(() => setAvailableSlots([]))
+  }, [form.doctorId, form.date, role])
 
   async function fetchAppointments() {
     setLoading(true)
@@ -68,6 +79,7 @@ export default function AppointmentsPage() {
       if (data.suggestedType) {
         setSuggestedType(data.suggestedType)
         setSuggestionConfidence(data.confidence)
+        setSuggestionSource(data.source)
         setForm(f => ({ ...f, type: data.suggestedType }))
       }
     } catch {}
@@ -116,11 +128,36 @@ export default function AppointmentsPage() {
     }
   }
 
+  async function saveConsultation(id) {
+    if (!consultation.consultationOutcome.trim()) return setError('Consultation outcome is required')
+    try {
+      const { data } = await api.patch(`/appointments/${id}/consultation`, consultation)
+      setAppointments(appointments.map(a => a._id === id ? data : a))
+      setConsultationId('')
+      setConsultation({ consultationOutcome: '', consultationNotes: '' })
+      setSuccess('Consultation outcome recorded')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not save consultation outcome')
+    }
+  }
+
   // When a doctor is selected from workload panel, pre-fill the form
   function selectDoctorFromWorkload(docId) {
     setForm(f => ({ ...f, doctorId: docId }))
     setShowForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function getDoctorWorkload(doctorId) {
+    return workload.find(doc => doc._id === doctorId)
+  }
+
+  function doctorsSortedByWorkload() {
+    return [...doctors].sort((first, second) => {
+      const firstScore = getDoctorWorkload(first._id)?.workloadScore ?? Number.POSITIVE_INFINITY
+      const secondScore = getDoctorWorkload(second._id)?.workloadScore ?? Number.POSITIVE_INFINITY
+      return firstScore - secondScore
+    })
   }
 
   return (
@@ -185,6 +222,9 @@ export default function AppointmentsPage() {
                     <p className="text-xs text-on-surface-variant">Total</p>
                   </div>
                 </div>
+                <p className="text-xs text-on-surface-variant mb-3">
+                  Patient risk: <span className="font-semibold text-on-surface">{doc.riskLevel} ({doc.riskScore}/100)</span>
+                </p>
                 {/* Load bar */}
                 <div className="w-full bg-surface-container-high rounded-full h-1.5 mb-3">
                   <div
@@ -220,8 +260,8 @@ export default function AppointmentsPage() {
               <div className="flex-1">
                 <p className="text-xs font-semibold text-on-surface">AI Suggestion</p>
                 <p className="text-xs text-on-surface-variant">
-                  Based on your history, <span className="font-semibold text-primary">{suggestedType}</span> is pre-selected
-                  {suggestionConfidence > 0 && ` (${suggestionConfidence}% of your past appointments)`}
+                  Based on your {suggestionSource === 'ml_model_plus_history' ? 'medical profile and recent bookings' : 'medical profile'}, <span className="font-semibold text-primary">{suggestedType}</span> is pre-selected
+                  {suggestionConfidence > 0 && ` (${suggestionConfidence}% confidence)`}
                 </p>
               </div>
             </div>
@@ -236,10 +276,25 @@ export default function AppointmentsPage() {
                 className="w-full mt-1 px-3 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
               >
                 <option value="">Select a doctor</option>
-                {doctors.map(d => (
-                  <option key={d._id} value={d._id}>Dr. {d.firstName} {d.lastName}</option>
-                ))}
+                {doctorsSortedByWorkload().map(d => {
+                  const doctorWorkload = getDoctorWorkload(d._id)
+                  const loadLabel = doctorWorkload
+                    ? `${doctorWorkload.recommendation} — ${doctorWorkload.activeAppointments} active`
+                    : 'Checking workload...'
+                  return (
+                    <option key={d._id} value={d._id}>
+                      Dr. {d.firstName} {d.lastName} ({loadLabel})
+                    </option>
+                  )
+                })}
               </select>
+              {form.doctorId && getDoctorWorkload(form.doctorId) && (
+                <p className="mt-1.5 text-xs text-on-surface-variant">
+                  Current workload: <span className="font-semibold text-on-surface">{getDoctorWorkload(form.doctorId).recommendation}</span>
+                  {' '}— {getDoctorWorkload(form.doctorId).activeAppointments} active appointment(s),
+                  {' '}patient risk {getDoctorWorkload(form.doctorId).riskLevel}.
+                </p>
+              )}
             </div>
             <div>
               <label className="text-xs font-semibold text-on-surface-variant flex items-center gap-1">
@@ -270,12 +325,14 @@ export default function AppointmentsPage() {
             </div>
             <div>
               <label className="text-xs font-semibold text-on-surface-variant">Time *</label>
-              <input
-                type="time"
-                value={form.time}
-                onChange={e => setForm({ ...form, time: e.target.value })}
-                className="w-full mt-1 px-3 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
-              />
+              {availableSlots.length > 0 ? (
+                <select value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} className="w-full mt-1 px-3 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none">
+                  <option value="">Select an available slot</option>
+                  {availableSlots.map(slot => <option key={slot._id} value={slot.time}>{slot.time}</option>)}
+                </select>
+              ) : (
+                <input type="time" value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} className="w-full mt-1 px-3 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none" />
+              )}
             </div>
             <div className="md:col-span-2">
               <label className="text-xs font-semibold text-on-surface-variant">Notes (optional)</label>
@@ -352,13 +409,16 @@ export default function AppointmentsPage() {
                     Confirm
                   </button>
                 )}
-                {['staff', 'doctor', 'admin'].includes(role) && apt.status === 'Confirmed' && (
+                {['staff', 'admin'].includes(role) && apt.status === 'Confirmed' && (
                   <button
                     onClick={() => handleStatus(apt._id, 'Completed')}
                     className="px-3 py-1.5 bg-primary-fixed text-primary text-xs font-semibold rounded-lg hover:bg-primary hover:text-white transition-colors"
                   >
                     Complete
                   </button>
+                )}
+                {role === 'doctor' && apt.status === 'Confirmed' && (
+                  <button onClick={() => { setConsultationId(consultationId === apt._id ? '' : apt._id); setConsultation({ consultationOutcome: apt.consultationOutcome || '', consultationNotes: apt.consultationNotes || '' }) }} className="px-3 py-1.5 bg-primary-fixed text-primary text-xs font-semibold rounded-lg hover:bg-primary hover:text-white transition-colors">Record outcome</button>
                 )}
                 {(role === 'patient' || role === 'admin') && ['Pending', 'Confirmed'].includes(apt.status) && (
                   <button
@@ -369,6 +429,14 @@ export default function AppointmentsPage() {
                   </button>
                 )}
               </div>
+              {apt.consultationOutcome && <p className="w-full text-xs bg-secondary-container text-on-secondary-container rounded-lg px-2 py-1.5"><span className="font-semibold">Outcome:</span> {apt.consultationOutcome}{apt.consultationNotes && ` — ${apt.consultationNotes}`}</p>}
+              {role === 'doctor' && consultationId === apt._id && (
+                <div className="w-full bg-surface-container-low rounded-xl p-3">
+                  <input value={consultation.consultationOutcome} onChange={e => setConsultation({ ...consultation, consultationOutcome: e.target.value })} placeholder="Consultation outcome / diagnosis *" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-xs outline-none focus:ring-2 focus:ring-primary" />
+                  <textarea value={consultation.consultationNotes} onChange={e => setConsultation({ ...consultation, consultationNotes: e.target.value })} placeholder="Clinical notes, treatment, or follow-up advice" rows={2} className="w-full mt-2 px-3 py-2 border border-outline-variant rounded-lg text-xs outline-none focus:ring-2 focus:ring-primary resize-none" />
+                  <div className="flex gap-2 mt-2"><button onClick={() => saveConsultation(apt._id)} className="px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg">Save and complete</button><button onClick={() => setConsultationId('')} className="px-3 py-1.5 text-xs font-semibold text-on-surface-variant">Cancel</button></div>
+                </div>
+              )}
             </div>
           ))}
         </div>

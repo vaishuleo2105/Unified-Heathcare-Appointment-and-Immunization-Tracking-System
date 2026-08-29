@@ -1,6 +1,7 @@
 const express = require('express')
 const axios = require('axios')
 const Appointment = require('../models/Appointment')
+const Slot = require('../models/Slot')
 const User = require('../models/User')
 const protect = require('../middleware/auth')
 
@@ -47,6 +48,19 @@ router.post('/', async (req, res) => {
     if (!doctor || doctor.role !== 'doctor')
       return res.status(400).json({ message: 'Invalid doctor selected' })
 
+    // When staff has configured slots for a doctor/date, bookings must use an
+    // available slot.  Existing dates without configured slots remain
+    // backward-compatible with the original booking workflow.
+    const configuredSlots = await Slot.exists({ doctorId, date })
+    if (configuredSlots) {
+      const slot = await Slot.findOneAndUpdate(
+        { doctorId, date, time, isBooked: false },
+        { isBooked: true },
+        { new: true }
+      )
+      if (!slot) return res.status(409).json({ message: 'Selected appointment slot is no longer available' })
+    }
+
     const appointment = await Appointment.create({
       patientId: req.user._id,
       doctorId,
@@ -77,10 +91,31 @@ router.patch('/:id/status', async (req, res) => {
   try {
     const appointment = await Appointment.findByIdAndUpdate(
       req.params.id,
-      { status },
+      { status, ...(status === 'Completed' ? { completedAt: new Date() } : {}) },
       { new: true }
     ).populate('patientId', 'firstName lastName email').populate('doctorId', 'firstName lastName')
     if (!appointment) return res.status(404).json({ message: 'Appointment not found' })
+    if (status === 'Cancelled') {
+      await Slot.updateOne({ doctorId: appointment.doctorId._id, date: appointment.date, time: appointment.time }, { isBooked: false })
+    }
+    return res.json(appointment)
+  } catch (err) {
+    return res.status(500).json({ message: err.message })
+  }
+})
+
+// PATCH /api/appointments/:id/consultation — doctor records the outcome of a visit
+router.patch('/:id/consultation', async (req, res) => {
+  if (req.user.role !== 'doctor') return res.status(403).json({ message: 'Only doctors can record consultation outcomes' })
+  const { consultationOutcome, consultationNotes } = req.body
+  if (!consultationOutcome) return res.status(400).json({ message: 'consultationOutcome is required' })
+  try {
+    const appointment = await Appointment.findOneAndUpdate(
+      { _id: req.params.id, doctorId: req.user._id },
+      { consultationOutcome, consultationNotes, status: 'Completed', completedAt: new Date() },
+      { new: true, runValidators: true }
+    ).populate('patientId', 'firstName lastName email').populate('doctorId', 'firstName lastName')
+    if (!appointment) return res.status(404).json({ message: 'Assigned appointment not found' })
     return res.json(appointment)
   } catch (err) {
     return res.status(500).json({ message: err.message })
@@ -105,19 +140,50 @@ router.get('/suggest-type', async (req, res) => {
     let confidence = 0
     let probabilities = {}
     let source = 'fallback'
+    let historySuggestion = null
+
+    // Recent non-cancelled bookings are a useful patient-specific signal.  A
+    // repeated type is allowed to refine a routine ML prediction, but never
+    // overrides an Emergency recommendation.
+    const history = await Appointment.find({
+      patientId: user._id,
+      status: { $ne: 'Cancelled' },
+    }).sort({ createdAt: -1 }).limit(5).select('type')
+
+    if (history.length > 0) {
+      const weightedTypes = {}
+      history.forEach((appointment, index) => {
+        // The newest appointment gets the greatest weight.
+        const weight = history.length - index
+        weightedTypes[appointment.type] = (weightedTypes[appointment.type] || 0) + weight
+      })
+      const [type, weight] = Object.entries(weightedTypes).sort((a, b) => b[1] - a[1])[0]
+      const occurrences = history.filter(appointment => appointment.type === type).length
+      const totalWeight = Object.values(weightedTypes).reduce((sum, value) => sum + value, 0)
+      const historyConfidence = Math.round((weight / totalWeight) * 100)
+
+      if (occurrences >= 2 && historyConfidence >= 50) {
+        historySuggestion = { type, confidence: historyConfidence, occurrences }
+      }
+    }
+
     try {
       const { data } = await axios.post(`${ML_SERVICE}/predict-type`, payload, { timeout: 3000 })
       suggestedType = data.predictedType
       confidence = data.confidence
       probabilities = data.probabilities
       source = 'ml_model'
+
+      if (historySuggestion && suggestedType !== 'Emergency') {
+        suggestedType = historySuggestion.type
+        confidence = historySuggestion.confidence
+        source = 'ml_model_plus_history'
+      }
     } catch {
-      const history = await Appointment.find({ patientId: user._id })
       if (history.length > 0) {
-        const freq = {}
-        history.forEach(a => { freq[a.type] = (freq[a.type] || 0) + 1 })
-        suggestedType = Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0]
-        confidence = Math.round((freq[suggestedType] / history.length) * 100)
+        const latestType = historySuggestion?.type || history[0].type
+        suggestedType = latestType
+        confidence = historySuggestion?.confidence || Math.round(100 / history.length)
         source = 'frequency'
       }
     }
@@ -150,6 +216,7 @@ router.get('/suggest-type', async (req, res) => {
       confidence,
       probabilities,
       source,
+      historySuggestion,
       suggestedDoctor,
       suggestedDate,
       suggestedTime,
@@ -178,10 +245,13 @@ router.get('/doctor-workload', async (req, res) => {
       let riskScore = 0
       try {
         const activeApts = await Appointment.find({ doctorId: doc._id, status: { $in: activeStatuses } })
-          .populate('patientId', 'age medicalCondition testResults')
+          .populate('patientId', 'age gender bloodType medicalCondition medication testResults')
         const patients = activeApts.map(a => ({
           age: a.patientId?.age || 30,
+          gender: a.patientId?.gender || 'Male',
+          bloodType: a.patientId?.bloodType || 'O+',
           medicalCondition: a.patientId?.medicalCondition || 'None',
+          medication: a.patientId?.medication || 'None',
           testResults: a.patientId?.testResults || 'Normal',
         }))
         if (patients.length > 0) {
@@ -191,6 +261,10 @@ router.get('/doctor-workload', async (req, res) => {
         }
       } catch {}
 
+      // Risk is on a 0-100 scale.  Convert it to a small capacity penalty so
+      // a clinician with complex active cases is not preferred simply because
+      // they have fewer appointment slots filled.
+      const workloadScore = Number((loadScore + (riskScore / 20)).toFixed(2))
       return {
         _id: doc._id,
         firstName: doc.firstName,
@@ -200,13 +274,14 @@ router.get('/doctor-workload', async (req, res) => {
         activeAppointments: active,
         todayAppointments: todayCount,
         loadScore,
+        workloadScore,
         riskLevel,
         riskScore,
-        recommendation: loadScore === 0 ? 'Available' : loadScore <= 3 ? 'Low Load' : loadScore <= 7 ? 'Moderate' : 'High Load',
+        recommendation: workloadScore === 0 ? 'Available' : workloadScore <= 3 ? 'Low Load' : workloadScore <= 7 ? 'Moderate' : 'High Load',
       }
     }))
 
-    workloads.sort((a, b) => a.loadScore - b.loadScore)
+    workloads.sort((a, b) => a.workloadScore - b.workloadScore)
     return res.json(workloads)
   } catch (err) {
     return res.status(500).json({ message: err.message })
@@ -223,6 +298,7 @@ router.delete('/:id', async (req, res) => {
       appointment.patientId.toString() !== req.user._id.toString()
     ) return res.status(403).json({ message: 'Not authorized' })
     await appointment.deleteOne()
+    await Slot.updateOne({ doctorId: appointment.doctorId, date: appointment.date, time: appointment.time }, { isBooked: false })
     return res.json({ message: 'Appointment cancelled' })
   } catch (err) {
     return res.status(500).json({ message: err.message })
