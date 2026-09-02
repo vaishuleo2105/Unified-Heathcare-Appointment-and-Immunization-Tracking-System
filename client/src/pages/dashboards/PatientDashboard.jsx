@@ -36,7 +36,58 @@ export default function PatientDashboard() {
         <StatCard icon="calendar_month" label="Upcoming Appointments" value={loading ? '…' : upcoming.length} color="primary" />
         <StatCard icon="vaccines" label="Immunizations Done" value={loading ? '…' : done.length} color="secondary" />
         <StatCard icon="pending_actions" label="Pending Vaccines" value={loading ? '…' : pending.length} color="tertiary" />
-        <StatCard icon="favorite" label="Health Score" value="Good" color="secondary" />
+        <StatCard icon="bloodtype" label="Blood Group" value={user.bloodType || 'O+'} color="secondary" />
+      </div>
+
+      {/* Patient Health Profile Card */}
+      <div className="bg-white border border-outline-variant rounded-xl p-5 mb-8 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-outline-variant">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary-fixed flex items-center justify-center text-primary">
+              <span className="material-symbols-outlined">medical_information</span>
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-on-surface">Your Medical Profile</h2>
+              <p className="text-xs text-on-surface-variant">Used by AI for smart appointment suggestions & clinical risk assessment</p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/dashboard/profile')}
+            className="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary-fixed/40 px-3 py-1.5 rounded-lg hover:bg-primary-fixed transition-colors self-start sm:self-auto"
+          >
+            <span className="material-symbols-outlined text-sm">edit</span>
+            <span>Update Details</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-4">
+          <div className="p-3 bg-surface-container-low rounded-lg">
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Age</p>
+            <p className="text-sm font-bold text-on-surface mt-0.5">{user.age || 30} yrs</p>
+          </div>
+          <div className="p-3 bg-surface-container-low rounded-lg">
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Gender</p>
+            <p className="text-sm font-bold text-on-surface mt-0.5">{user.gender || 'Female'}</p>
+          </div>
+          <div className="p-3 bg-surface-container-low rounded-lg">
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Blood Group</p>
+            <p className="text-sm font-bold text-primary mt-0.5">{user.bloodType || 'O+'}</p>
+          </div>
+          <div className="p-3 bg-surface-container-low rounded-lg">
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Condition</p>
+            <p className="text-sm font-bold text-on-surface mt-0.5 truncate">{user.medicalCondition || 'None'}</p>
+          </div>
+          <div className="p-3 bg-surface-container-low rounded-lg">
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Medication</p>
+            <p className="text-sm font-bold text-on-surface mt-0.5 truncate">{user.medication || 'None'}</p>
+          </div>
+          <div className="p-3 bg-surface-container-low rounded-lg">
+            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Test Results</p>
+            <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full mt-0.5 ${user.testResults === 'Abnormal' ? 'bg-error-container text-on-error-container' : 'bg-secondary-container text-on-secondary-container'}`}>
+              {user.testResults || 'Normal'}
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">

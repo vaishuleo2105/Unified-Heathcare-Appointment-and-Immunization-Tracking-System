@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useTranslation } from 'react-i18next'
 import DashboardLayout from '../components/layout/DashboardLayout'
@@ -10,14 +10,52 @@ function headers() { return { Authorization: `Bearer ${getToken()}` } }
 
 export default function MaternalRecordPage() {
   const { t } = useTranslation()
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
+
   const [govtId, setGovtId] = useState('')
   const [record, setRecord] = useState(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [showManualSearch, setShowManualSearch] = useState(false)
   const [antenatalForm, setAntenatalForm] = useState({ date: '', notes: '', hospitalId: '' })
   const [deliveryForm, setDeliveryForm] = useState({ date: '', notes: '', hospitalId: '' })
   const [activeTab, setActiveTab] = useState('antenatal')
+
+  const isMalePatient = user.role === 'patient' && user.gender === 'Male'
+
+  useEffect(() => {
+    if (!isMalePatient) fetchMyRecord()
+    else setLoading(false)
+  }, [isMalePatient])
+
+  async function fetchMyRecord() {
+    setLoading(true)
+    try {
+      const { data } = await axios.get(`${API}/my-record`, { headers: headers() })
+      setRecord(data)
+      setGovtId(data.govtMaternalId)
+    } catch {
+      // Record not created/activated yet
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleActivateAccess() {
+    setLoading(true)
+    setError(''); setSuccess('')
+    try {
+      const { data } = await axios.post(`${API}/activate`, {}, { headers: headers() })
+      setRecord(data)
+      setGovtId(data.govtMaternalId)
+      setSuccess('Maternal & Child Health Access activated successfully!')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to activate access')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   async function handleLookup(e) {
     e.preventDefault()
@@ -28,7 +66,7 @@ export default function MaternalRecordPage() {
       const { data } = await axios.get(`${API}/${govtId.trim()}`, { headers: headers() })
       setRecord(data)
     } catch (err) {
-      if (err.response?.status === 404) setError('No record found. You can register this ID below.')
+      if (err.response?.status === 404) setError('No record found. You can activate maternal access directly.')
       else setError(err.response?.data?.message || 'Lookup failed')
     } finally {
       setLoading(false)
@@ -77,26 +115,55 @@ export default function MaternalRecordPage() {
 
   return (
     <DashboardLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-on-surface">{t('maternalTracking')}</h1>
-        <p className="text-on-surface-variant mt-1">{t('maternalSubtitle')}</p>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-on-surface">{t('maternalTracking')}</h1>
+          <p className="text-on-surface-variant mt-1">{t('maternalSubtitle')}</p>
+        </div>
+        {!record && !isMalePatient && (
+          <button
+            onClick={() => setShowManualSearch(!showManualSearch)}
+            className="text-xs font-semibold text-primary hover:underline self-start sm:self-auto"
+          >
+            {showManualSearch ? '← Back to Activation' : 'Have a Government RCH ID? Search ID'}
+          </button>
+        )}
       </div>
 
-      <form onSubmit={handleLookup} className="flex gap-3 mb-6">
-        <input
-          value={govtId}
-          onChange={(e) => setGovtId(e.target.value)}
-          placeholder={t('enterMaternalId')}
-          className="flex-1 px-4 py-3 border border-outline-variant rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-6 py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60"
-        >
-          {loading ? t('searching') : t('lookUp')}
-        </button>
-      </form>
+      {isMalePatient ? (
+        <div className="bg-white border border-outline-variant rounded-xl p-8 max-w-xl mx-auto text-center my-8 shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-surface-container-high flex items-center justify-center mx-auto mb-4 text-on-surface-variant">
+            <span className="material-symbols-outlined text-3xl">lock</span>
+          </div>
+          <h2 className="text-lg font-bold text-on-surface mb-2">Maternal Care Access Notice</h2>
+          <p className="text-sm text-on-surface-variant leading-relaxed">
+            Maternal & Child Health (MCH) tracking is strictly reserved for female patients and authorized healthcare clinical staff.
+          </p>
+          <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-container rounded-lg text-xs font-semibold text-on-surface-variant">
+            <span className="material-symbols-outlined text-sm text-secondary">verified_user</span>
+            <span>HIPAA & ABDM Privacy Protected</span>
+          </div>
+        </div>
+      ) : (
+        <>
+
+      {showManualSearch && !record && (
+        <form onSubmit={handleLookup} className="flex gap-3 mb-6 bg-white p-4 border border-outline-variant rounded-xl shadow-sm">
+          <input
+            value={govtId}
+            onChange={(e) => setGovtId(e.target.value)}
+            placeholder={t('enterMaternalId')}
+            className="flex-1 px-4 py-3 border border-outline-variant rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-6 py-3 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-60"
+          >
+            {loading ? t('searching') : t('lookUp')}
+          </button>
+        </form>
+      )}
 
       {error && (
         <div className="mb-4 flex items-center gap-2 bg-error-container text-on-error-container px-4 py-3 rounded-lg text-sm">
@@ -111,6 +178,30 @@ export default function MaternalRecordPage() {
         <div className="mb-4 flex items-center gap-2 bg-secondary-container text-on-secondary-container px-4 py-3 rounded-lg text-sm">
           <span className="material-symbols-outlined text-base">check_circle</span>
           {success}
+        </div>
+      )}
+
+      {/* Opt-In Access Card if patient does not have maternal tracking enabled */}
+      {!record && !loading && !showManualSearch && (
+        <div className="bg-white border border-outline-variant rounded-xl p-8 max-w-2xl mx-auto shadow-sm text-center my-6">
+          <div className="w-16 h-16 rounded-2xl bg-primary-fixed flex items-center justify-center mx-auto mb-4 text-primary">
+            <span className="material-symbols-outlined text-3xl">pregnant_woman</span>
+          </div>
+          <h2 className="text-xl font-bold text-on-surface mb-2">Mother & Child Health (MCH) Tracking Access</h2>
+          <p className="text-sm text-on-surface-variant max-w-md mx-auto mb-6">
+            Do you want to enable Maternal Care & Antenatal (ANC) Visit tracking for your account?
+            This will activate your digital RCH health card, log antenatal visits, and record delivery milestones.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <button
+              onClick={handleActivateAccess}
+              disabled={loading}
+              className="w-full sm:w-auto px-6 py-3 bg-primary text-white font-semibold text-sm rounded-xl hover:bg-primary/90 transition-colors shadow-sm disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-lg">auto_awesome</span>
+              <span>Yes, Activate Maternal Access</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -254,6 +345,8 @@ export default function MaternalRecordPage() {
             </div>
           )}
         </div>
+      )}
+      </>
       )}
     </DashboardLayout>
   )

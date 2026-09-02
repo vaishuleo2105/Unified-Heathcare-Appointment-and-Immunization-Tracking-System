@@ -43,6 +43,54 @@ async function seed() {
     if (u.role === 'doctor') createdDoctors.push(existing)
   }
 
+  // Create or update main Patient user with full medical profile
+  let patientUser = await User.findOne({ email: 'indujaee@gmail.com' })
+  if (!patientUser) {
+    patientUser = await User.create({
+      _id: PATIENT_ID,
+      firstName: 'Induja',
+      lastName: 'E',
+      email: 'indujaee@gmail.com',
+      password: hash,
+      role: 'patient',
+      age: 28,
+      gender: 'Female',
+      bloodType: 'O+',
+      medicalCondition: 'Hypertension',
+      medication: 'Folic Acid',
+      testResults: 'Normal',
+    })
+    console.log('Created main patient user: indujaee@gmail.com')
+  } else {
+    patientUser.age = patientUser.age || 28
+    patientUser.gender = patientUser.gender || 'Female'
+    patientUser.bloodType = patientUser.bloodType || 'O+'
+    patientUser.medicalCondition = patientUser.medicalCondition || 'Hypertension'
+    patientUser.medication = patientUser.medication || 'Folic Acid'
+    patientUser.testResults = patientUser.testResults || 'Normal'
+    await patientUser.save()
+    console.log('Updated patient user profile: indujaee@gmail.com')
+  }
+
+  // Backfill any existing patient profiles in DB with random/default medical details
+  const randomGenders = ['Male', 'Female']
+  const randomBloodTypes = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+']
+  const randomConditions = ['None', 'Hypertension', 'Diabetes', 'Asthma', 'Allergy']
+  const randomMedications = ['None', 'Paracetamol', 'Metformin', 'Amoxicillin', 'Aspirin']
+  const randomTestResults = ['Normal', 'Normal', 'Normal', 'Abnormal', 'Inconclusive']
+
+  const allPatientsWithoutDetails = await User.find({ role: 'patient' })
+  for (const p of allPatientsWithoutDetails) {
+    let modified = false
+    if (!p.age) { p.age = Math.floor(Math.random() * 35) + 20; modified = true }
+    if (!p.gender) { p.gender = randomGenders[Math.floor(Math.random() * randomGenders.length)]; modified = true }
+    if (!p.bloodType) { p.bloodType = randomBloodTypes[Math.floor(Math.random() * randomBloodTypes.length)]; modified = true }
+    if (!p.medicalCondition) { p.medicalCondition = randomConditions[Math.floor(Math.random() * randomConditions.length)]; modified = true }
+    if (!p.medication) { p.medication = randomMedications[Math.floor(Math.random() * randomMedications.length)]; modified = true }
+    if (!p.testResults) { p.testResults = randomTestResults[Math.floor(Math.random() * randomTestResults.length)]; modified = true }
+    if (modified) await p.save()
+  }
+
   const [dr1, dr2, dr3] = createdDoctors
   const patientId = new mongoose.Types.ObjectId(PATIENT_ID)
 
@@ -111,8 +159,8 @@ async function seed() {
     { patientId, vaccineName: 'COVID-19',     date: '2021-09-18', status: 'Completed', dose: 'Dose 2',       administeredBy: dr2._id, notes: 'Covishield' },
     { patientId, vaccineName: 'COVID-19',     date: subDays(30),  status: 'Completed', dose: 'Booster',      administeredBy: dr3._id, notes: 'Corbevax booster' },
     { patientId, vaccineName: 'Influenza',    date: subDays(90),  status: 'Completed', dose: 'Annual',       administeredBy: dr1._id },
-    { patientId, vaccineName: 'Hepatitis B',  date: addDays(7),   status: 'Upcoming',  dose: 'Dose 3',       notes: 'Scheduled with Dr. Priya' },
-    { patientId, vaccineName: 'HPV',          date: addDays(30),  status: 'Upcoming',  dose: 'Dose 1',       notes: 'Recommended by Dr. Ramesh' },
+    { patientId, vaccineName: 'Hepatitis B',  date: addDays(7),   status: 'Upcoming',  dose: 'Dose 3',       notes: 'Scheduled for 3rd dose completion' },
+    { patientId, vaccineName: 'HPV',          date: addDays(30),  status: 'Upcoming',  dose: 'Dose 1',       notes: 'Recommended primary 2-dose HPV series' },
   ])
   console.log('Immunizations seeded')
 

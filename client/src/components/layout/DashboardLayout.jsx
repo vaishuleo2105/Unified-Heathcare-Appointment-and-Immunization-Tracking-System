@@ -16,24 +16,18 @@ const navItems = {
     { label: 'Overview', icon: 'dashboard', path: '/dashboard' },
     { label: "Today's Appointments", icon: 'calendar_month', path: '/dashboard/appointments' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
-    { label: 'Maternal ID', icon: 'pregnant_woman', path: '/maternal' },
-    { label: 'ABHA Health ID', icon: 'health_and_safety', path: '/abha' },
     { label: 'My Profile', icon: 'person', path: '/dashboard/profile' },
   ],
   staff: [
     { label: 'Overview', icon: 'dashboard', path: '/dashboard' },
     { label: 'Manage Appointments', icon: 'calendar_month', path: '/dashboard/appointments' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
-    { label: 'Maternal ID', icon: 'pregnant_woman', path: '/maternal' },
-    { label: 'ABHA Health ID', icon: 'health_and_safety', path: '/abha' },
     { label: 'My Profile', icon: 'person', path: '/dashboard/profile' },
   ],
   admin: [
     { label: 'Overview', icon: 'dashboard', path: '/dashboard' },
     { label: 'All Appointments', icon: 'calendar_month', path: '/dashboard/appointments' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
-    { label: 'Maternal ID', icon: 'pregnant_woman', path: '/maternal' },
-    { label: 'ABHA Health ID', icon: 'health_and_safety', path: '/abha' },
   ],
 }
 

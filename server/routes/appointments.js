@@ -38,19 +38,79 @@ router.get('/doctors', async (req, res) => {
   }
 })
 
+// GET /api/appointments/booked-slots  — return unavailable time slots for doctor & patient
+router.get('/booked-slots', async (req, res) => {
+  try {
+    const { doctorId, date } = req.query
+    const activeStatuses = ['Pending', 'Confirmed', 'Completed']
+
+    let doctorBookedTimes = []
+    let patientBookedTimes = []
+
+    if (doctorId && date) {
+      const docBookings = await Appointment.find({
+        doctorId,
+        date,
+        status: { $in: activeStatuses }
+      }).select('time')
+      doctorBookedTimes = docBookings.map(b => b.time)
+    }
+
+    if (date && req.user) {
+      const patBookings = await Appointment.find({
+        patientId: req.user._id,
+        date,
+        status: { $in: activeStatuses }
+      }).select('time')
+      patientBookedTimes = patBookings.map(b => b.time)
+    }
+
+    return res.json({ doctorBookedTimes, patientBookedTimes })
+  } catch (err) {
+    return res.status(500).json({ message: err.message })
+  }
+})
+
 // POST /api/appointments  — patient books appointment
 router.post('/', async (req, res) => {
   const { doctorId, date, time, type, notes } = req.body
   if (!doctorId || !date || !time || !type)
     return res.status(400).json({ message: 'doctorId, date, time, and type are required' })
+
   try {
     const doctor = await User.findById(doctorId)
     if (!doctor || doctor.role !== 'doctor')
       return res.status(400).json({ message: 'Invalid doctor selected' })
 
-    // When staff has configured slots for a doctor/date, bookings must use an
-    // available slot.  Existing dates without configured slots remain
-    // backward-compatible with the original booking workflow.
+    const activeStatuses = ['Pending', 'Confirmed', 'Completed']
+
+    // 1. Doctor Conflict Check: Prevent two patients from booking the same doctor at the same time
+    const doctorConflict = await Appointment.findOne({
+      doctorId,
+      date,
+      time,
+      status: { $in: activeStatuses }
+    })
+    if (doctorConflict) {
+      return res.status(409).json({
+        message: `Dr. ${doctor.firstName} ${doctor.lastName} is already booked at ${time} on ${date}. Please select a different time slot or doctor.`
+      })
+    }
+
+    // 2. Patient Conflict Check: Prevent a patient from scheduling overlapping appointments
+    const patientConflict = await Appointment.findOne({
+      patientId: req.user._id,
+      date,
+      time,
+      status: { $in: activeStatuses }
+    })
+    if (patientConflict) {
+      return res.status(409).json({
+        message: `You already have an active appointment scheduled at ${time} on ${date}. Please choose a different time.`
+      })
+    }
+
+    // 3. Slot Table Verification (if staff configured slots)
     const configuredSlots = await Slot.exists({ doctorId, date })
     if (configuredSlots) {
       const slot = await Slot.findOneAndUpdate(
@@ -61,14 +121,16 @@ router.post('/', async (req, res) => {
       if (!slot) return res.status(409).json({ message: 'Selected appointment slot is no longer available' })
     }
 
+    const targetPatientId = (['staff', 'admin', 'doctor'].includes(req.user.role) && req.body.patientId) ? req.body.patientId : req.user._id
+
     const appointment = await Appointment.create({
-      patientId: req.user._id,
+      patientId: targetPatientId,
       doctorId,
       date,
       time,
       type,
       notes,
-      status: 'Pending',
+      status: req.user.role === 'patient' ? 'Pending' : 'Confirmed',
     })
     const populated = await appointment.populate([
       { path: 'patientId', select: 'firstName lastName email' },
@@ -76,6 +138,9 @@ router.post('/', async (req, res) => {
     ])
     return res.status(201).json(populated)
   } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ message: 'Conflict: This slot was just booked by another patient. Please select another time slot.' })
+    }
     return res.status(500).json({ message: err.message })
   }
 })
@@ -142,9 +207,6 @@ router.get('/suggest-type', async (req, res) => {
     let source = 'fallback'
     let historySuggestion = null
 
-    // Recent non-cancelled bookings are a useful patient-specific signal.  A
-    // repeated type is allowed to refine a routine ML prediction, but never
-    // overrides an Emergency recommendation.
     const history = await Appointment.find({
       patientId: user._id,
       status: { $ne: 'Cancelled' },
@@ -153,7 +215,6 @@ router.get('/suggest-type', async (req, res) => {
     if (history.length > 0) {
       const weightedTypes = {}
       history.forEach((appointment, index) => {
-        // The newest appointment gets the greatest weight.
         const weight = history.length - index
         weightedTypes[appointment.type] = (weightedTypes[appointment.type] || 0) + weight
       })
@@ -191,17 +252,21 @@ router.get('/suggest-type', async (req, res) => {
     // 2. Suggest best doctor (lowest active load)
     const doctors = await User.find({ role: 'doctor' }).select('firstName lastName _id')
     const activeStatuses = ['Pending', 'Confirmed']
+    const todayStr = new Date().toISOString().split('T')[0]
     const doctorLoads = await Promise.all(doctors.map(async (doc) => {
       const active = await Appointment.countDocuments({ doctorId: doc._id, status: { $in: activeStatuses } })
-      return { _id: doc._id, firstName: doc.firstName, lastName: doc.lastName, active }
+      const todayCount = await Appointment.countDocuments({ doctorId: doc._id, date: todayStr })
+      const loadScore = (active * 2) + todayCount
+      return { _id: doc._id, firstName: doc.firstName, lastName: doc.lastName, active, todayCount, loadScore }
     }))
-    doctorLoads.sort((a, b) => a.active - b.active)
+    doctorLoads.sort((a, b) => a.loadScore - b.loadScore)
     const suggestedDoctor = doctorLoads[0] || null
 
     // 3. Suggest next available date (tomorrow) and a smart time based on appointment type
     const tomorrow = new Date()
     tomorrow.setDate(tomorrow.getDate() + 1)
     const suggestedDate = tomorrow.toISOString().split('T')[0]
+
     const TIME_BY_TYPE = {
       'Emergency': '08:00',
       'Consultation': '10:00',
@@ -240,7 +305,6 @@ router.get('/doctor-workload', async (req, res) => {
       const todayCount = await Appointment.countDocuments({ doctorId: doc._id, date: today })
       const loadScore = (active * 2) + todayCount
 
-      // Try to get ML risk score for this doctor's active patients
       let riskLevel = 'Low'
       let riskScore = 0
       try {
@@ -261,9 +325,6 @@ router.get('/doctor-workload', async (req, res) => {
         }
       } catch {}
 
-      // Risk is on a 0-100 scale.  Convert it to a small capacity penalty so
-      // a clinician with complex active cases is not preferred simply because
-      // they have fewer appointment slots filled.
       const workloadScore = Number((loadScore + (riskScore / 20)).toFixed(2))
       return {
         _id: doc._id,
