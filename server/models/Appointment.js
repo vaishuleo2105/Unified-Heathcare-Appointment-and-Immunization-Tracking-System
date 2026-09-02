@@ -13,4 +13,16 @@ const appointmentSchema = new mongoose.Schema({
   completedAt: { type: Date },
 }, { timestamps: true })
 
+// Prevent double booking a doctor at the same date and time for active appointments
+appointmentSchema.index(
+  { doctorId: 1, date: 1, time: 1 },
+  { unique: true, partialFilterExpression: { status: { $in: ['Pending', 'Confirmed', 'Completed'] } } }
+)
+
+// Prevent a patient from scheduling overlapping active appointments at the same date and time
+appointmentSchema.index(
+  { patientId: 1, date: 1, time: 1 },
+  { unique: true, partialFilterExpression: { status: { $in: ['Pending', 'Confirmed', 'Completed'] } } }
+)
+
 module.exports = mongoose.model('Appointment', appointmentSchema)

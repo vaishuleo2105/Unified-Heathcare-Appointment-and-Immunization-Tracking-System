@@ -103,6 +103,23 @@ router.post('/abha/verify-otp', async (req, res) => {
   return res.json({ txnId: newTxnId, message: 'OTP verified successfully' })
 })
 
+// GET /api/maternal/abha/my-abha
+router.get('/abha/my-abha', async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+    if (!user || !user.abhaId) return res.status(404).json({ hasAbha: false })
+    return res.json({
+      hasAbha: true,
+      abhaId: user.abhaId,
+      abhaNumber: user.abhaNumber,
+      name: `${user.firstName} ${user.lastName}`,
+      yearOfBirth: new Date().getFullYear().toString(),
+    })
+  } catch (err) {
+    return res.status(500).json({ message: err.message })
+  }
+})
+
 // POST /api/maternal/abha/create-health-id
 router.post('/abha/create-health-id', async (req, res) => {
   const { txnId, healthId } = req.body
@@ -118,6 +135,9 @@ router.post('/abha/create-health-id', async (req, res) => {
   const abhaAddress = (healthId || `${user.firstName.toLowerCase()}${user.lastName.toLowerCase()}`) + '@abdm'
   const abhaNumber = '91' + Date.now().toString().slice(-12)
 
+  // Permanently store on User profile in DB
+  await User.findByIdAndUpdate(user._id, { abhaId: abhaAddress, abhaNumber })
+
   return res.json({
     abhaId: abhaAddress,
     abhaNumber,
@@ -127,6 +147,16 @@ router.post('/abha/create-health-id', async (req, res) => {
     message: 'Health ID created successfully',
     mock: !EMAIL_CONFIGURED,
   })
+})
+
+// POST /api/maternal/abha/disconnect
+router.post('/abha/disconnect', async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user._id, { $unset: { abhaId: 1, abhaNumber: 1 } })
+    return res.json({ message: 'ABHA ID disconnected successfully' })
+  } catch (err) {
+    return res.status(500).json({ message: err.message })
+  }
 })
 
 // POST /api/maternal/abha/link
@@ -145,6 +175,36 @@ router.post('/abha/link', async (req, res) => {
 })
 
 // ── Maternal Record CRUD ──────────────────────────────────────────────────────
+
+// GET /api/maternal/my-record — fetch maternal record for currently logged-in patient
+router.get('/my-record', async (req, res) => {
+  try {
+    const record = await MaternalRecord.findOne({ patientId: req.user._id })
+    if (!record) return res.status(404).json({ hasAccess: false, message: 'No maternal record found' })
+    return res.json(record)
+  } catch (err) {
+    return res.status(500).json({ message: err.message })
+  }
+})
+
+// POST /api/maternal/activate — opt-in activate maternal care tracking for patient
+router.post('/activate', async (req, res) => {
+  try {
+    let record = await MaternalRecord.findOne({ patientId: req.user._id })
+    if (record) return res.json(record)
+
+    const randomId = 'RCH-2026-' + Math.floor(100000 + Math.random() * 900000)
+    record = await MaternalRecord.create({
+      govtMaternalId: randomId,
+      patientId: req.user._id,
+      abhaId: `${req.user.firstName.toLowerCase()}@abdm`,
+    })
+
+    return res.status(201).json(record)
+  } catch (err) {
+    return res.status(500).json({ message: err.message })
+  }
+})
 
 router.get('/:govtMaternalId', async (req, res) => {
   try {

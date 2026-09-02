@@ -16,6 +16,8 @@ const userSchema = new mongoose.Schema(
     medicalCondition: { type: String },
     medication:       { type: String },
     testResults:      { type: String, enum: ['Normal', 'Abnormal', 'Inconclusive'] },
+    abhaId:           { type: String },
+    abhaNumber:       { type: String },
   },
   { timestamps: true }
 )

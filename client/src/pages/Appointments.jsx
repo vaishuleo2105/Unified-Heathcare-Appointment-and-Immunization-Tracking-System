@@ -24,6 +24,7 @@ export default function AppointmentsPage() {
   const [workload, setWorkload] = useState([])
   const [availableSlots, setAvailableSlots] = useState([])
   const [suggestedType, setSuggestedType] = useState('')
+  const [suggestedDoctor, setSuggestedDoctor] = useState(null)
   const [suggestionConfidence, setSuggestionConfidence] = useState(0)
   const [suggestionSource, setSuggestionSource] = useState('')
   const [loading, setLoading] = useState(true)
@@ -47,11 +48,23 @@ export default function AppointmentsPage() {
     }
   }, [])
 
+  const [bookedSlots, setBookedSlots] = useState({ doctorBookedTimes: [], patientBookedTimes: [] })
+
   useEffect(() => {
     if (role !== 'patient' || !form.doctorId || !form.date) return setAvailableSlots([])
     api.get('/slots', { params: { doctorId: form.doctorId, date: form.date } })
       .then(({ data }) => setAvailableSlots(data))
       .catch(() => setAvailableSlots([]))
+  }, [form.doctorId, form.date, role])
+
+  useEffect(() => {
+    if (role !== 'patient' || !form.doctorId || !form.date) {
+      setBookedSlots({ doctorBookedTimes: [], patientBookedTimes: [] })
+      return
+    }
+    api.get('/appointments/booked-slots', { params: { doctorId: form.doctorId, date: form.date } })
+      .then(({ data }) => setBookedSlots(data))
+      .catch(() => setBookedSlots({ doctorBookedTimes: [], patientBookedTimes: [] }))
   }, [form.doctorId, form.date, role])
 
   async function fetchAppointments() {
@@ -80,7 +93,12 @@ export default function AppointmentsPage() {
         setSuggestedType(data.suggestedType)
         setSuggestionConfidence(data.confidence)
         setSuggestionSource(data.source)
-        setForm(f => ({ ...f, type: data.suggestedType }))
+        setSuggestedDoctor(data.suggestedDoctor || null)
+        setForm(f => ({
+          ...f,
+          type: data.suggestedType,
+          doctorId: f.doctorId || data.suggestedDoctor?._id || ''
+        }))
       }
     } catch {}
   }
@@ -103,6 +121,9 @@ export default function AppointmentsPage() {
       setSuccess('Appointment booked successfully!')
       setShowForm(false)
       setForm({ doctorId: '', date: '', time: '', type: suggestedType || 'General Checkup', notes: '' })
+      // Live refresh doctor workload & ML suggestion after booking
+      fetchWorkload()
+      fetchSuggestion()
     } catch (err) {
       setError(err.response?.data?.message || 'Booking failed')
     } finally {
@@ -114,6 +135,8 @@ export default function AppointmentsPage() {
     try {
       const { data } = await api.patch(`/appointments/${id}/status`, { status })
       setAppointments(appointments.map(a => a._id === id ? data : a))
+      fetchWorkload()
+      fetchSuggestion()
     } catch (err) {
       setError(err.response?.data?.message || 'Update failed')
     }
@@ -123,6 +146,8 @@ export default function AppointmentsPage() {
     try {
       await api.delete(`/appointments/${id}`)
       setAppointments(appointments.filter(a => a._id !== id))
+      fetchWorkload()
+      fetchSuggestion()
     } catch (err) {
       setError(err.response?.data?.message || 'Cancel failed')
     }
@@ -136,6 +161,8 @@ export default function AppointmentsPage() {
       setConsultationId('')
       setConsultation({ consultationOutcome: '', consultationNotes: '' })
       setSuccess('Consultation outcome recorded')
+      fetchWorkload()
+      fetchSuggestion()
     } catch (err) {
       setError(err.response?.data?.message || 'Could not save consultation outcome')
     }
@@ -149,15 +176,34 @@ export default function AppointmentsPage() {
   }
 
   function getDoctorWorkload(doctorId) {
-    return workload.find(doc => doc._id === doctorId)
+    if (!doctorId) return null
+    return workload.find(doc => String(doc._id) === String(doctorId))
   }
 
   function doctorsSortedByWorkload() {
     return [...doctors].sort((first, second) => {
-      const firstScore = getDoctorWorkload(first._id)?.workloadScore ?? Number.POSITIVE_INFINITY
-      const secondScore = getDoctorWorkload(second._id)?.workloadScore ?? Number.POSITIVE_INFINITY
-      return firstScore - secondScore
+      const firstW = getDoctorWorkload(first._id)
+      const secondW = getDoctorWorkload(second._id)
+      const firstScore = firstW ? (firstW.workloadScore ?? (firstW.activeAppointments * 2) ?? 0) : 0
+      const secondScore = secondW ? (secondW.workloadScore ?? (secondW.activeAppointments * 2) ?? 0) : 0
+      if (firstScore !== secondScore) {
+        return firstScore - secondScore
+      }
+      return `${first.firstName} ${first.lastName}`.localeCompare(`${second.firstName} ${second.lastName}`)
     })
+  }
+
+  function toggleBookingForm() {
+    if (!showForm) {
+      const sorted = doctorsSortedByWorkload()
+      const lowestLoadDoc = suggestedDoctor?._id || sorted[0]?._id || ''
+      setForm(f => ({
+        ...f,
+        doctorId: f.doctorId || lowestLoadDoc,
+        type: suggestedType || f.type || 'General Checkup',
+      }))
+    }
+    setShowForm(!showForm)
   }
 
   return (
@@ -166,16 +212,16 @@ export default function AppointmentsPage() {
         <div>
           <h1 className="text-2xl font-bold text-on-surface">Appointments</h1>
           <p className="text-on-surface-variant mt-1">
-            {role === 'patient' ? 'Your scheduled appointments' : 'Manage all appointments'}
+            {role === 'patient' ? 'Your scheduled appointments' : 'Manage all clinic appointments & scheduling'}
           </p>
         </div>
-        {role === 'patient' && (
+        {['patient', 'staff', 'admin'].includes(role) && (
           <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors"
+            onClick={toggleBookingForm}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors shadow-sm"
           >
             <span className="material-symbols-outlined text-xl">add</span>
-            Book Appointment
+            {role === 'patient' ? 'Book Appointment' : 'Schedule Appointment'}
           </button>
         )}
       </div>
@@ -249,9 +295,11 @@ export default function AppointmentsPage() {
       )}
 
       {/* ── Booking Form ── */}
-      {showForm && role === 'patient' && (
+      {showForm && (
         <form onSubmit={handleBook} className="bg-white border border-outline-variant rounded-xl p-6 mb-6 shadow-sm">
-          <h2 className="text-base font-bold text-on-surface mb-4">New Appointment</h2>
+          <h2 className="text-base font-bold text-on-surface mb-4">
+            {role === 'patient' ? 'New Appointment' : 'Schedule Appointment for Patient'}
+          </h2>
 
           {/* ML Suggestion Banner */}
           {suggestedType && (
@@ -268,8 +316,26 @@ export default function AppointmentsPage() {
           )}
 
           <div className="grid md:grid-cols-2 gap-4">
+            {role !== 'patient' && (
+              <div className="md:col-span-2">
+                <label className="text-xs font-semibold text-on-surface-variant">Patient ID (optional, defaults to current patient)</label>
+                <input
+                  value={form.patientId || ''}
+                  onChange={e => setForm({ ...form, patientId: e.target.value })}
+                  placeholder="Enter Patient User ID (leave blank to book for main patient)"
+                  className="w-full mt-1 px-3 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
+                />
+              </div>
+            )}
             <div>
-              <label className="text-xs font-semibold text-on-surface-variant">Doctor *</label>
+              <label className="text-xs font-semibold text-on-surface-variant flex items-center justify-between">
+                <span>Doctor * (Sorted by Lowest Workload)</span>
+                {suggestedDoctor && (
+                  <span className="text-[11px] font-semibold text-secondary flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">balance</span> AI Recommended
+                  </span>
+                )}
+              </label>
               <select
                 value={form.doctorId}
                 onChange={e => setForm({ ...form, doctorId: e.target.value })}
@@ -278,12 +344,13 @@ export default function AppointmentsPage() {
                 <option value="">Select a doctor</option>
                 {doctorsSortedByWorkload().map(d => {
                   const doctorWorkload = getDoctorWorkload(d._id)
+                  const isSuggested = suggestedDoctor && String(suggestedDoctor._id) === String(d._id)
                   const loadLabel = doctorWorkload
                     ? `${doctorWorkload.recommendation} — ${doctorWorkload.activeAppointments} active`
                     : 'Checking workload...'
                   return (
                     <option key={d._id} value={d._id}>
-                      Dr. {d.firstName} {d.lastName} ({loadLabel})
+                      {isSuggested ? '★ Recommended: ' : ''}Dr. {d.firstName} {d.lastName} ({loadLabel})
                     </option>
                   )
                 })}
@@ -292,7 +359,7 @@ export default function AppointmentsPage() {
                 <p className="mt-1.5 text-xs text-on-surface-variant">
                   Current workload: <span className="font-semibold text-on-surface">{getDoctorWorkload(form.doctorId).recommendation}</span>
                   {' '}— {getDoctorWorkload(form.doctorId).activeAppointments} active appointment(s),
-                  {' '}patient risk {getDoctorWorkload(form.doctorId).riskLevel}.
+                  {' '}patient risk score {getDoctorWorkload(form.doctorId).riskScore || 0}/100 ({getDoctorWorkload(form.doctorId).riskLevel}).
                 </p>
               )}
             </div>
@@ -324,14 +391,43 @@ export default function AppointmentsPage() {
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-on-surface-variant">Time *</label>
-              {availableSlots.length > 0 ? (
-                <select value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} className="w-full mt-1 px-3 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none">
-                  <option value="">Select an available slot</option>
-                  {availableSlots.map(slot => <option key={slot._id} value={slot.time}>{slot.time}</option>)}
-                </select>
-              ) : (
-                <input type="time" value={form.time} onChange={e => setForm({ ...form, time: e.target.value })} className="w-full mt-1 px-3 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none" />
+              <label className="text-xs font-semibold text-on-surface-variant flex items-center justify-between">
+                <span>Time *</span>
+                {(bookedSlots.doctorBookedTimes.length > 0 || bookedSlots.patientBookedTimes.length > 0) && (
+                  <span className="text-[10px] text-error font-semibold flex items-center gap-0.5">
+                    <span className="material-symbols-outlined text-xs">event_busy</span> Booked slots disabled
+                  </span>
+                )}
+              </label>
+              <select
+                value={form.time}
+                onChange={e => setForm({ ...form, time: e.target.value })}
+                className="w-full mt-1 px-3 py-2.5 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
+                required
+              >
+                <option value="">Select a time slot</option>
+                {['08:00', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00'].map(t => {
+                  const isDoctorBooked = bookedSlots.doctorBookedTimes.includes(t)
+                  const isPatientBooked = bookedSlots.patientBookedTimes.includes(t)
+                  const isDisabled = isDoctorBooked || isPatientBooked
+
+                  let label = `${t}`
+                  if (isDoctorBooked) label += ' — Doctor Booked ❌'
+                  else if (isPatientBooked) label += ' — You Have Appointment ❌'
+                  else label += ' (Available ✅)'
+
+                  return (
+                    <option key={t} value={t} disabled={isDisabled}>
+                      {label}
+                    </option>
+                  )
+                })}
+              </select>
+              {form.time && (bookedSlots.doctorBookedTimes.includes(form.time) || bookedSlots.patientBookedTimes.includes(form.time)) && (
+                <p className="mt-1 text-xs text-error font-semibold flex items-center gap-1">
+                  <span className="material-symbols-outlined text-sm">warning</span>
+                  Conflict Warning: This time slot is already booked and unavailable.
+                </p>
               )}
             </div>
             <div className="md:col-span-2">

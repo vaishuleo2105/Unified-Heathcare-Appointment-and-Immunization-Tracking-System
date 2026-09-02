@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import api from '../api'
 
@@ -25,10 +25,42 @@ export default function AbhaPage() {
   const [linkMsg, setLinkMsg] = useState('')
   const [confirmDisconnect, setConfirmDisconnect] = useState(false)
 
+  useEffect(() => {
+    fetchMyAbha()
+  }, [])
+
+  async function fetchMyAbha() {
+    try {
+      const { data } = await api.get('/maternal/abha/my-abha')
+      if (data.hasAbha) {
+        setAbhaResult(data)
+        setStep(3)
+      }
+    } catch {
+      // No connected ABHA yet
+    }
+    try {
+      const { data: matRecord } = await api.get('/maternal/my-record')
+      if (matRecord && matRecord.govtMaternalId) {
+        setGovtMaternalId(matRecord.govtMaternalId)
+      }
+    } catch {}
+  }
+
   function reset() {
     setStep(0); setAadhaar(''); setOtp(''); setTxnId('')
     setHealthId(''); setAbhaResult(null); setError(''); setSuccess('')
     setMockOtp(''); setOtpSentTo('')
+    setConfirmDisconnect(false)
+  }
+
+  async function handleDisconnect() {
+    try {
+      await api.post('/maternal/abha/disconnect')
+      reset()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to disconnect ABHA ID')
+    }
   }
 
   async function handleGenerateOtp(e) {
@@ -368,30 +400,40 @@ export default function AbhaPage() {
               </div>
             </div>
 
-            <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm">
-              <h3 className="text-sm font-bold text-on-surface mb-1">Link to Maternal Record</h3>
-              <p className="text-xs text-on-surface-variant mb-4">Optionally link this ABHA ID to a government maternal record (RCH/MCTS ID).</p>
-              <form onSubmit={handleLink} className="flex gap-3">
-                <input
-                  value={govtMaternalId}
-                  onChange={e => setGovtMaternalId(e.target.value)}
-                  placeholder="e.g. RCH-2024-001234"
-                  className="flex-1 px-3 py-2.5 border border-outline-variant rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none"
-                />
-                <button
-                  type="submit"
-                  disabled={linkLoading}
-                  className="px-5 py-2.5 bg-secondary text-white text-sm font-semibold rounded-xl hover:bg-secondary/90 transition-colors disabled:opacity-60"
-                >
-                  {linkLoading ? 'Linking...' : 'Link'}
-                </button>
-              </form>
-              {linkMsg && (
-                <p className={`text-xs mt-2 font-medium ${linkMsg.startsWith('✓') ? 'text-secondary' : 'text-error'}`}>
-                  {linkMsg}
-                </p>
-              )}
-            </div>
+            {user.gender !== 'Male' && user.gender !== 'male' && (
+              <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-sm font-bold text-on-surface">Link to Maternal Record</h3>
+                  {govtMaternalId && (
+                    <span className="text-[10px] bg-secondary-container text-on-secondary-container font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">auto_awesome</span> Auto-Detected
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-on-surface-variant mb-4">Link this ABHA ID to your active digital Maternal Care (RCH/MCTS) record.</p>
+                <form onSubmit={handleLink} className="flex gap-3">
+                  <input
+                    value={govtMaternalId}
+                    onChange={e => setGovtMaternalId(e.target.value)}
+                    placeholder="e.g. RCH-2024-001234"
+                    className="flex-1 px-3 py-2.5 border border-outline-variant rounded-xl text-sm focus:ring-2 focus:ring-primary outline-none font-semibold text-primary"
+                  />
+                  <button
+                    type="submit"
+                    disabled={linkLoading}
+                    className="px-5 py-2.5 bg-secondary text-white text-sm font-semibold rounded-xl hover:bg-secondary/90 transition-colors disabled:opacity-60 flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-base">link</span>
+                    {linkLoading ? 'Linking...' : 'Link ID'}
+                  </button>
+                </form>
+                {linkMsg && (
+                  <p className={`text-xs mt-2 font-medium ${linkMsg.startsWith('✓') ? 'text-secondary' : 'text-error'}`}>
+                    {linkMsg}
+                  </p>
+                )}
+              </div>
+            )}
 
             {!confirmDisconnect ? (
               <button
@@ -412,7 +454,7 @@ export default function AbhaPage() {
                 </p>
                 <div className="flex gap-3">
                   <button
-                    onClick={reset}
+                    onClick={handleDisconnect}
                     className="flex-1 py-2.5 bg-error text-white text-sm font-semibold rounded-xl hover:bg-error/90 transition-colors flex items-center justify-center gap-2"
                   >
                     <span className="material-symbols-outlined text-lg">link_off</span>

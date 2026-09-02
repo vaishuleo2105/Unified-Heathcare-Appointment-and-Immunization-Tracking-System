@@ -30,7 +30,18 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '' })
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    age: '30',
+    gender: 'Female',
+    bloodType: 'O+',
+    medicalCondition: 'None',
+    medication: 'None',
+    testResults: 'Normal',
+  })
 
   // Forgot password state
   const [fpStep, setFpStep] = useState(0) // 0=closed, 1=email, 2=otp, 3=newpass
@@ -52,7 +63,18 @@ export default function AuthPage() {
     setMode(m)
     setError('')
     setSuccess('')
-    setForm({ firstName: '', lastName: '', email: '', password: '' })
+    setForm({
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      age: '30',
+      gender: 'Female',
+      bloodType: 'O+',
+      medicalCondition: 'None',
+      medication: 'None',
+      testResults: 'Normal',
+    })
   }
 
   async function handleFpSubmitEmail(e) {
@@ -101,7 +123,19 @@ export default function AuthPage() {
     try {
       const endpoint = isRegister ? '/register' : '/login'
       const payload = isRegister
-        ? { firstName: form.firstName, lastName: form.lastName, email: form.email, password: form.password, role }
+        ? {
+            firstName: form.firstName,
+            lastName: form.lastName,
+            email: form.email,
+            password: form.password,
+            role,
+            age: Number(form.age) || 30,
+            gender: form.gender,
+            bloodType: form.bloodType,
+            medicalCondition: form.medicalCondition,
+            medication: form.medication,
+            testResults: form.testResults,
+          }
         : { email: form.email, password: form.password, role }
 
       const { data } = await axios.post(`${API}${endpoint}`, payload)
@@ -225,18 +259,64 @@ export default function AuthPage() {
             {/* Form */}
             <form className="space-y-5" onSubmit={handleSubmit}>
               {isRegister && (
-                <div className="grid md:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-on-surface-variant ml-1" htmlFor="firstName">{t('firstName')}</label>
-                    <input id="firstName" value={form.firstName} onChange={handleChange} placeholder="John"
-                      className="w-full px-4 py-3 bg-white border border-outline-variant rounded-lg text-base focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" />
+                <>
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-on-surface-variant ml-1" htmlFor="firstName">{t('firstName')}</label>
+                      <input id="firstName" value={form.firstName} onChange={handleChange} placeholder="John"
+                        className="w-full px-4 py-3 bg-white border border-outline-variant rounded-lg text-base focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-on-surface-variant ml-1" htmlFor="lastName">{t('lastName')}</label>
+                      <input id="lastName" value={form.lastName} onChange={handleChange} placeholder="Doe"
+                        className="w-full px-4 py-3 bg-white border border-outline-variant rounded-lg text-base focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-on-surface-variant ml-1" htmlFor="lastName">{t('lastName')}</label>
-                    <input id="lastName" value={form.lastName} onChange={handleChange} placeholder="Doe"
-                      className="w-full px-4 py-3 bg-white border border-outline-variant rounded-lg text-base focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" />
-                  </div>
-                </div>
+
+                  {role === 'patient' && (
+                    <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/60 space-y-4">
+                      <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider">
+                        <span className="material-symbols-outlined text-base">medical_information</span>
+                        <span>Patient Health Profile Details</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-on-surface-variant" htmlFor="age">Age</label>
+                          <input id="age" type="number" min="1" max="120" value={form.age} onChange={handleChange}
+                            className="w-full px-3 py-2 bg-white border border-outline-variant rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-on-surface-variant" htmlFor="gender">Gender</label>
+                          <select id="gender" value={form.gender} onChange={handleChange}
+                            className="w-full px-3 py-2 bg-white border border-outline-variant rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary">
+                            <option value="Female">Female</option>
+                            <option value="Male">Male</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-on-surface-variant" htmlFor="bloodType">Blood Type</label>
+                          <select id="bloodType" value={form.bloodType} onChange={handleChange}
+                            className="w-full px-3 py-2 bg-white border border-outline-variant rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary">
+                            {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map(b => <option key={b} value={b}>{b}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-on-surface-variant" htmlFor="medicalCondition">Medical Condition</label>
+                          <input id="medicalCondition" value={form.medicalCondition} onChange={handleChange} placeholder="e.g. Hypertension, None"
+                            className="w-full px-3 py-2 bg-white border border-outline-variant rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary" />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-on-surface-variant" htmlFor="medication">Current Medication</label>
+                          <input id="medication" value={form.medication} onChange={handleChange} placeholder="e.g. Paracetamol, None"
+                            className="w-full px-3 py-2 bg-white border border-outline-variant rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="space-y-2">
