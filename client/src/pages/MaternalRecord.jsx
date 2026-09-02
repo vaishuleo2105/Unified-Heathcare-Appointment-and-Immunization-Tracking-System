@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
 import { useTranslation } from 'react-i18next'
 import DashboardLayout from '../components/layout/DashboardLayout'
+import api from '../api'
 
-const API = '/api/maternal'
-
-function getToken() { return localStorage.getItem('token') }
-function headers() { return { Authorization: `Bearer ${getToken()}` } }
+const API = '/maternal'
 
 export default function MaternalRecordPage() {
   const { t } = useTranslation()
@@ -32,7 +29,7 @@ export default function MaternalRecordPage() {
   async function fetchMyRecord() {
     setLoading(true)
     try {
-      const { data } = await axios.get(`${API}/my-record`, { headers: headers() })
+      const { data } = await api.get(`${API}/my-record`)
       setRecord(data)
       setGovtId(data.govtMaternalId)
     } catch {
@@ -46,7 +43,7 @@ export default function MaternalRecordPage() {
     setLoading(true)
     setError(''); setSuccess('')
     try {
-      const { data } = await axios.post(`${API}/activate`, {}, { headers: headers() })
+      const { data } = await api.post(`${API}/activate`, {})
       setRecord(data)
       setGovtId(data.govtMaternalId)
       setSuccess('Maternal & Child Health Access activated successfully!')
@@ -63,7 +60,7 @@ export default function MaternalRecordPage() {
     if (!govtId.trim()) return setError(t('enterMaternalIdError'))
     setLoading(true)
     try {
-      const { data } = await axios.get(`${API}/${govtId.trim()}`, { headers: headers() })
+      const { data } = await api.get(`${API}/${govtId.trim()}`)
       setRecord(data)
     } catch (err) {
       if (err.response?.status === 404) setError('No record found. You can activate maternal access directly.')
@@ -77,7 +74,7 @@ export default function MaternalRecordPage() {
     setError(''); setSuccess('')
     setLoading(true)
     try {
-      const { data } = await axios.post(API, { govtMaternalId: govtId.trim() }, { headers: headers() })
+      const { data } = await api.post(API, { govtMaternalId: govtId.trim() })
       setRecord(data)
       setSuccess(t('registerSuccess'))
     } catch (err) {
@@ -91,7 +88,7 @@ export default function MaternalRecordPage() {
     e.preventDefault()
     setError(''); setSuccess('')
     try {
-      const { data } = await axios.post(`${API}/${record.govtMaternalId}/antenatal`, antenatalForm, { headers: headers() })
+      const { data } = await api.post(`${API}/${record.govtMaternalId}/antenatal`, antenatalForm)
       setRecord(data)
       setSuccess(t('antenatalAdded'))
       setAntenatalForm({ date: '', notes: '', hospitalId: '' })
@@ -104,7 +101,7 @@ export default function MaternalRecordPage() {
     e.preventDefault()
     setError(''); setSuccess('')
     try {
-      const { data } = await axios.post(`${API}/${record.govtMaternalId}/delivery`, deliveryForm, { headers: headers() })
+      const { data } = await api.post(`${API}/${record.govtMaternalId}/delivery`, deliveryForm)
       setRecord(data)
       setSuccess(t('deliverySaved'))
       setDeliveryForm({ date: '', notes: '', hospitalId: '' })

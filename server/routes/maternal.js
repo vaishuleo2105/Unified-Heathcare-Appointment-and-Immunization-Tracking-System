@@ -31,6 +31,7 @@ function genOtp() {
 }
 
 async function sendOtpEmail(to, otp) {
+  if (!transporter) throw new Error('Email not configured')
   await transporter.sendMail({
     from: `"Unified Health" <${EMAIL_USER}>`,
     to,

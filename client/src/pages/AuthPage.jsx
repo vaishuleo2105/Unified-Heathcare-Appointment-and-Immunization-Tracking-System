@@ -18,11 +18,13 @@ export default function AuthPage() {
   const navigate = useNavigate()
   const { t } = useTranslation()
 
-  const existingToken = localStorage.getItem('token')
-  const existingUser = localStorage.getItem('user')
-  if (existingToken && existingUser) {
-    navigate('/dashboard', { replace: true })
-  }
+  useEffect(() => {
+    const existingToken = localStorage.getItem('token')
+    const existingUser = localStorage.getItem('user')
+    if (existingToken && existingUser) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [navigate])
 
   const [mode, setMode] = useState('login')
   const [role, setRole] = useState('patient')
