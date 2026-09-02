@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
 import DashboardLayout from '../../components/layout/DashboardLayout'
-import BookAppointmentModal from '../../components/BookAppointmentModal'
+import api from '../../api'
 
 const statusColors = {
   Confirmed: 'bg-secondary-container text-on-secondary-container',
@@ -13,22 +12,19 @@ const statusColors = {
 const filters = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled']
 
 export default function PatientAppointments() {
-  const token = localStorage.getItem('token')
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('All')
-  const [showModal, setShowModal] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => { fetchAppointments() }, [])
 
   async function fetchAppointments() {
     try {
-      const { data } = await axios.get('/api/appointments', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const { data } = await api.get('/appointments')
       setAppointments(data)
     } catch (err) {
-      console.error(err)
+      setError(err.response?.data?.message || 'Failed to load appointments')
     } finally {
       setLoading(false)
     }
@@ -36,16 +32,12 @@ export default function PatientAppointments() {
 
   async function handleCancel(id) {
     try {
-      await axios.delete(`/api/appointments/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      await api.delete(`/appointments/${id}`)
       fetchAppointments()
     } catch (err) {
-      console.error(err)
+      setError(err.response?.data?.message || 'Failed to cancel appointment')
     }
   }
-
-
 
   const filtered = filter === 'All' ? appointments : appointments.filter(a => a.status === filter)
 
@@ -56,14 +48,13 @@ export default function PatientAppointments() {
           <h1 className="text-2xl font-bold text-on-surface">My Appointments</h1>
           <p className="text-on-surface-variant text-sm mt-1">Manage all your appointments here</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary-container transition-colors"
-        >
-          <span className="material-symbols-outlined text-xl">add</span>
-          Book Appointment
-        </button>
       </div>
+
+      {error && (
+        <div className="mb-4 flex items-center gap-2 bg-error-container text-on-error-container px-4 py-3 rounded-lg text-sm">
+          <span className="material-symbols-outlined text-base">error</span>{error}
+        </div>
+      )}
 
       {/* Filter Tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
@@ -80,7 +71,6 @@ export default function PatientAppointments() {
         ))}
       </div>
 
-      {/* List */}
       <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16">
@@ -93,9 +83,6 @@ export default function PatientAppointments() {
           <div className="text-center py-16">
             <span className="material-symbols-outlined text-5xl text-on-surface-variant">calendar_month</span>
             <p className="text-on-surface-variant mt-3 font-medium">No appointments found</p>
-            <button onClick={() => setShowModal(true)} className="mt-4 px-6 py-2 bg-primary text-white text-sm font-semibold rounded-xl">
-              Book Now
-            </button>
           </div>
         ) : (
           <div className="divide-y divide-outline-variant">
@@ -107,7 +94,9 @@ export default function PatientAppointments() {
                 <div className="flex-1">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-sm font-bold text-on-surface">{apt.doctorName}</p>
+                      <p className="text-sm font-bold text-on-surface">
+                        Dr. {apt.doctorId?.firstName} {apt.doctorId?.lastName}
+                      </p>
                       <p className="text-xs text-on-surface-variant mt-0.5">{apt.type}</p>
                       <p className="text-xs text-on-surface-variant mt-1">{apt.date} • {apt.time}</p>
                       {apt.notes && <p className="text-xs text-on-surface-variant mt-1 italic">Note: {apt.notes}</p>}
@@ -129,13 +118,6 @@ export default function PatientAppointments() {
           </div>
         )}
       </div>
-
-      {showModal && (
-        <BookAppointmentModal
-          onClose={() => setShowModal(false)}
-          onSuccess={fetchAppointments}
-        />
-      )}
     </DashboardLayout>
   )
 }
