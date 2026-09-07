@@ -17,7 +17,11 @@ const { startReminderScheduler } = require('./utils/reminderScheduler')
 const app = express()
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+  origin: [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'https://unified-heathcare-appointment-and.onrender.com',
+  ],
   credentials: true,
 }))
 app.use(express.json())
