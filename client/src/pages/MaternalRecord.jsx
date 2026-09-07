@@ -76,7 +76,7 @@ export default function MaternalRecordPage() {
     try {
       const { data } = await api.post(API, { govtMaternalId: govtId.trim() })
       setRecord(data)
-      setSuccess(t('registerSuccess'))
+      setSuccess(t('maternalRegisterSuccess') || t('registerSuccess'))
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed')
     } finally {

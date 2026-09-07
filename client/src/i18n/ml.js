@@ -209,7 +209,7 @@ export default {
   deliveryRecord: "പ്രസവ രേഖ",
   visitHistoryCount: "സന്ദർശന ചരിത്രം",
   deliveryNotes: "പ്രസവ കുറിപ്പുകൾ...",
-  registerSuccess: "മാതൃ രേഖ വിജയകരമായി രജിസ്റ്റർ ചെയ്തു.",
+  maternalRegisterSuccess: "മാതൃ രേഖ വിജയകരമായി രജിസ്റ്റർ ചെയ്തു.",
   antenatalAdded: "പ്രസവപൂർവ സന്ദർശനം ചേർക്കപ്പെട്ടു.",
   deliverySaved: "പ്രസവ വിവരങ്ങൾ സേവ് ചെയ്തു.",
   enterMaternalIdError: "ദയവായി ഒരു മാതൃ ഐഡി നൽകുക",

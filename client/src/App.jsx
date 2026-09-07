@@ -5,9 +5,7 @@ import PatientDashboard from './pages/dashboards/PatientDashboard'
 import DoctorDashboard from './pages/dashboards/DoctorDashboard'
 import StaffDashboard from './pages/dashboards/StaffDashboard'
 import AdminDashboard from './pages/dashboards/AdminDashboard'
-import PatientAppointments from './pages/patient/PatientAppointments'
-import PatientImmunization from './pages/patient/PatientImmunization'
-import PatientProfile from './pages/patient/PatientProfile'
+// Legacy patient routes now redirect to canonical pages
 import ProtectedRoute from './components/ProtectedRoute'
 import MaternalRecord from './pages/MaternalRecord'
 import AppointmentsPage from './pages/Appointments'
@@ -27,9 +25,9 @@ export default function App() {
 
       {/* Patient Routes */}
       <Route path="/dashboard/patient" element={<Protected><PatientDashboard /></Protected>} />
-      <Route path="/dashboard/patient/appointments" element={<Protected><PatientAppointments /></Protected>} />
-      <Route path="/dashboard/patient/immunization" element={<Protected><PatientImmunization /></Protected>} />
-      <Route path="/dashboard/patient/profile" element={<Protected><PatientProfile /></Protected>} />
+      <Route path="/dashboard/patient/appointments" element={<Navigate to="/dashboard/appointments" replace />} />
+      <Route path="/dashboard/patient/immunization" element={<Navigate to="/dashboard/immunization" replace />} />
+      <Route path="/dashboard/patient/profile" element={<Navigate to="/dashboard/profile" replace />} />
 
       {/* Other Role Routes */}
       <Route path="/dashboard/doctor" element={<Protected><DoctorDashboard /></Protected>} />

@@ -22,7 +22,6 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState([])
   const [doctors, setDoctors] = useState([])
   const [workload, setWorkload] = useState([])
-  const [availableSlots, setAvailableSlots] = useState([])
   const [suggestedType, setSuggestedType] = useState('')
   const [suggestedDoctor, setSuggestedDoctor] = useState(null)
   const [suggestionConfidence, setSuggestionConfidence] = useState(0)
@@ -50,12 +49,6 @@ export default function AppointmentsPage() {
 
   const [bookedSlots, setBookedSlots] = useState({ doctorBookedTimes: [], patientBookedTimes: [] })
 
-  useEffect(() => {
-    if (role !== 'patient' || !form.doctorId || !form.date) return setAvailableSlots([])
-    api.get('/slots', { params: { doctorId: form.doctorId, date: form.date } })
-      .then(({ data }) => setAvailableSlots(data))
-      .catch(() => setAvailableSlots([]))
-  }, [form.doctorId, form.date, role])
 
   useEffect(() => {
     if (role !== 'patient' || !form.doctorId || !form.date) {
@@ -184,8 +177,8 @@ export default function AppointmentsPage() {
     return [...doctors].sort((first, second) => {
       const firstW = getDoctorWorkload(first._id)
       const secondW = getDoctorWorkload(second._id)
-      const firstScore = firstW ? (firstW.workloadScore ?? (firstW.activeAppointments * 2) ?? 0) : 0
-      const secondScore = secondW ? (secondW.workloadScore ?? (secondW.activeAppointments * 2) ?? 0) : 0
+      const firstScore = firstW ? (firstW.workloadScore ?? ((firstW.activeAppointments || 0) * 2)) : 0
+      const secondScore = secondW ? (secondW.workloadScore ?? ((secondW.activeAppointments || 0) * 2)) : 0
       if (firstScore !== secondScore) {
         return firstScore - secondScore
       }

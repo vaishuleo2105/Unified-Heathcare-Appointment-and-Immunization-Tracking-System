@@ -15,7 +15,6 @@ export default function AdminDashboard() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const navigate = useNavigate()
   const [appointments, setAppointments] = useState([])
-  const [immunizations, setImmunizations] = useState([])
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [roleFilter, setRoleFilter] = useState('all')
@@ -24,12 +23,10 @@ export default function AdminDashboard() {
   useEffect(() => {
     Promise.all([
       api.get('/appointments'),
-      api.get('/immunizations'),
       api.get('/auth/users'),
     ])
-      .then(([a, i, u]) => {
+      .then(([a, u]) => {
         setAppointments(a.data)
-        setImmunizations(i.data)
         setUsers(u.data)
       })
       .finally(() => setLoading(false))

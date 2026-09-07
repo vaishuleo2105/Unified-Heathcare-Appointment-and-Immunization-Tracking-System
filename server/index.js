@@ -12,6 +12,7 @@ const doctorRoutes       = require('./routes/doctors')
 const immunizationRoutes = require('./routes/immunizations')
 const slotRoutes         = require('./routes/slots')
 const patientRoutes      = require('./routes/patients')
+const { startReminderScheduler } = require('./utils/reminderScheduler')
 
 const app = express()
 
@@ -40,6 +41,7 @@ mongoose
   .then(() => {
     console.log('MongoDB connected')
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+    startReminderScheduler()
   })
   .catch((err) => {
     console.error('MongoDB connection failed:', err.message)

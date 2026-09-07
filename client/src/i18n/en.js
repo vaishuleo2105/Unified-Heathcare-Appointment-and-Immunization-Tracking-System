@@ -238,7 +238,7 @@ export default {
   deliveryRecord: "Delivery Record",
   visitHistoryCount: "Visit History",
   deliveryNotes: "Delivery notes...",
-  registerSuccess: "Maternal record registered successfully.",
+  maternalRegisterSuccess: "Maternal record registered successfully.",
   antenatalAdded: "Antenatal visit added.",
   deliverySaved: "Delivery details saved.",
   enterMaternalIdError: "Please enter a Maternal ID",

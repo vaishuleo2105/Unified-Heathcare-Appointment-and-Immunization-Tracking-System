@@ -219,7 +219,7 @@ export default {
   deliveryRecord: "பிரசவ பதிவு",
   visitHistoryCount: "வருகை வரலாறு",
   deliveryNotes: "பிரசவ குறிப்புகள்...",
-  registerSuccess: "தாய் பதிவு வெற்றிகரமாக பதிவு செய்யப்பட்டது.",
+  maternalRegisterSuccess: "தாய் பதிவு வெற்றிகரமாக பதிவு செய்யப்பட்டது.",
   antenatalAdded: "மகப்பேறுக்கு முந்தைய வருகை சேர்க்கப்பட்டது.",
   deliverySaved: "பிரசவ விவரங்கள் சேமிக்கப்பட்டன.",
   enterMaternalIdError: "தயவுசெய்து தாய் அடையாளத்தை உள்ளிடவும்",

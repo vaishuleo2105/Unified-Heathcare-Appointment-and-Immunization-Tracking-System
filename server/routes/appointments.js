@@ -4,6 +4,7 @@ const Appointment = require('../models/Appointment')
 const Slot = require('../models/Slot')
 const User = require('../models/User')
 const protect = require('../middleware/auth')
+const { sendBookingConfirmation } = require('../utils/reminderScheduler')
 
 const ML_SERVICE = 'http://localhost:5001'
 
@@ -136,6 +137,7 @@ router.post('/', async (req, res) => {
       { path: 'patientId', select: 'firstName lastName email' },
       { path: 'doctorId', select: 'firstName lastName' },
     ])
+    sendBookingConfirmation(populated).catch(() => {})
     return res.status(201).json(populated)
   } catch (err) {
     if (err.code === 11000) {

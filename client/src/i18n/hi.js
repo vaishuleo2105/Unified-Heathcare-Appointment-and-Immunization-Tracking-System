@@ -208,7 +208,7 @@ export default {
   deliveryRecord: "प्रसव रिकॉर्ड",
   visitHistoryCount: "दौरे का इतिहास",
   deliveryNotes: "प्रसव नोट्स...",
-  registerSuccess: "मातृ रिकॉर्ड सफलतापूर्वक पंजीकृत।",
+  maternalRegisterSuccess: "मातृ रिकॉर्ड सफलतापूर्वक पंजीकृत।",
   antenatalAdded: "प्रसवपूर्व दौरा जोड़ा गया।",
   deliverySaved: "प्रसव विवरण सहेजा गया।",
   enterMaternalIdError: "कृपया मातृ आईडी दर्ज करें",
