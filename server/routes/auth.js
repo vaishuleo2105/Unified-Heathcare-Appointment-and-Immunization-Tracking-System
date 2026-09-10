@@ -1,7 +1,7 @@
 const express = require('express')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
-const nodemailer = require('nodemailer')
+const axios = require('axios')
 const User = require('../models/User')
 const protect = require('../middleware/auth')
 
@@ -159,13 +159,6 @@ router.get('/users', protect, async (req, res) => {
   }
 })
 
-function createTransporter() {
-  return nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail',
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-  })
-}
-
 // FORGOT PASSWORD
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body
@@ -177,13 +170,16 @@ router.post('/forgot-password', async (req, res) => {
     user.resetOtp = otp
     user.resetOtpExpiry = new Date(Date.now() + 10 * 60 * 1000)
     await user.save()
-    const transporter = createTransporter()
-    await transporter.sendMail({
-      from: `"Unified Health" <${process.env.EMAIL_USER}>`,
-      to: user.email,
-      subject: 'Password Reset OTP',
-      html: `<p>Hi ${user.firstName},</p><p>Your OTP to reset your password is: <strong>${otp}</strong></p><p>This OTP expires in 10 minutes.</p>`,
-    })
+    await axios.post(
+      'https://api.brevo.com/v3/smtp/email',
+      {
+        sender: { name: 'Unified Health', email: process.env.EMAIL_FROM },
+        to: [{ email: user.email }],
+        subject: 'Password Reset OTP',
+        htmlContent: `<p>Hi ${user.firstName},</p><p>Your OTP to reset your password is: <strong>${otp}</strong></p><p>This OTP expires in 10 minutes.</p>`,
+      },
+      { headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' } }
+    )
     return res.json({ message: 'OTP sent to your email.' })
   } catch (err) {
     console.error('Forgot password error:', err.message)
