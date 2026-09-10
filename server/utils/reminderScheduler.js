@@ -1,13 +1,15 @@
 const cron = require('node-cron')
-const nodemailer = require('nodemailer')
+const Brevo = require('@getbrevo/brevo')
 const Appointment = require('../models/Appointment')
 
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',
-    port: 587,
-    secure: false,
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+function sendEmail(to, subject, html) {
+  const client = new Brevo.TransactionalEmailsApi()
+  client.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY)
+  return client.sendTransacEmail({
+    sender: { name: 'Unified Health', email: process.env.EMAIL_FROM },
+    to: [{ email: to }],
+    subject,
+    htmlContent: html,
   })
 }
 
@@ -49,19 +51,12 @@ async function sendRemindersForDate(dateStr, subject, message) {
     return
   }
 
-  const transporter = createTransporter()
-
   const results = await Promise.allSettled(
     appointments.map((appt) => {
       const patient = appt.patientId
       const doctor = appt.doctorId
       if (!patient?.email) return Promise.resolve()
-      return transporter.sendMail({
-        from: `"Unified Health" <${process.env.EMAIL_USER}>`,
-        to: patient.email,
-        subject,
-        html: buildEmailHtml(patient, doctor, appt, message),
-      })
+      return sendEmail(patient.email, subject, buildEmailHtml(patient, doctor, appt, message))
     })
   )
 
@@ -74,20 +69,12 @@ async function sendBookingConfirmation(appt) {
   const patient = appt.patientId
   const doctor = appt.doctorId
   if (!patient?.email) return
-
-  const transporter = createTransporter()
   try {
-    await transporter.sendMail({
-      from: `"Unified Health" <${process.env.EMAIL_USER}>`,
-      to: patient.email,
-      subject: '✅ Appointment Booked – Unified Health',
-      html: buildEmailHtml(
-        patient,
-        doctor,
-        appt,
-        'Your appointment has been successfully booked. Here are your appointment details:'
-      ),
-    })
+    await sendEmail(
+      patient.email,
+      '✅ Appointment Booked – Unified Health',
+      buildEmailHtml(patient, doctor, appt, 'Your appointment has been successfully booked. Here are your appointment details:')
+    )
     console.log(`[Reminders] Booking confirmation sent to ${patient.email}`)
   } catch (err) {
     console.error(`[Reminders] Failed to send booking confirmation: ${err.message}`)
