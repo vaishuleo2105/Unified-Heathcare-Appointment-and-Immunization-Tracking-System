@@ -1,11 +1,10 @@
 const cron = require('node-cron')
-const Brevo = require('@getbrevo/brevo')
+const { BrevoClient } = require('@getbrevo/brevo')
 const Appointment = require('../models/Appointment')
 
 function sendEmail(to, subject, html) {
-  const client = new Brevo.TransactionalEmailsApi()
-  client.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY)
-  return client.sendTransacEmail({
+  const client = new BrevoClient({ apiKey: process.env.BREVO_API_KEY })
+  return client.transactionalEmails.sendTransacEmail({
     sender: { name: 'Unified Health', email: process.env.EMAIL_FROM },
     to: [{ email: to }],
     subject,
