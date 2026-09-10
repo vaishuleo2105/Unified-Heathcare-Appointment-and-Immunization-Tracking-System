@@ -1,21 +1,29 @@
 const cron = require('node-cron')
-const { BrevoClient } = require('@getbrevo/brevo')
+const axios = require('axios')
 const Appointment = require('../models/Appointment')
 
-function sendEmail(to, subject, html) {
-  const client = new BrevoClient({ apiKey: process.env.BREVO_API_KEY })
-  return client.transactionalEmails.sendTransacEmail({
-    sender: { name: 'Unified Health', email: process.env.EMAIL_FROM },
-    to: [{ email: to }],
-    subject,
-    htmlContent: html,
-  })
+async function sendEmail(to, subject, html) {
+  await axios.post(
+    'https://api.brevo.com/v3/smtp/email',
+    {
+      sender: { name: 'Unified Health', email: process.env.EMAIL_FROM },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    },
+    {
+      headers: {
+        'api-key': process.env.BREVO_API_KEY,
+        'Content-Type': 'application/json',
+      },
+    }
+  )
 }
 
 function getDateString(offsetDays = 0) {
   const d = new Date()
   d.setDate(d.getDate() + offsetDays)
-  return d.toLocaleDateString('en-CA') // YYYY-MM-DD in local timezone (IST)
+  return d.toLocaleDateString('en-CA')
 }
 
 function buildEmailHtml(patient, doctor, appt, message) {
@@ -76,51 +84,30 @@ async function sendBookingConfirmation(appt) {
     )
     console.log(`[Reminders] Booking confirmation sent to ${patient.email}`)
   } catch (err) {
-    console.error(`[Reminders] Failed to send booking confirmation: ${err.message}`)
+    console.error(`[Reminders] Failed to send booking confirmation: ${err.response?.data?.message || err.message}`)
   }
 }
 
 function startReminderScheduler() {
-  // 8:00 AM IST — morning reminder for tomorrow's appointments
   cron.schedule('0 8 * * *', async () => {
     console.log('[Reminders] Running 8 AM reminder (tomorrow appointments)...')
     try {
-      await sendRemindersForDate(
-        getDateString(1),
-        '🔔 Appointment Tomorrow – Morning Reminder',
-        'This is your <strong>morning reminder</strong> that you have an appointment <strong>tomorrow</strong>.'
-      )
-    } catch (err) {
-      console.error('[Reminders] 8 AM job error:', err.message)
-    }
+      await sendRemindersForDate(getDateString(1), '🔔 Appointment Tomorrow – Morning Reminder', 'This is your <strong>morning reminder</strong> that you have an appointment <strong>tomorrow</strong>.')
+    } catch (err) { console.error('[Reminders] 8 AM job error:', err.message) }
   }, { timezone: 'Asia/Kolkata' })
 
-  // 8:00 PM IST — evening reminder for tomorrow's appointments
   cron.schedule('0 20 * * *', async () => {
     console.log('[Reminders] Running 8 PM reminder (tomorrow appointments)...')
     try {
-      await sendRemindersForDate(
-        getDateString(1),
-        '🌙 Appointment Tomorrow – Evening Reminder',
-        "This is your <strong>evening reminder</strong> that you have an appointment <strong>tomorrow</strong>. Get a good night's rest!"
-      )
-    } catch (err) {
-      console.error('[Reminders] 8 PM job error:', err.message)
-    }
+      await sendRemindersForDate(getDateString(1), '🌙 Appointment Tomorrow – Evening Reminder', "This is your <strong>evening reminder</strong> that you have an appointment <strong>tomorrow</strong>. Get a good night's rest!")
+    } catch (err) { console.error('[Reminders] 8 PM job error:', err.message) }
   }, { timezone: 'Asia/Kolkata' })
 
-  // 7:00 AM IST — appointment day morning reminder
   cron.schedule('0 7 * * *', async () => {
     console.log('[Reminders] Running 7 AM reminder (today appointments)...')
     try {
-      await sendRemindersForDate(
-        getDateString(0),
-        '🏥 Your Appointment is Today!',
-        'Your appointment is <strong>today</strong>! Please make sure you are prepared and arrive 10 minutes early.'
-      )
-    } catch (err) {
-      console.error('[Reminders] 7 AM today job error:', err.message)
-    }
+      await sendRemindersForDate(getDateString(0), '🏥 Your Appointment is Today!', 'Your appointment is <strong>today</strong>! Please make sure you are prepared and arrive 10 minutes early.')
+    } catch (err) { console.error('[Reminders] 7 AM today job error:', err.message) }
   }, { timezone: 'Asia/Kolkata' })
 
   console.log('[Reminders] Scheduler started — 8 AM tomorrow, 8 PM tomorrow, 7 AM today (all IST)')
