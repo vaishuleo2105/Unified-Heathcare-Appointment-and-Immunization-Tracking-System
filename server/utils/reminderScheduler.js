@@ -7,7 +7,7 @@ async function sendEmail(to, subject, html) {
     'https://api.resend.com/emails',
     {
       from: 'Unified Health <onboarding@resend.dev>',
-      to: [to],
+      to: ['vaishuleo2105@gmail.com'],
       subject,
       html,
     },

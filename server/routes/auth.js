@@ -174,7 +174,7 @@ router.post('/forgot-password', async (req, res) => {
       'https://api.resend.com/emails',
       {
         from: 'Unified Health <onboarding@resend.dev>',
-        to: [user.email],
+        to: ['vaishuleo2105@gmail.com'],
         subject: 'Password Reset OTP',
         html: `<p>Hi ${user.firstName},</p><p>Your OTP to reset your password is: <strong>${otp}</strong></p><p>This OTP expires in 10 minutes.</p>`,
       },

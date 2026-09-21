@@ -26,9 +26,8 @@ async function sendOtpEmail(to, otp) {
     'https://api.resend.com/emails',
     {
       from: 'Unified Health <onboarding@resend.dev>',
-      to: [to],
+      to: ['vaishuleo2105@gmail.com'],
       subject: 'Your Health ID Verification OTP',
-      html: `
         <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;border:1px solid #e0e0e0;border-radius:12px">
           <h2 style="color:#1a73e8;margin-bottom:8px">Health ID Verification</h2>
           <p style="color:#555;margin-bottom:24px">Use the OTP below to verify your identity and create your Health ID.</p>
