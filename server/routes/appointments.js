@@ -137,7 +137,7 @@ router.post('/', async (req, res) => {
       { path: 'patientId', select: 'firstName lastName email' },
       { path: 'doctorId', select: 'firstName lastName' },
     ])
-    sendBookingConfirmation(populated).catch(() => {})
+    sendBookingConfirmation(populated).catch((err) => console.error('[Email] Booking confirmation failed:', err.response?.data || err.message))
     return res.status(201).json(populated)
   } catch (err) {
     if (err.code === 11000) {
