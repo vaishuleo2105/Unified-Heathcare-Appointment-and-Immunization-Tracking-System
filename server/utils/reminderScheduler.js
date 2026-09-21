@@ -4,16 +4,16 @@ const Appointment = require('../models/Appointment')
 
 async function sendEmail(to, subject, html) {
   await axios.post(
-    'https://api.brevo.com/v3/smtp/email',
+    'https://api.resend.com/emails',
     {
-      sender: { name: 'Unified Health', email: process.env.EMAIL_FROM },
-      to: [{ email: to }],
+      from: 'Unified Health <onboarding@resend.dev>',
+      to: [to],
       subject,
-      htmlContent: html,
+      html,
     },
     {
       headers: {
-        'api-key': process.env.BREVO_API_KEY,
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
     }

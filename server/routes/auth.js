@@ -171,14 +171,14 @@ router.post('/forgot-password', async (req, res) => {
     user.resetOtpExpiry = new Date(Date.now() + 10 * 60 * 1000)
     await user.save()
     await axios.post(
-      'https://api.brevo.com/v3/smtp/email',
+      'https://api.resend.com/emails',
       {
-        sender: { name: 'Unified Health', email: process.env.EMAIL_FROM },
-        to: [{ email: user.email }],
+        from: 'Unified Health <onboarding@resend.dev>',
+        to: [user.email],
         subject: 'Password Reset OTP',
-        htmlContent: `<p>Hi ${user.firstName},</p><p>Your OTP to reset your password is: <strong>${otp}</strong></p><p>This OTP expires in 10 minutes.</p>`,
+        html: `<p>Hi ${user.firstName},</p><p>Your OTP to reset your password is: <strong>${otp}</strong></p><p>This OTP expires in 10 minutes.</p>`,
       },
-      { headers: { 'api-key': process.env.BREVO_API_KEY, 'Content-Type': 'application/json' } }
+      { headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' } }
     )
     return res.json({ message: 'OTP sent to your email.' })
   } catch (err) {
