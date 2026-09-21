@@ -1,5 +1,5 @@
 const express = require('express')
-const nodemailer = require('nodemailer')
+const axios = require('axios')
 const MaternalRecord = require('../models/MaternalRecord')
 const User = require('../models/User')
 const protect = require('../middleware/auth')
@@ -7,17 +7,7 @@ const protect = require('../middleware/auth')
 const router = express.Router()
 router.use(protect)
 
-// ── Email transporter ─────────────────────────────────────────────────────────
-const EMAIL_USER = process.env.EMAIL_USER || ''
-const EMAIL_PASS = process.env.EMAIL_PASS || ''
-const EMAIL_CONFIGURED = EMAIL_USER && EMAIL_USER !== 'your_gmail@gmail.com'
-
-const transporter = EMAIL_CONFIGURED
-  ? nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user: EMAIL_USER, pass: EMAIL_PASS },
-    })
-  : null
+const EMAIL_CONFIGURED = !!process.env.RESEND_API_KEY
 
 // ── In-memory OTP sessions { txnId -> { otp, contact, verified } } ────────────
 const sessions = {}
@@ -31,22 +21,26 @@ function genOtp() {
 }
 
 async function sendOtpEmail(to, otp) {
-  if (!transporter) throw new Error('Email not configured')
-  await transporter.sendMail({
-    from: `"Unified Health" <${EMAIL_USER}>`,
-    to,
-    subject: 'Your Health ID Verification OTP',
-    html: `
-      <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;border:1px solid #e0e0e0;border-radius:12px">
-        <h2 style="color:#1a73e8;margin-bottom:8px">Health ID Verification</h2>
-        <p style="color:#555;margin-bottom:24px">Use the OTP below to verify your identity and create your Health ID.</p>
-        <div style="background:#f0f4ff;border-radius:8px;padding:20px;text-align:center;letter-spacing:8px;font-size:32px;font-weight:bold;color:#1a73e8">
-          ${otp}
+  if (!EMAIL_CONFIGURED) throw new Error('Email not configured')
+  await axios.post(
+    'https://api.resend.com/emails',
+    {
+      from: 'Unified Health <onboarding@resend.dev>',
+      to: [to],
+      subject: 'Your Health ID Verification OTP',
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;border:1px solid #e0e0e0;border-radius:12px">
+          <h2 style="color:#1a73e8;margin-bottom:8px">Health ID Verification</h2>
+          <p style="color:#555;margin-bottom:24px">Use the OTP below to verify your identity and create your Health ID.</p>
+          <div style="background:#f0f4ff;border-radius:8px;padding:20px;text-align:center;letter-spacing:8px;font-size:32px;font-weight:bold;color:#1a73e8">
+            ${otp}
+          </div>
+          <p style="color:#888;font-size:12px;margin-top:20px">This OTP is valid for 10 minutes. Do not share it with anyone.</p>
         </div>
-        <p style="color:#888;font-size:12px;margin-top:20px">This OTP is valid for 10 minutes. Do not share it with anyone.</p>
-      </div>
-    `,
-  })
+      `,
+    },
+    { headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' } }
+  )
 }
 
 // POST /api/maternal/abha/generate-otp
