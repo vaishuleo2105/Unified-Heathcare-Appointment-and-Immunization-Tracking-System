@@ -10,12 +10,14 @@ const navItems = {
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
     { label: 'Maternal ID', icon: 'pregnant_woman', path: '/maternal' },
     { label: 'ABHA Health ID', icon: 'health_and_safety', path: '/abha' },
+    { label: 'Medical History', icon: 'history', path: '/dashboard/medical-history' },
     { label: 'My Profile', icon: 'person', path: '/dashboard/profile' },
   ],
   doctor: [
     { label: 'Overview', icon: 'dashboard', path: '/dashboard' },
     { label: "Today's Appointments", icon: 'calendar_month', path: '/dashboard/appointments' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
+    { label: 'Medical History', icon: 'history', path: '/dashboard/medical-history' },
     { label: 'My Profile', icon: 'person', path: '/dashboard/profile' },
   ],
   staff: [

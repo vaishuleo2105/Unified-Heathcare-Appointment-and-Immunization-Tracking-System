@@ -12,6 +12,7 @@ const doctorRoutes       = require('./routes/doctors')
 const immunizationRoutes = require('./routes/immunizations')
 const slotRoutes         = require('./routes/slots')
 const patientRoutes      = require('./routes/patients')
+const medicalHistoryRoutes = require('./routes/medicalHistory')
 const { startReminderScheduler } = require('./utils/reminderScheduler')
 
 const app = express()
@@ -33,6 +34,7 @@ app.use('/api/doctors',       doctorRoutes)
 app.use('/api/immunizations', immunizationRoutes)
 app.use('/api/slots',         slotRoutes)
 app.use('/api/patients',      patientRoutes)
+app.use('/api/medical-history', medicalHistoryRoutes)
 
 app.get('/', (req, res) => {
   res.json({ message: 'Unified Health API running' })
