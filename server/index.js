@@ -2,6 +2,7 @@ const express = require('express')
 const mongoose = require('mongoose')
 const cors = require('cors')
 const dotenv = require('dotenv')
+const path = require('path')
 
 dotenv.config()
 
@@ -16,6 +17,7 @@ const medicalHistoryRoutes = require('./routes/medicalHistory')
 const { startReminderScheduler } = require('./utils/reminderScheduler')
 
 const app = express()
+const clientDist = path.join(__dirname, '../client/dist')
 
 app.use(cors({
   origin: [
@@ -37,7 +39,7 @@ app.use('/api/patients',      patientRoutes)
 app.use('/api/medical-history', medicalHistoryRoutes)
 
 app.get('/', (req, res) => {
-  res.json({ message: 'Unified Health API running' })
+  res.sendFile(path.join(clientDist, 'index.html'))
 })
 
 app.get('/api/test-email', async (req, res) => {
@@ -57,6 +59,15 @@ app.get('/api/test-email', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.response?.data || err.message })
   }
+})
+
+app.use(express.static(clientDist))
+
+app.get('/{*splat}', (req, res, next) => {
+  if (req.path === '/api' || req.path.startsWith('/api/')) {
+    return next()
+  }
+  return res.sendFile(path.join(clientDist, 'index.html'))
 })
 
 const PORT = process.env.PORT || 5000
