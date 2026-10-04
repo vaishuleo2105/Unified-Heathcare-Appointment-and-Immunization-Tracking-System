@@ -14,6 +14,7 @@ function generateToken(id) {
 function userPayload(user) {
   return {
     id: user._id,
+    _id: user._id,
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
@@ -26,7 +27,16 @@ function userPayload(user) {
     testResults: user.testResults,
     abhaId: user.abhaId,
     abhaNumber: user.abhaNumber,
+    hospitalId: user.hospitalId,
+    department: user.department,
   }
+}
+
+function getErrorMessage(err) {
+  if (process.env.NODE_ENV === 'production') {
+    return 'Something went wrong. Please try again.'
+  }
+  return err.message
 }
 
 // REGISTER
@@ -34,7 +44,8 @@ router.post('/register', async (req, res) => {
   try {
     const {
       firstName, lastName, email, password, role,
-      age, gender, bloodType, medicalCondition, medication, testResults
+      age, gender, bloodType, medicalCondition, medication, testResults,
+      hospitalId, department
     } = req.body
 
     if (!firstName || !lastName || !email || !password) {
@@ -59,17 +70,20 @@ router.post('/register', async (req, res) => {
       medicalCondition: medicalCondition || (userRole === 'patient' ? 'None' : undefined),
       medication: medication || (userRole === 'patient' ? 'None' : undefined),
       testResults: testResults || (userRole === 'patient' ? 'Normal' : undefined),
+      hospitalId: hospitalId || undefined,
+      department: department || undefined,
     }
 
     const user = new User(userData)
     await user.save()
+    await user.populate('hospitalId')
 
     const token = generateToken(user._id)
 
     return res.status(201).json({ token, user: userPayload(user) })
   } catch (err) {
     console.error('Register error:', err.message)
-    return res.status(500).json({ message: 'Server error: ' + err.message })
+    return res.status(500).json({ message: getErrorMessage(err) })
   }
 })
 
@@ -82,7 +96,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Email and password are required' })
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() })
+    const user = await User.findOne({ email: email.toLowerCase() }).populate('hospitalId')
     if (!user) {
       return res.status(401).json({ message: 'No account found with this email. Please register first.' })
     }
@@ -112,19 +126,20 @@ router.post('/login', async (req, res) => {
     return res.json({ token, user: userPayload(user) })
   } catch (err) {
     console.error('Login error:', err.message)
-    return res.status(500).json({ message: 'Server error: ' + err.message })
+    return res.status(500).json({ message: getErrorMessage(err) })
   }
 })
 
 // VERIFY TOKEN
-router.get('/verify', protect, (req, res) => {
-  res.json({ user: userPayload(req.user) })
+router.get('/verify', protect, async (req, res) => {
+  const user = await User.findById(req.user._id).populate('hospitalId')
+  res.json({ user: userPayload(user || req.user) })
 })
 
 // UPDATE MEDICAL PROFILE
 router.put('/profile', protect, async (req, res) => {
   try {
-    const { firstName, lastName, age, gender, bloodType, medicalCondition, medication, testResults } = req.body
+    const { firstName, lastName, age, gender, bloodType, medicalCondition, medication, testResults, hospitalId, department } = req.body
     const updateData = {}
     if (firstName) updateData.firstName = firstName
     if (lastName) updateData.lastName = lastName
@@ -134,12 +149,14 @@ router.put('/profile', protect, async (req, res) => {
     if (medicalCondition !== undefined) updateData.medicalCondition = medicalCondition
     if (medication !== undefined) updateData.medication = medication
     if (testResults) updateData.testResults = testResults
+    if (hospitalId) updateData.hospitalId = hospitalId
+    if (department !== undefined) updateData.department = department
 
     const user = await User.findByIdAndUpdate(
       req.user._id,
       updateData,
       { new: true }
-    )
+    ).populate('hospitalId')
     return res.json({ user: userPayload(user) })
   } catch (err) {
     return res.status(500).json({ message: err.message })
@@ -155,7 +172,7 @@ router.get('/users', protect, async (req, res) => {
     const users = await User.find({}).select('-password').sort({ createdAt: -1 })
     return res.json(users)
   } catch (err) {
-    return res.status(500).json({ message: err.message })
+    return res.status(500).json({ message: getErrorMessage(err) })
   }
 })
 
@@ -183,7 +200,11 @@ router.post('/forgot-password', async (req, res) => {
     return res.json({ message: 'OTP sent to your email.' })
   } catch (err) {
     console.error('Forgot password error:', err.message)
-    return res.status(500).json({ message: 'Failed to send OTP. Check email configuration.' })
+    return res.status(500).json({
+      message: process.env.NODE_ENV === 'production'
+        ? 'Failed to send OTP. Please try again later.'
+        : 'Failed to send OTP. Check email configuration.'
+    })
   }
 })
 
@@ -198,7 +219,7 @@ router.post('/verify-otp', async (req, res) => {
     if (user.resetOtp !== otp) return res.status(400).json({ message: 'Incorrect OTP. Please try again.' })
     return res.json({ message: 'OTP verified.' })
   } catch (err) {
-    return res.status(500).json({ message: err.message })
+    return res.status(500).json({ message: getErrorMessage(err) })
   }
 })
 
@@ -218,7 +239,7 @@ router.post('/reset-password', async (req, res) => {
     await user.save()
     return res.json({ message: 'Password reset successfully. You can now login.' })
   } catch (err) {
-    return res.status(500).json({ message: err.message })
+    return res.status(500).json({ message: getErrorMessage(err) })
   }
 })
 

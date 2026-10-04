@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import axios from 'axios'
+import api from '../api'
 import RoleCard from '../components/RoleCard'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 
@@ -12,7 +12,7 @@ const ROLES = [
   { value: 'admin', icon: 'admin_panel_settings' },
 ]
 
-const API = '/api/auth'
+const API = '/auth'
 
 export default function AuthPage() {
   const navigate = useNavigate()
@@ -32,6 +32,8 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [hospitals, setHospitals] = useState([])
+  const [districtFilter, setDistrictFilter] = useState('All')
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -43,7 +45,24 @@ export default function AuthPage() {
     medicalCondition: 'None',
     medication: 'None',
     testResults: 'Normal',
+    hospitalId: '',
+    department: '',
   })
+
+  useEffect(() => {
+    async function loadHospitals() {
+      try {
+        const res = await api.get('/hospitals')
+        setHospitals(res.data)
+        if (res.data.length > 0) {
+          setForm(f => ({ ...f, hospitalId: f.hospitalId || res.data[0]._id }))
+        }
+      } catch (err) {
+        console.error('Failed to load hospitals:', err)
+      }
+    }
+    loadHospitals()
+  }, [])
 
   // Forgot password state
   const [fpStep, setFpStep] = useState(0) // 0=closed, 1=email, 2=otp, 3=newpass
@@ -76,6 +95,8 @@ export default function AuthPage() {
       medicalCondition: 'None',
       medication: 'None',
       testResults: 'Normal',
+      hospitalId: hospitals[0]?._id || '',
+      department: '',
     })
   }
 
@@ -83,7 +104,7 @@ export default function AuthPage() {
     e.preventDefault()
     setFpError(''); setFpLoading(true)
     try {
-      await axios.post(`${API}/forgot-password`, { email: fpEmail })
+      await api.post(`${API}/forgot-password`, { email: fpEmail })
       setFpStep(2)
     } catch (err) {
       setFpError(err.response?.data?.message || 'Failed to send OTP.')
@@ -94,7 +115,7 @@ export default function AuthPage() {
     e.preventDefault()
     setFpError(''); setFpLoading(true)
     try {
-      await axios.post(`${API}/verify-otp`, { email: fpEmail, otp: fpOtp })
+      await api.post(`${API}/verify-otp`, { email: fpEmail, otp: fpOtp })
       setFpStep(3)
     } catch (err) {
       setFpError(err.response?.data?.message || 'Invalid OTP.')
@@ -105,7 +126,7 @@ export default function AuthPage() {
     e.preventDefault()
     setFpError(''); setFpLoading(true)
     try {
-      const { data } = await axios.post(`${API}/reset-password`, { email: fpEmail, otp: fpOtp, newPassword: fpNewPass })
+      const { data } = await api.post(`${API}/reset-password`, { email: fpEmail, otp: fpOtp, newPassword: fpNewPass })
       setFpSuccess(data.message)
       setTimeout(() => { setFpStep(0); setFpEmail(''); setFpOtp(''); setFpNewPass(''); setFpSuccess('') }, 2000)
     } catch (err) {
@@ -120,6 +141,7 @@ export default function AuthPage() {
 
     if (!form.email || !form.password) return setError('Email and password are required')
     if (isRegister && (!form.firstName || !form.lastName)) return setError('First name and last name are required')
+    if (isRegister && !form.hospitalId) return setError('Please select a healthcare facility / hospital.')
 
     setLoading(true)
     try {
@@ -137,10 +159,12 @@ export default function AuthPage() {
             medicalCondition: form.medicalCondition,
             medication: form.medication,
             testResults: form.testResults,
+            hospitalId: form.hospitalId,
+            department: form.department || (role === 'doctor' ? 'General Medicine' : role === 'staff' ? 'General Staff' : undefined),
           }
         : { email: form.email, password: form.password, role }
 
-      const { data } = await axios.post(`${API}${endpoint}`, payload)
+      const { data } = await api.post(`${API}${endpoint}`, payload)
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
       setSuccess(isRegister ? t('registerSuccess') : t('loginSuccess'))
@@ -318,6 +342,71 @@ export default function AuthPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Tamil Nadu Hospital Selection */}
+                  <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant/60 space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider">
+                        <span className="material-symbols-outlined text-base">local_hospital</span>
+                        <span>Healthcare Facility (Tamil Nadu)</span>
+                      </div>
+                      <select
+                        value={districtFilter}
+                        onChange={(e) => setDistrictFilter(e.target.value)}
+                        className="text-xs px-2 py-1 bg-white border border-outline-variant rounded-md text-on-surface outline-none"
+                      >
+                        <option value="All">All Districts</option>
+                        {Array.from(new Set(hospitals.map((h) => h.district))).sort().map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-on-surface-variant" htmlFor="hospitalId">
+                        Registered Hospital / Centre *
+                      </label>
+                      <select
+                        id="hospitalId"
+                        value={form.hospitalId}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-3 py-2.5 bg-white border border-outline-variant rounded-lg text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary font-medium"
+                      >
+                        {hospitals
+                          .filter((h) => districtFilter === 'All' || h.district === districtFilter)
+                          .map((h) => (
+                            <option key={h._id} value={h._id}>
+                              {h.name} — {h.district} ({h.type})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    {form.hospitalId && (
+                      <div className="text-xs text-on-surface-variant flex items-center gap-1.5 bg-white/70 p-2 rounded-lg border border-outline-variant/40">
+                        <span className="material-symbols-outlined text-sm text-secondary">location_on</span>
+                        <span>
+                          {hospitals.find((h) => h._id === form.hospitalId)?.address || 'Tamil Nadu Healthcare Network'}
+                        </span>
+                      </div>
+                    )}
+
+                    {['doctor', 'staff'].includes(role) && (
+                      <div className="space-y-1 pt-1">
+                        <label className="text-xs font-semibold text-on-surface-variant" htmlFor="department">
+                          Department / Clinical Unit
+                        </label>
+                        <input
+                          id="department"
+                          value={form.department}
+                          onChange={handleChange}
+                          placeholder={role === 'doctor' ? 'e.g. Emergency Medicine, Cardiology, General' : 'e.g. Triage, Outpatient, Records'}
+                          className="w-full px-3 py-2 bg-white border border-outline-variant rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
 

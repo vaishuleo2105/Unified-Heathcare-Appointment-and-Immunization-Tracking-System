@@ -7,7 +7,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'https://unified-heathcare-appointment-and.onrender.com',
+        target: 'http://localhost:5000',
         changeOrigin: true,
       },
     },

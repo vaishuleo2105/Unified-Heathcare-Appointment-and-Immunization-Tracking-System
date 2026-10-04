@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../api'
 
 export default function ProtectedRoute({ children }) {
   const [status, setStatus] = useState('checking') // checking | valid | invalid
@@ -12,10 +12,8 @@ export default function ProtectedRoute({ children }) {
       return
     }
 
-    axios
-      .get('/api/auth/verify', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+    api
+      .get('/auth/verify')
       .then(() => setStatus('valid'))
       .catch(() => {
         localStorage.removeItem('token')

@@ -13,6 +13,7 @@ import ImmunizationPage from './pages/Immunization'
 import ProfilePage from './pages/Profile'
 import AbhaPage from './pages/AbhaPage'
 import MedicalHistory from './pages/MedicalHistory'
+import EmergencyTransferPage from './pages/EmergencyTransferPage'
 
 function Protected({ children }) {
   return <ProtectedRoute>{children}</ProtectedRoute>
@@ -36,6 +37,7 @@ export default function App() {
       <Route path="/dashboard/admin" element={<Protected><AdminDashboard /></Protected>} />
       <Route path="/dashboard/appointments" element={<Protected><AppointmentsPage /></Protected>} />
       <Route path="/dashboard/immunization" element={<Protected><ImmunizationPage /></Protected>} />
+      <Route path="/dashboard/emergency-transfer" element={<Protected><EmergencyTransferPage /></Protected>} />
       <Route path="/dashboard/profile" element={<Protected><ProfilePage /></Protected>} />
       <Route path="/maternal" element={<Protected><MaternalRecord /></Protected>} />
       <Route path="/abha" element={<Protected><AbhaPage /></Protected>} />

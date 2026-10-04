@@ -6,6 +6,21 @@ const Appointment = require('../models/Appointment')
 const Immunization = require('../models/Immunization')
 const MaternalRecord = require('../models/MaternalRecord')
 
+function canViewPatientRecord(requesterRole, requesterId, patientId) {
+  if (requesterRole?.toLowerCase() === 'patient') {
+    return String(requesterId).trim() === String(patientId).trim()
+  }
+  return ['doctor', 'staff', 'admin'].includes(requesterRole?.toLowerCase())
+}
+
+router.get('/my-history', protect, async (req, res) => {
+  try {
+    return res.redirect(`/api/medical-history/${req.user._id}`)
+  } catch (err) {
+    return res.status(500).json({ message: err.message })
+  }
+})
+
 // GET /api/medical-history/:patientId
 // Accessible by the patient themselves or any doctor/staff/admin
 router.get('/:patientId', protect, async (req, res) => {
@@ -14,8 +29,7 @@ router.get('/:patientId', protect, async (req, res) => {
     const requesterId = req.user._id.toString()
     const requesterRole = req.user.role
 
-    // Only the patient themselves or authorized roles can view
-    if (requesterRole === 'patient' && requesterId !== patientId) {
+    if (!canViewPatientRecord(requesterRole, requesterId, patientId)) {
       return res.status(403).json({ message: 'Access denied' })
     }
 
@@ -23,20 +37,20 @@ router.get('/:patientId', protect, async (req, res) => {
       User.findById(patientId).select('-password -resetOtp -resetOtpExpiry'),
       Appointment.find({ patientId })
         .populate('doctorId', 'firstName lastName')
-        .sort({ date: -1 }),
+        .sort({ date: -1, time: -1 }),
       Immunization.find({ patientId })
         .populate('administeredBy', 'firstName lastName')
         .sort({ date: -1 }),
       MaternalRecord.findOne({ patientId })
-        .populate('antenatalVisits.recordedBy', 'firstName lastName')
-        .populate('deliveryDetails.recordedBy', 'firstName lastName'),
     ])
 
-    if (!patient) return res.status(404).json({ message: 'Patient not found' })
+    if (!patient) {
+      return res.status(404).json({ message: 'Patient not found' })
+    }
 
-    res.json({ patient, appointments, immunizations, maternalRecord })
+    return res.json({ patient, appointments, immunizations, maternalRecord })
   } catch (err) {
-    res.status(500).json({ message: err.message })
+    return res.status(500).json({ message: err.message })
   }
 })
 

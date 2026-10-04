@@ -4,7 +4,10 @@ const cors = require('cors')
 const dotenv = require('dotenv')
 const path = require('path')
 
+dotenv.config({ path: path.join(__dirname, '.env') })
 dotenv.config()
+
+
 
 const authRoutes         = require('./routes/auth')
 const maternalRoutes     = require('./routes/maternal')
@@ -14,6 +17,8 @@ const immunizationRoutes = require('./routes/immunizations')
 const slotRoutes         = require('./routes/slots')
 const patientRoutes      = require('./routes/patients')
 const medicalHistoryRoutes = require('./routes/medicalHistory')
+const hospitalRoutes       = require('./routes/hospitals')
+const emergencyTransferRoutes = require('./routes/emergencyTransfers')
 const { startReminderScheduler } = require('./utils/reminderScheduler')
 
 const app = express()
@@ -37,9 +42,20 @@ app.use('/api/immunizations', immunizationRoutes)
 app.use('/api/slots',         slotRoutes)
 app.use('/api/patients',      patientRoutes)
 app.use('/api/medical-history', medicalHistoryRoutes)
+app.use('/api/hospitals',     hospitalRoutes)
+app.use('/api/emergency-transfers', emergencyTransferRoutes)
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(clientDist, 'index.html'))
+})
+
+app.get('/api/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  res.json({
+    status: 'ok',
+    database: dbStatus,
+    nodeEnv: process.env.NODE_ENV || 'development',
+  })
 })
 
 app.get('/api/test-email', async (req, res) => {

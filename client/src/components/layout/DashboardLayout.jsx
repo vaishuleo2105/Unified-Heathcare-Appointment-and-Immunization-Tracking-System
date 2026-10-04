@@ -8,6 +8,7 @@ const navItems = {
     { label: 'Overview', icon: 'dashboard', path: '/dashboard/patient' },
     { label: 'My Appointments', icon: 'calendar_month', path: '/dashboard/appointments' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
+    { label: 'Emergency Transfer', icon: 'sync_alt', path: '/dashboard/emergency-transfer' },
     { label: 'Maternal ID', icon: 'pregnant_woman', path: '/maternal' },
     { label: 'ABHA Health ID', icon: 'health_and_safety', path: '/abha' },
     { label: 'Medical History', icon: 'history', path: '/dashboard/medical-history' },
@@ -16,6 +17,7 @@ const navItems = {
   doctor: [
     { label: 'Overview', icon: 'dashboard', path: '/dashboard' },
     { label: "Today's Appointments", icon: 'calendar_month', path: '/dashboard/appointments' },
+    { label: 'Emergency Transfers', icon: 'sync_alt', path: '/dashboard/emergency-transfer' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
     { label: 'Medical History', icon: 'history', path: '/dashboard/medical-history' },
     { label: 'My Profile', icon: 'person', path: '/dashboard/profile' },
@@ -23,15 +25,20 @@ const navItems = {
   staff: [
     { label: 'Overview', icon: 'dashboard', path: '/dashboard' },
     { label: 'Manage Appointments', icon: 'calendar_month', path: '/dashboard/appointments' },
+    { label: 'Emergency Transfers', icon: 'sync_alt', path: '/dashboard/emergency-transfer' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
+    { label: 'Medical History', icon: 'history', path: '/dashboard/medical-history' },
     { label: 'My Profile', icon: 'person', path: '/dashboard/profile' },
   ],
   admin: [
     { label: 'Overview', icon: 'dashboard', path: '/dashboard' },
     { label: 'All Appointments', icon: 'calendar_month', path: '/dashboard/appointments' },
+    { label: 'Emergency Transfers', icon: 'sync_alt', path: '/dashboard/emergency-transfer' },
     { label: 'Immunization Records', icon: 'vaccines', path: '/dashboard/immunization' },
+    { label: 'Medical History', icon: 'history', path: '/dashboard/medical-history' },
   ],
 }
+
 
 export default function DashboardLayout({ children }) {
   const navigate = useNavigate()
@@ -124,9 +131,18 @@ export default function DashboardLayout({ children }) {
           >
             <span className="material-symbols-outlined">menu</span>
           </button>
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-on-surface-variant text-xl">location_on</span>
-            <span className="text-sm text-on-surface-variant">Rural Health Center</span>
+          <div className="flex items-center gap-2 overflow-hidden max-w-md">
+            <span className="material-symbols-outlined text-primary text-xl shrink-0">local_hospital</span>
+            <div className="truncate">
+              <span className="text-sm font-semibold text-on-surface truncate block">
+                {user.hospitalId?.name || (typeof user.hospitalId === 'string' ? user.hospitalName : null) || 'Peelamedu Urban Primary Health Centre'}
+              </span>
+              {user.hospitalId?.district && (
+                <span className="text-[11px] text-on-surface-variant block -mt-0.5">
+                  {user.hospitalId.district} · {user.hospitalId.type || 'Tamil Nadu Healthcare'}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />

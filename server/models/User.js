@@ -18,6 +18,8 @@ const userSchema = new mongoose.Schema(
     testResults:      { type: String, enum: ['Normal', 'Abnormal', 'Inconclusive'] },
     abhaId:           { type: String },
     abhaNumber:       { type: String },
+    hospitalId:       { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital' },
+    department:       { type: String, trim: true },
   },
   { timestamps: true }
 )
