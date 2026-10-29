@@ -16,6 +16,16 @@ const LOAD_COLORS = {
   'High Load':  'text-on-error-container bg-error-container',
 }
 
+const CANCELLATION_REASONS = [
+  'Personal or family emergency',
+  'Schedule conflict / Unexpected work commitment',
+  'Feeling better / Health condition resolved',
+  'Need to reschedule to a different date or doctor',
+  'Transportation or travel difficulty',
+  'Booked by mistake',
+  'Other reason',
+]
+
 const getUser = () => JSON.parse(localStorage.getItem('user') || '{}')
 
 export default function AppointmentsPage() {
@@ -34,6 +44,10 @@ export default function AppointmentsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [consultationId, setConsultationId] = useState('')
   const [consultation, setConsultation] = useState({ consultationOutcome: '', consultationNotes: '' })
+  const [cancelModalApt, setCancelModalApt] = useState(null)
+  const [selectedReason, setSelectedReason] = useState('Personal or family emergency')
+  const [customReason, setCustomReason] = useState('')
+  const [cancelling, setCancelling] = useState(false)
   const role = getUser().role
 
   useEffect(() => {
@@ -113,7 +127,24 @@ export default function AppointmentsPage() {
       setAppointments([data, ...appointments])
       setSuccess('Appointment booked successfully!')
       setShowForm(false)
-      setForm({ doctorId: '', date: '', time: '', type: suggestedType || 'General Checkup', notes: '' })
+      // Browser Desktop Push Notification
+      if ('Notification' in window) {
+        const assignedDoc = doctors.find(d => String(d._id) === String(form.doctorId))
+        const docLabel = assignedDoc ? `Dr. ${assignedDoc.firstName} ${assignedDoc.lastName}` : 'Assigned Doctor'
+        const notifyUser = () => {
+          new Notification('📅 Unified Health: Appointment Confirmed', {
+            body: `Appointment confirmed with ${docLabel} on ${form.date} at ${form.time} (${form.type}). Alerts sent to Patient, Doctor & Staff.`,
+          })
+        }
+        if (Notification.permission === 'granted') {
+          notifyUser()
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then(perm => {
+            if (perm === 'granted') notifyUser()
+          }).catch(() => {})
+        }
+      }
+
       // Live refresh doctor workload & ML suggestion after booking
       fetchWorkload()
       fetchSuggestion()
@@ -135,14 +166,59 @@ export default function AppointmentsPage() {
     }
   }
 
-  async function handleCancel(id) {
+  function openCancelModal(apt) {
+    setCancelModalApt(apt)
+    setSelectedReason('Personal or family emergency')
+    setCustomReason('')
+  }
+
+  async function confirmCancel() {
+    if (!cancelModalApt) return
+    const reasonText = selectedReason === 'Other reason'
+      ? (customReason.trim() || 'Other reason')
+      : (customReason.trim() ? `${selectedReason} - ${customReason.trim()}` : selectedReason)
+
+    setCancelling(true)
+    setError('')
     try {
-      await api.delete(`/appointments/${id}`)
-      setAppointments(appointments.filter(a => a._id !== id))
+      await api.post(`/appointments/${cancelModalApt._id}/cancel`, {
+        reason: reasonText,
+      })
+      const doctorName = cancelModalApt.doctorId?.firstName ? `Dr. ${cancelModalApt.doctorId.firstName} ${cancelModalApt.doctorId.lastName || ''}` : 'the doctor'
+      setAppointments(appointments.map(a => a._id === cancelModalApt._id ? {
+        ...a,
+        status: 'Cancelled',
+        cancellationReason: reasonText,
+        cancelledBy: getUser(),
+      } : a))
+      setSuccess(`Appointment cancelled successfully. A notification containing your reason ("${reasonText}") has been sent to ${doctorName} and clinic staff.`)
+      
+      // Native Device/Browser Notification popup
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        if (Notification.permission === 'granted') {
+          try {
+            new Notification('⚠️ Unified Health: Appointment Cancelled', {
+              body: `Appointment with ${doctorName} on ${cancelModalApt.date} at ${cancelModalApt.time} was CANCELLED. Reason: ${reasonText}`,
+            })
+          } catch {}
+        } else if (Notification.permission === 'default') {
+          Notification.requestPermission().then(perm => {
+            if (perm === 'granted') {
+              new Notification('⚠️ Unified Health: Appointment Cancelled', {
+                body: `Appointment with ${doctorName} was CANCELLED. Reason: ${reasonText}`,
+              })
+            }
+          }).catch(() => {})
+        }
+      }
+
+      setCancelModalApt(null)
       fetchWorkload()
       fetchSuggestion()
     } catch (err) {
       setError(err.response?.data?.message || 'Cancel failed')
+    } finally {
+      setCancelling(false)
     }
   }
 
@@ -199,6 +275,21 @@ export default function AppointmentsPage() {
     setShowForm(!showForm)
   }
 
+  function isWithin24Hours(dateStr, timeStr) {
+    if (!dateStr) return false
+    try {
+      const [year, month, day] = dateStr.split('-').map(Number)
+      const [hour, minute] = (timeStr || '09:00').split(':').map(Number)
+      const apptDateTime = new Date(year, month - 1, day, hour, minute, 0)
+      const now = new Date()
+      const msDiff = apptDateTime.getTime() - now.getTime()
+      const hoursDiff = msDiff / (1000 * 60 * 60)
+      return hoursDiff < 24
+    } catch (err) {
+      return false
+    }
+  }
+
   return (
     <DashboardLayout>
       <div className="flex items-center justify-between mb-6">
@@ -208,16 +299,25 @@ export default function AppointmentsPage() {
             {role === 'patient' ? 'Your scheduled appointments' : 'Manage all clinic appointments & scheduling'}
           </p>
         </div>
-        {['patient', 'staff', 'admin'].includes(role) && (
-          <button
-            onClick={toggleBookingForm}
-            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors shadow-sm"
-          >
-            <span className="material-symbols-outlined text-xl">add</span>
-            {role === 'patient' ? 'Book Appointment' : 'Schedule Appointment'}
-          </button>
-        )}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {['patient', 'staff', 'admin'].includes(role) && (
+            <button
+              onClick={toggleBookingForm}
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors shadow-sm"
+            >
+              <span className="material-symbols-outlined text-xl">add</span>
+              {role === 'patient' ? 'Book Appointment' : 'Schedule Appointment'}
+            </button>
+          )}
+        </div>
       </div>
+
+      {role === 'patient' && (
+        <div className="mb-4 p-3 bg-tertiary-fixed/30 border border-tertiary-fixed rounded-xl flex items-center gap-2 text-xs text-on-tertiary-container">
+          <span className="material-symbols-outlined text-base text-tertiary flex-shrink-0">info</span>
+          <span><strong>Cancellation Policy:</strong> Appointments can only be cancelled at least <strong>24 hours prior</strong> to the scheduled time. Automated email notifications are sent to assigned doctors and nurses upon cancellation.</span>
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 flex items-center gap-2 bg-error-container text-on-error-container px-4 py-3 rounded-lg text-sm">
@@ -469,65 +569,282 @@ export default function AppointmentsPage() {
           {role === 'patient' && <p className="text-xs mt-1">Click "Book Appointment" to get started</p>}
         </div>
       ) : (
-        <div className="space-y-3">
-          {appointments.map(apt => (
-            <div key={apt._id} className="bg-white border border-outline-variant rounded-xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-primary-fixed flex items-center justify-center flex-shrink-0">
-                <span className="material-symbols-outlined text-primary text-xl">calendar_month</span>
-              </div>
-              <div className="flex-1">
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <p className="text-sm font-semibold text-on-surface">
-                    {role === 'patient'
-                      ? `Dr. ${apt.doctorId?.firstName} ${apt.doctorId?.lastName}`
-                      : `${apt.patientId?.firstName} ${apt.patientId?.lastName}`}
-                  </p>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS_COLORS[apt.status]}`}>
-                    {apt.status}
-                  </span>
+        <div className="space-y-4">
+          {appointments.map(apt => {
+            const hasActions = (
+              (['staff', 'doctor', 'admin'].includes(role) && apt.status === 'Pending') ||
+              (['staff', 'admin'].includes(role) && apt.status === 'Confirmed') ||
+              (role === 'doctor' && apt.status === 'Confirmed') ||
+              ((role === 'patient' || role === 'admin') && ['Pending', 'Confirmed'].includes(apt.status))
+            )
+
+            return (
+              <div
+                key={apt._id}
+                className="bg-white border border-outline-variant rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3.5"
+              >
+                {/* ── Top Row: Icon + Main Details + Action Buttons ── */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-start sm:items-center gap-4 flex-1 min-w-0">
+                    <div className="w-11 h-11 rounded-xl bg-primary-fixed flex items-center justify-center flex-shrink-0 shadow-xs">
+                      <span className="material-symbols-outlined text-primary text-xl">calendar_month</span>
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <h3 className="text-sm font-bold text-on-surface">
+                          {role === 'patient'
+                            ? `Dr. ${apt.doctorId?.firstName || ''} ${apt.doctorId?.lastName || ''}`.trim() || 'Dr. Specialist'
+                            : `${apt.patientId?.firstName || ''} ${apt.patientId?.lastName || ''}`.trim() || 'Patient'}
+                        </h3>
+                        <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${STATUS_COLORS[apt.status] || 'bg-surface-container text-on-surface'}`}>
+                          {apt.status}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-on-surface-variant flex items-center gap-1.5 flex-wrap">
+                        <span className="font-medium text-on-surface">{apt.type}</span>
+                        <span>•</span>
+                        <span>{apt.date}</span>
+                        <span>•</span>
+                        <span>{apt.time}</span>
+                      </p>
+
+                      {apt.notes && (
+                        <p className="text-xs text-on-surface-variant mt-1 italic">
+                          "{apt.notes}"
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  {hasActions && (
+                    <div className="flex items-center gap-2 flex-wrap flex-shrink-0 self-start sm:self-center">
+                      {['staff', 'doctor', 'admin'].includes(role) && apt.status === 'Pending' && (
+                        <button
+                          onClick={() => handleStatus(apt._id, 'Confirmed')}
+                          className="px-3.5 py-1.5 bg-secondary-container text-on-secondary-container text-xs font-semibold rounded-lg hover:bg-secondary hover:text-white transition-colors"
+                        >
+                          Confirm
+                        </button>
+                      )}
+                      {['staff', 'admin'].includes(role) && apt.status === 'Confirmed' && (
+                        <button
+                          onClick={() => handleStatus(apt._id, 'Completed')}
+                          className="px-3.5 py-1.5 bg-primary-fixed text-primary text-xs font-semibold rounded-lg hover:bg-primary hover:text-white transition-colors"
+                        >
+                          Complete
+                        </button>
+                      )}
+                      {role === 'doctor' && apt.status === 'Confirmed' && (
+                        <button
+                          onClick={() => {
+                            setConsultationId(consultationId === apt._id ? '' : apt._id)
+                            setConsultation({
+                              consultationOutcome: apt.consultationOutcome || '',
+                              consultationNotes: apt.consultationNotes || '',
+                            })
+                          }}
+                          className="px-3.5 py-1.5 bg-primary-fixed text-primary text-xs font-semibold rounded-lg hover:bg-primary hover:text-white transition-colors"
+                        >
+                          Record outcome
+                        </button>
+                      )}
+                      {(role === 'patient' || role === 'admin') && ['Pending', 'Confirmed'].includes(apt.status) && (
+                        role === 'patient' && isWithin24Hours(apt.date, apt.time) ? (
+                          <span
+                            title="Appointments cannot be cancelled less than 24 hours prior to scheduled time. Please contact clinic staff."
+                            className="px-3 py-1.5 bg-outline-variant/30 text-on-surface-variant/70 text-xs font-medium rounded-lg cursor-not-allowed flex items-center gap-1 select-none"
+                          >
+                            <span className="material-symbols-outlined text-xs">lock</span>
+                            Cannot Cancel (&lt;24h)
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => openCancelModal(apt)}
+                            className="px-3 py-1.5 bg-error-container text-on-error-container text-xs font-semibold rounded-lg hover:bg-error hover:text-white transition-colors flex items-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-xs">close</span>
+                            Cancel
+                          </button>
+                        )
+                      )}
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs text-on-surface-variant">{apt.type} • {apt.date} • {apt.time}</p>
-                {apt.notes && <p className="text-xs text-on-surface-variant mt-1 italic">"{apt.notes}"</p>}
+
+                {/* ── Consultation Outcome Banner (Full Width) ── */}
+                {apt.consultationOutcome && (
+                  <div className="w-full p-3.5 bg-secondary-container/40 border border-secondary/20 rounded-xl flex items-start gap-2.5">
+                    <span className="material-symbols-outlined text-secondary text-base flex-shrink-0 mt-0.5">clinical_notes</span>
+                    <div className="flex-1 min-w-0 text-xs leading-relaxed">
+                      <span className="font-semibold text-secondary">Outcome: </span>
+                      <span className="text-on-surface font-medium">{apt.consultationOutcome}</span>
+                      {apt.consultationNotes && (
+                        <span className="text-on-surface-variant font-normal"> — {apt.consultationNotes}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Cancellation Reason Banner (Full Width) ── */}
+                {apt.status === 'Cancelled' && (
+                  <div className="w-full p-3.5 bg-error-container/20 border border-error/20 rounded-xl flex items-start gap-2.5">
+                    <span className="material-symbols-outlined text-error text-base flex-shrink-0 mt-0.5">event_busy</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[11px] font-bold text-error uppercase tracking-wider">Cancellation Reason</span>
+                        {apt.cancelledBy && (
+                          <span className="text-[11px] text-on-surface-variant font-medium">
+                            (by {apt.cancelledBy.firstName ? `${apt.cancelledBy.firstName} ${apt.cancelledBy.lastName || ''}` : 'User'})
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-on-surface mt-1 font-medium leading-relaxed">
+                        {apt.cancellationReason || 'No specific reason provided'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Doctor Outcome Form (Full Width) ── */}
+                {role === 'doctor' && consultationId === apt._id && (
+                  <div className="w-full bg-surface-container-low rounded-xl p-4 border border-outline-variant">
+                    <input
+                      value={consultation.consultationOutcome}
+                      onChange={e => setConsultation({ ...consultation, consultationOutcome: e.target.value })}
+                      placeholder="Consultation outcome / diagnosis *"
+                      className="w-full px-3 py-2 border border-outline-variant rounded-lg text-xs outline-none focus:ring-2 focus:ring-primary bg-white"
+                    />
+                    <textarea
+                      value={consultation.consultationNotes}
+                      onChange={e => setConsultation({ ...consultation, consultationNotes: e.target.value })}
+                      placeholder="Clinical notes, treatment, or follow-up advice"
+                      rows={2}
+                      className="w-full mt-2 px-3 py-2 border border-outline-variant rounded-lg text-xs outline-none focus:ring-2 focus:ring-primary resize-none bg-white"
+                    />
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        onClick={() => saveConsultation(apt._id)}
+                        className="px-3.5 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+                      >
+                        Save and complete
+                      </button>
+                      <button
+                        onClick={() => setConsultationId('')}
+                        className="px-3.5 py-1.5 text-xs font-semibold text-on-surface-variant hover:bg-surface-container rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex gap-2 flex-shrink-0">
-                {['staff', 'doctor', 'admin'].includes(role) && apt.status === 'Pending' && (
-                  <button
-                    onClick={() => handleStatus(apt._id, 'Confirmed')}
-                    className="px-3 py-1.5 bg-secondary-container text-on-secondary-container text-xs font-semibold rounded-lg hover:bg-secondary hover:text-white transition-colors"
-                  >
-                    Confirm
-                  </button>
-                )}
-                {['staff', 'admin'].includes(role) && apt.status === 'Confirmed' && (
-                  <button
-                    onClick={() => handleStatus(apt._id, 'Completed')}
-                    className="px-3 py-1.5 bg-primary-fixed text-primary text-xs font-semibold rounded-lg hover:bg-primary hover:text-white transition-colors"
-                  >
-                    Complete
-                  </button>
-                )}
-                {role === 'doctor' && apt.status === 'Confirmed' && (
-                  <button onClick={() => { setConsultationId(consultationId === apt._id ? '' : apt._id); setConsultation({ consultationOutcome: apt.consultationOutcome || '', consultationNotes: apt.consultationNotes || '' }) }} className="px-3 py-1.5 bg-primary-fixed text-primary text-xs font-semibold rounded-lg hover:bg-primary hover:text-white transition-colors">Record outcome</button>
-                )}
-                {(role === 'patient' || role === 'admin') && ['Pending', 'Confirmed'].includes(apt.status) && (
-                  <button
-                    onClick={() => handleCancel(apt._id)}
-                    className="px-3 py-1.5 bg-error-container text-on-error-container text-xs font-semibold rounded-lg hover:bg-error hover:text-white transition-colors"
-                  >
-                    Cancel
-                  </button>
-                )}
+            )
+          })}
+        </div>
+      )}
+
+      {/* Cancellation Reason Modal */}
+      {cancelModalApt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-surface rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-outline-variant">
+            <div className="flex items-center gap-3 text-error mb-4">
+              <div className="w-10 h-10 rounded-full bg-error-container flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-error">event_busy</span>
               </div>
-              {apt.consultationOutcome && <p className="w-full text-xs bg-secondary-container text-on-secondary-container rounded-lg px-2 py-1.5"><span className="font-semibold">Outcome:</span> {apt.consultationOutcome}{apt.consultationNotes && ` — ${apt.consultationNotes}`}</p>}
-              {role === 'doctor' && consultationId === apt._id && (
-                <div className="w-full bg-surface-container-low rounded-xl p-3">
-                  <input value={consultation.consultationOutcome} onChange={e => setConsultation({ ...consultation, consultationOutcome: e.target.value })} placeholder="Consultation outcome / diagnosis *" className="w-full px-3 py-2 border border-outline-variant rounded-lg text-xs outline-none focus:ring-2 focus:ring-primary" />
-                  <textarea value={consultation.consultationNotes} onChange={e => setConsultation({ ...consultation, consultationNotes: e.target.value })} placeholder="Clinical notes, treatment, or follow-up advice" rows={2} className="w-full mt-2 px-3 py-2 border border-outline-variant rounded-lg text-xs outline-none focus:ring-2 focus:ring-primary resize-none" />
-                  <div className="flex gap-2 mt-2"><button onClick={() => saveConsultation(apt._id)} className="px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg">Save and complete</button><button onClick={() => setConsultationId('')} className="px-3 py-1.5 text-xs font-semibold text-on-surface-variant">Cancel</button></div>
-                </div>
-              )}
+              <div>
+                <h2 className="text-lg font-bold text-on-surface">Cancel Appointment</h2>
+                <p className="text-xs text-on-surface-variant">
+                  Dr. {cancelModalApt.doctorId?.firstName} {cancelModalApt.doctorId?.lastName} · {cancelModalApt.date} at {cancelModalApt.time}
+                </p>
+              </div>
             </div>
-          ))}
+
+            <p className="text-xs text-on-surface-variant mb-4">
+              Please state the reason for this cancellation. This reason will be immediately dispatched in notifications to the assigned doctor and hospital staff.
+            </p>
+
+            {/* Quick Reason Options */}
+            <label className="block text-xs font-semibold text-on-surface mb-2">Select Reason</label>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {CANCELLATION_REASONS.map(reasonOption => (
+                <button
+                  key={reasonOption}
+                  type="button"
+                  onClick={() => {
+                    setSelectedReason(reasonOption)
+                    if (reasonOption !== 'Other reason') {
+                      setCustomReason('')
+                    }
+                  }}
+                  className={`px-3 py-1.5 text-xs rounded-lg border transition-all text-left ${
+                    selectedReason === reasonOption
+                      ? 'bg-error text-white border-error font-medium shadow-sm'
+                      : 'bg-surface-container-low text-on-surface-variant border-outline-variant hover:bg-surface-container'
+                  }`}
+                >
+                  {reasonOption}
+                </button>
+              ))}
+            </div>
+
+            {/* Additional note / custom explanation */}
+            <label className="block text-xs font-semibold text-on-surface mb-1.5">
+              Additional Details {selectedReason === 'Other reason' && <span className="text-error">*</span>}
+            </label>
+            <textarea
+              value={customReason}
+              onChange={(e) => setCustomReason(e.target.value)}
+              placeholder="Provide any specific details or notes for the doctor & clinical staff..."
+              rows={3}
+              className="w-full p-3 text-xs border border-outline-variant rounded-xl bg-surface-container-lowest text-on-surface outline-none focus:ring-2 focus:ring-error focus:border-error transition-all resize-none mb-4"
+            />
+
+            <div className="p-3 bg-error-container/20 border border-error/20 rounded-xl mb-5 flex items-start gap-2.5">
+              <span className="material-symbols-outlined text-error text-base flex-shrink-0 mt-0.5">notifications_active</span>
+              <span className="text-[11px] text-on-surface-variant leading-relaxed">
+                <strong>Instant Alert:</strong> A cancellation notice including your reason will be emailed immediately to <strong>Dr. {cancelModalApt.doctorId?.firstName} {cancelModalApt.doctorId?.lastName}</strong> and clinical staff. The time slot will be reopened for other patients.
+              </span>
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setCancelModalApt(null)
+                  setSelectedReason('Personal or family emergency')
+                  setCustomReason('')
+                }}
+                disabled={cancelling}
+                className="px-4 py-2 text-xs font-semibold text-on-surface-variant hover:bg-surface-container rounded-xl transition-colors"
+              >
+                Keep Appointment
+              </button>
+              <button
+                type="button"
+                onClick={confirmCancel}
+                disabled={cancelling || (selectedReason === 'Other reason' && !customReason.trim())}
+                className="px-5 py-2 text-xs font-semibold bg-error text-white rounded-xl hover:bg-error/90 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {cancelling ? (
+                  <>
+                    <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <span>Cancelling...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-sm">check</span>
+                    <span>Confirm Cancellation</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </DashboardLayout>

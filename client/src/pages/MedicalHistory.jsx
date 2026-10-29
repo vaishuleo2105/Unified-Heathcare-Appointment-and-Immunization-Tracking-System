@@ -376,9 +376,12 @@ export default function MedicalHistory() {
   const location = useLocation()
   const navigate = useNavigate()
   const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const isClinician = ['doctor', 'staff', 'admin'].includes(user.role)
+  const queryPatientId = new URLSearchParams(location.search).get('patientId')
+
   const [patients, setPatients] = useState([])
   const [selectedPatientId, setSelectedPatientId] = useState(
-    new URLSearchParams(location.search).get('patientId') || user.id || user._id || ''
+    queryPatientId || (!isClinician ? (user.id || user._id || '') : '')
   )
 
   const [data, setData] = useState(null)
@@ -387,13 +390,13 @@ export default function MedicalHistory() {
 
   useEffect(() => {
     async function loadPatients() {
-      if (!['doctor', 'staff', 'admin'].includes(user.role)) return
+      if (!isClinician) return
 
       try {
         const res = await api.get('/patients')
         setPatients(res.data)
 
-        if (!selectedPatientId && res.data.length > 0) {
+        if (!queryPatientId && res.data.length > 0) {
           setSelectedPatientId(res.data[0]._id)
         }
       } catch (err) {
@@ -402,7 +405,7 @@ export default function MedicalHistory() {
     }
 
     loadPatients()
-  }, [user.role, selectedPatientId])
+  }, [user.role, queryPatientId, isClinician])
 
   useEffect(() => {
     if (!selectedPatientId) {
@@ -437,22 +440,34 @@ export default function MedicalHistory() {
     </DashboardLayout>
   )
 
-  const patient = data?.patient || {
-    firstName: user.firstName || 'Vaishali',
-    lastName: user.lastName || 'S',
+  const patient = data?.patient || (isClinician ? {
+    firstName: 'Select',
+    lastName: 'Patient',
+    age: '—',
+    gender: '—',
+    bloodType: '—',
+    abhaId: '—',
+    email: '—',
+    medicalCondition: '—',
+    medication: '—',
+    testResults: '—',
+  } : {
+    firstName: user.firstName || 'Induja',
+    lastName: user.lastName || 'E',
     age: user.age || 28,
     gender: user.gender || 'Female',
     bloodType: user.bloodType || 'O+',
-    abhaId: user.abhaId || '91-8273-9021-4432',
-    email: user.email || 'vaishali.s@unifiedhealth.com',
+    abhaId: user.abhaId || 'induja.e@abdm',
+    email: user.email || 'indujaee@gmail.com',
     medicalCondition: user.medicalCondition || 'Hypertension, Seasonal Allergies',
     medication: user.medication || 'Telmisartan 40mg, Cetirizine 10mg',
     testResults: user.testResults || 'Normal',
-  }
+  })
 
   const savedAppointments = data?.appointments || []
   const savedImmunizations = data?.immunizations || []
   const maternalRecord = data?.maternalRecord || null
+
   const hasSavedHistory = savedAppointments.length > 0
     || savedImmunizations.length > 0
     || Boolean(maternalRecord?.antenatalVisits?.length || maternalRecord?.deliveryDetails?.date)
@@ -676,6 +691,11 @@ export default function MedicalHistory() {
                     {apt.consultationOutcome && (
                       <p className="text-xs text-on-surface-variant">Outcome: {apt.consultationOutcome}</p>
                     )}
+                    {apt.cancellationReason && (
+                      <p className="text-xs text-error font-medium mt-1">
+                        Cancellation Reason: <span className="font-normal italic">{apt.cancellationReason}</span>
+                      </p>
+                    )}
                   </div>
                   <span className={`text-xs px-2 py-1 rounded-full font-medium ${
                     apt.status === 'Completed' ? 'bg-secondary-fixed text-on-secondary-fixed' :
@@ -698,6 +718,11 @@ export default function MedicalHistory() {
                   <p className="text-sm font-medium text-on-surface">{appointment.type} · {appointment.status}</p>
                   <p className="text-xs text-on-surface-variant">{formatDate(appointment.date)} at {appointment.time}</p>
                   {appointment.notes && <p className="text-xs text-on-surface-variant mt-1">{appointment.notes}</p>}
+                  {appointment.cancellationReason && (
+                    <p className="text-xs text-error font-medium mt-1">
+                      Cancellation Reason: <span className="font-normal italic">{appointment.cancellationReason}</span>
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

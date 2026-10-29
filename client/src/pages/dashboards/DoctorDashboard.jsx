@@ -63,6 +63,9 @@ export default function DoctorDashboard() {
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-on-surface">{apt.patientId?.firstName} {apt.patientId?.lastName}</p>
                     <p className="text-xs text-on-surface-variant">{apt.type} • {apt.time}</p>
+                    {apt.status === 'Cancelled' && apt.cancellationReason && (
+                      <p className="text-xs text-error font-medium truncate mt-0.5">Reason: {apt.cancellationReason}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-semibold px-2 py-1 rounded-full ${STATUS_COLORS[apt.status]}`}>{apt.status}</span>

@@ -38,6 +38,7 @@ export default function AuthPage() {
     firstName: '',
     lastName: '',
     email: '',
+    phone: '9791868857',
     password: '',
     age: '30',
     gender: 'Female',
@@ -73,7 +74,33 @@ export default function AuthPage() {
   const [fpError, setFpError] = useState('')
   const [fpSuccess, setFpSuccess] = useState('')
 
+  // Telegram alert state during registration
+  const [showTelegramModal, setShowTelegramModal] = useState(false)
+  const [telegramChatId, setTelegramChatId] = useState('')
+  const [telegramSyncing, setTelegramSyncing] = useState(false)
+  const [telegramStatus, setTelegramStatus] = useState(null)
+  const [manualChatId, setManualChatId] = useState('')
+
   const isRegister = mode === 'register'
+
+  async function handleTelegramSync(providedId = null) {
+    setTelegramSyncing(true)
+    try {
+      const params = {}
+      const targetId = typeof providedId === 'string' ? providedId : manualChatId.trim()
+      if (targetId) params.chatId = targetId
+      const { data } = await api.get('/telegram-sync', { params })
+      setTelegramStatus(data)
+      if (data.success && data.chatId) {
+        setTelegramChatId(data.chatId)
+        setTimeout(() => setShowTelegramModal(false), 2000)
+      }
+    } catch (err) {
+      setTelegramStatus({ success: false, message: err.response?.data?.error || err.message })
+    } finally {
+      setTelegramSyncing(false)
+    }
+  }
 
   function handleChange(e) {
     setForm({ ...form, [e.target.id]: e.target.value })
@@ -153,6 +180,8 @@ export default function AuthPage() {
             email: form.email,
             password: form.password,
             role,
+            phone: form.phone || '9791868857',
+            telegramChatId: telegramChatId || undefined,
             age: Number(form.age) || 30,
             gender: form.gender,
             bloodType: form.bloodType,
@@ -421,6 +450,19 @@ export default function AuthPage() {
                 </div>
               </div>
 
+              {isRegister && (
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-on-surface-variant ml-1" htmlFor="phone">Phone Number (for SMS Alerts)</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <span className="material-symbols-outlined text-outline text-xl">call</span>
+                    </div>
+                    <input id="phone" type="tel" value={form.phone} onChange={handleChange} placeholder="9791868857"
+                      className="w-full pl-12 pr-4 py-3 bg-white border border-outline-variant rounded-lg text-base focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all" />
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-on-surface-variant ml-1" htmlFor="password">{t('password')}</label>
                 <div className="relative">
@@ -435,6 +477,37 @@ export default function AuthPage() {
                   </button>
                 </div>
               </div>
+
+              {isRegister && (
+                <div className="p-3.5 bg-sky-50/80 border border-sky-200 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sky-600 text-lg">notifications_active</span>
+                      <span className="text-xs font-bold text-sky-950">Free Telegram Bot Alerts (Optional)</span>
+                    </div>
+                    {telegramChatId ? (
+                      <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs">check</span> Linked
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-semibold text-sky-700 bg-sky-100 px-2 py-0.5 rounded-full">
+                        100% Free
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-sky-800 leading-relaxed">
+                    Receive instant appointment and cancellation alerts directly on your phone via <strong>@uni_h3alth_bot</strong>.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowTelegramModal(true)}
+                    className="w-full py-2 px-3 border border-sky-300 bg-white hover:bg-sky-100 text-sky-800 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                  >
+                    <span className="material-symbols-outlined text-sm text-sky-600">send</span>
+                    {telegramChatId ? `Linked (Chat ID: ${telegramChatId}) — Click to change` : 'Connect Telegram Alert Bot'}
+                  </button>
+                </div>
+              )}
 
               <div className="flex items-center justify-between py-2">
                 <label className="flex items-center gap-2 cursor-pointer group">
@@ -552,6 +625,139 @@ export default function AuthPage() {
                 </button>
               </form>
             )}
+          </div>
+        </div>
+      )}
+      {/* Telegram Setup Modal on Registration */}
+      {showTelegramModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-outline-variant animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-4 border-b border-outline-variant mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-2xl">send</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-on-surface text-base">Connect Telegram Alerts</h3>
+                  <p className="text-xs text-on-surface-variant">Real-time alerts for your mobile</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTelegramModal(false)}
+                className="text-on-surface-variant hover:text-on-surface p-1 rounded-lg"
+              >
+                <span className="material-symbols-outlined text-xl">close</span>
+              </button>
+            </div>
+
+            <p className="text-xs text-on-surface-variant leading-relaxed mb-4">
+              Connect to our bot <strong>(@uni_h3alth_bot)</strong> to receive instant, 100% free appointment confirmations and cancellation details on your phone.
+            </p>
+
+            <div className="space-y-3.5 mb-5">
+              <div className="p-3 bg-surface-container-low rounded-xl border border-outline-variant/60">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] font-bold flex items-center justify-center">1</span>
+                  <span className="text-xs font-bold text-on-surface">Open Bot & Tap START</span>
+                </div>
+                <p className="text-[11px] text-on-surface-variant mb-2 pl-7">
+                  Open the bot in Telegram and tap <strong>START</strong> (or send "hello").
+                </p>
+                <div className="pl-7">
+                  <a
+                    href="https://t.me/uni_h3alth_bot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs"
+                  >
+                    <span className="material-symbols-outlined text-sm">open_in_new</span>
+                    Open @uni_h3alth_bot in Telegram
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-3 bg-surface-container-low rounded-xl border border-outline-variant/60">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] font-bold flex items-center justify-center">2</span>
+                  <span className="text-xs font-bold text-on-surface">Auto-Detect & Link</span>
+                </div>
+                <p className="text-[11px] text-on-surface-variant mb-2.5 pl-7">
+                  After pressing START in Telegram, click below to link your account.
+                </p>
+                <div className="pl-7">
+                  <button
+                    type="button"
+                    onClick={() => handleTelegramSync()}
+                    disabled={telegramSyncing}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors shadow-xs disabled:opacity-50"
+                  >
+                    {telegramSyncing ? (
+                      <>
+                        <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        <span>Detecting Telegram Chat...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-sm">sync</span>
+                        <span>Auto-Detect & Link My Telegram</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant/40">
+                <label className="text-[11px] font-semibold text-on-surface block mb-1">
+                  Or enter your Telegram Chat ID manually:
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={manualChatId}
+                    onChange={(e) => setManualChatId(e.target.value)}
+                    placeholder="e.g. 123456789"
+                    className="flex-1 px-3 py-1.5 text-xs border border-outline-variant rounded-lg bg-white text-on-surface outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleTelegramSync()}
+                    disabled={telegramSyncing || !manualChatId.trim()}
+                    className="px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    Link ID
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {telegramStatus && (
+              <div className={`p-3 rounded-xl mb-4 text-xs ${telegramStatus.success ? 'bg-secondary-container text-on-secondary-container border border-secondary/30' : 'bg-amber-50 text-amber-900 border border-amber-200'}`}>
+                <div className="flex items-start gap-2">
+                  <span className="material-symbols-outlined text-base flex-shrink-0 mt-0.5">
+                    {telegramStatus.success ? 'check_circle' : 'info'}
+                  </span>
+                  <div>
+                    <p className="font-semibold">{telegramStatus.message}</p>
+                    {telegramStatus.instruction && (
+                      <p className="mt-1 whitespace-pre-line text-[11px] opacity-90">{telegramStatus.instruction}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowTelegramModal(false)}
+                className="px-4 py-2 text-xs font-semibold bg-surface-container hover:bg-surface-container-high text-on-surface rounded-xl transition-colors"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}

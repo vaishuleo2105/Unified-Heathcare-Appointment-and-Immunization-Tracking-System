@@ -1,0 +1,44 @@
+Total tables: 6
+
+=== TABLE 0 (36 rows, 2 cols) ===
+  Row 0: ACKNOWLEDGEMENT | i
+  Row 1: SYNOPSIS | ii
+  Row 2: 1.  INTRODUCTION | 1
+  Row 3: 1.1 Project Overview | 1
+  Row 4: 1.2 Project Objectives | 2
+
+=== TABLE 1 (14 rows, 2 cols) ===
+  Row 0: Technology | Purpose
+  Row 1: React.js / Vite | Frontend library with TailwindCSS & react-i18next (6 regional languages) for responsive, accessible UI. Selection Justification: Chosen for its component-based virtual DOM architecture, ensuring sub-second UI re-renders across multi-role dashboards and seamless integration with react-i18next for 6-language instant rendering without full page reloads.
+  Row 2: Node.js | JavaScript runtime environment for executing backend server operations. Selection Justification: Selected for its asynchronous, non-blocking I/O event loop, enabling efficient high-concurrency handling during peak appointment booking windows and real-time referral data dispatches.
+  Row 3: Express.js | Backend web framework for designing RESTful API endpoints and middleware routing. Selection Justification: Chosen for its lightweight routing pipeline, robust middleware support for JWT authentication, and seamless JSON serialization for REST API endpoints.
+  Row 4: MongoDB & Mongoose | NoSQL document database and ODM for storing flexible patient medical records, appointments, and user profiles. Selection Justification: Selected over rigid relational databases because patient EHRs, maternal trimester vitals, and immunization batch logs vary dynamically. Mongoose ODM enforces strict schema validation while retaining document flexibility.
+
+=== TABLE 2 (16 rows, 3 cols) ===
+  Row 0: ID | Requirement | Description
+  Row 1: FR1 | Patient Registration & Auth | The system shall allow patients, doctors, staff, and admins to register, authenticate, and manage sessions securely via JWT and ABHA ID.
+  Row 2: FR2 | Appointment Booking | The system shall enable patients to search for doctors, view available slots, and book appointments online.
+  Row 3: FR3 | Medical History Consolidation | The system shall store and retrieve unified patient medical records (diagnoses, prescriptions, test results, allergies) across all visited hospitals.
+  Row 4: FR4 | Inter-Hospital Referral | The system shall support transfer of medical history summaries and critical emergency data between hospitals during patient referrals.
+
+=== TABLE 3 (9 rows, 3 cols) ===
+  Row 0: ID | Requirement | Description
+  Row 1: NFR1 | Usability | The system shall provide an intuitive, accessible Organic Modernist interface suitable for patients of all digital literacy levels and healthcare professionals.
+  Row 2: NFR2 | Performance | The system shall process API requests within sub-second response times and perform ML model inference in under 200 milliseconds.
+  Row 3: NFR3 | Reliability | The system shall ensure 99.9% availability for retrieving critical medical histories during emergency patient referrals.
+  Row 4: NFR4 | Security & Privacy | The system shall protect sensitive patient data using JWT authentication, password hashing with bcryptjs, and HTTPS protocol.
+
+=== TABLE 4 (6 rows, 3 cols) ===
+  Row 0: Entity / Data Group | Purpose | Field Names
+  Row 1: User Collection | Stores patient and admin profile data, credentials, and demographic information. | _id, name, email, password, role, age, gender, bloodType, phone, address
+  Row 2: Doctor Collection | Stores doctor professional details, qualifications, department, and consultation fees. | _id, userId, specialization, qualification, experience, fee, hospitalName
+  Row 3: Appointment Collection | Stores appointment bookings, symptoms, triage type, status, and ML risk scores. | _id, patientId, doctorId, slotId, appointmentType, status, symptoms, predictedType, riskScore
+  Row 4: Slot Collection | Stores doctor consultation slot schedules and availability states. | _id, doctorId, date, startTime, endTime, isBooked
+
+=== TABLE 5 (19 rows, 3 cols) ===
+  Row 0: Test ID | Test Case | Expected Result
+  Row 1: TC01 | Patient Registration & Authentication | User registers and logs in with valid credentials; JWT token issued, user dashboard loaded successfully
+  Row 2: TC02 | Doctor Profile & Slot Creation | Admin creates doctor profile and assigns consultation slots; slots registered in MongoDB
+  Row 3: TC03 | Online Appointment Booking | Patient selects doctor slot, enters symptoms, and confirms booking; appointment created with status Pending
+  Row 4: TC04 | ML Appointment Type Prediction | Patient submits symptoms; Flask /predict-type returns predicted type and confidence score
+

@@ -106,26 +106,33 @@ export default function EmergencyTransferPage() {
         api.get('/emergency-transfers'),
         api.get('/hospitals'),
       ])
-      setTransfers(transfersRes.data)
-      setHospitals(hospitalsRes.data)
+      const transferList = Array.isArray(transfersRes?.data) ? transfersRes.data : []
+      const hospList = Array.isArray(hospitalsRes?.data) ? hospitalsRes.data : []
+      setTransfers(transferList)
+      setHospitals(hospList)
 
       if (['doctor', 'staff', 'admin'].includes(user.role)) {
         try {
           const patRes = await api.get('/patients')
-          setPatients(patRes.data)
-          if (!form.patientId && patRes.data.length > 0) {
-            setForm((f) => ({ ...f, patientId: patRes.data[0]._id }))
+          const patList = Array.isArray(patRes?.data) ? patRes.data : []
+          setPatients(patList)
+          if (!form.patientId && patList.length > 0) {
+            setForm((f) => ({ ...f, patientId: patList[0]._id }))
           }
-        } catch {}
+        } catch {
+          setPatients([])
+        }
       }
 
       // Auto-set source hospital if empty
-      if (!form.sourceHospitalId && hospitalsRes.data.length > 0) {
-        const defaultHosp = hospitalsRes.data.find((h) => h._id === (user.hospitalId?._id || user.hospitalId)) || hospitalsRes.data[0]
+      if (!form.sourceHospitalId && hospList.length > 0) {
+        const defaultHosp = hospList.find((h) => h._id === (user.hospitalId?._id || user.hospitalId)) || hospList[0]
         setForm((f) => ({ ...f, sourceHospitalId: defaultHosp._id }))
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load emergency transfer data')
+      setTransfers([])
+      setHospitals([])
     } finally {
       setLoading(false)
     }
@@ -134,8 +141,10 @@ export default function EmergencyTransferPage() {
   async function refreshTransfers() {
     try {
       const res = await api.get('/emergency-transfers')
-      setTransfers(res.data)
-    } catch {}
+      setTransfers(Array.isArray(res?.data) ? res.data : [])
+    } catch {
+      setTransfers([])
+    }
   }
 
   function handleCategoryToggle(catId) {
@@ -293,28 +302,32 @@ export default function EmergencyTransferPage() {
   }
 
   // Filter transfers for current view
+  const safeTransfers = Array.isArray(transfers) ? transfers : []
+  const safeHospitals = Array.isArray(hospitals) ? hospitals : []
+  const safePatients = Array.isArray(patients) ? patients : []
+
   const userHospId = user.hospitalId?._id || user.hospitalId || ''
-  const incomingTransfers = transfers.filter((t) =>
+  const incomingTransfers = safeTransfers.filter((t) =>
     user.role === 'patient'
       ? false
-      : t.destinationHospitalId?._id === userHospId || (user.role === 'admin' && !userHospId)
+      : t?.destinationHospitalId?._id === userHospId || (user.role === 'admin' && !userHospId)
   )
-  const outgoingTransfers = transfers.filter((t) =>
+  const outgoingTransfers = safeTransfers.filter((t) =>
     user.role === 'patient'
       ? false
-      : t.sourceHospitalId?._id === userHospId || t.initiatedBy?._id === (user.id || user._id)
+      : t?.sourceHospitalId?._id === userHospId || t?.initiatedBy?._id === (user.id || user._id)
   )
-  const patientTransfers = transfers.filter((t) =>
-    t.patientId?._id === (user.id || user._id) || t.patientId === (user.id || user._id)
+  const patientTransfers = safeTransfers.filter((t) =>
+    t?.patientId?._id === (user.id || user._id) || t?.patientId === (user.id || user._id)
   )
 
-  const activeHospital = hospitals.find((h) => h._id === userHospId) || {
+  const activeHospital = safeHospitals.find((h) => h?._id === userHospId) || {
     name: user.hospitalId?.name || 'Peelamedu Urban Primary Health Centre',
     district: user.hospitalId?.district || 'Coimbatore',
     type: user.hospitalId?.type || 'Urban Primary Health Centre (UPHC)',
   }
 
-  const selectedPatientObj = patients.find((p) => p._id === form.patientId) || (user.role === 'patient' ? user : null)
+  const selectedPatientObj = safePatients.find((p) => p?._id === form.patientId) || (user.role === 'patient' ? user : null)
 
   return (
     <DashboardLayout>

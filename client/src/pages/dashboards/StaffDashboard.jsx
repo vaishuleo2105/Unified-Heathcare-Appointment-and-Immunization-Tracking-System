@@ -28,7 +28,13 @@ export default function StaffDashboard() {
 
   async function handleStatus(id, status) {
     try {
-      const { data } = await api.patch(`/appointments/${id}/status`, { status })
+      let body = { status }
+      if (status === 'Cancelled') {
+        const staffReason = window.prompt('Please enter the reason for cancellation (visible to doctor and patient):', 'Cancelled by hospital staff')
+        if (staffReason === null) return
+        body.cancellationReason = staffReason.trim() || 'Cancelled by hospital staff'
+      }
+      const { data } = await api.patch(`/appointments/${id}/status`, body)
       setAppointments(appointments.map(a => a._id === id ? data : a))
     } catch (err) {
       setError(err.response?.data?.message || 'Update failed')

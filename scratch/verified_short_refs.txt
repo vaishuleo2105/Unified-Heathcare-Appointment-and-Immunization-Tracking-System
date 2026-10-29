@@ -1,0 +1,36 @@
+P81: Figure 1.1 shows the overall workflow of the unified healthcare system.
+P94: Table 1.1 lists the software tools and technologies used in the project.
+P141: Table 2.1 lists the functional requirements of the system.
+P145: Table 2.2 lists the non-functional requirements of the system.
+P154: Figure 3.1 shows the system architecture of the unified healthcare platform.
+P165: Algorithm 2 details the dual-mode notification and cancellation workflow.
+P191: Figure 3.2 shows the UML activity diagram of the system.
+P201: Figure 3.3 shows the BPMN diagram of the system workflow.
+P216: Figure 3.4 shows the database schema of the healthcare system.
+P223: Table 3.1 describes the database collections and schema entities.
+P225: Algorithm 1 details the appointment urgency triage classification algorithm.
+P230: Figure 3.5 shows the machine learning workflow pipeline.
+P239: Figure 4.1 shows the complete 3-tier MVC architecture diagram.
+P265: Figure 4.2 shows the authentication and login interface.
+P268: Figure 4.3 shows the patient dashboard interface.
+P271: Figure 4.4 shows the regional language selection controls.
+P274: Figure 4.5 shows the digital ABHA ID verification portal.
+P289: Figure 4.6 shows the hospital administrator management module.
+P309: Figure 4.7 shows the doctor and patient consultation portal.
+P327: Figure 4.8 shows the unified patient EHR history view.
+P343: Figure 4.9 shows the clinical data preprocessing and encoding pipeline.
+P365: Figure 4.10 shows the urgency triage prediction view.
+P386: Figure 4.11 shows the machine learning model performance evaluation.
+P402: Figure 4.12 shows the emergency referral and data dispatch portal.
+P420: Figure 4.13 shows the doctor workload risk score meter.
+P437: Figure 4.14 shows the maternal healthcare and antenatal tracker.
+P454: Figure 4.15 shows the child immunization tracker overview.
+P457: Figure 4.16 shows the child vaccination schedule timeline.
+P460: Figure 4.17 shows the vaccination status update and batch logging view.
+P463: Figure 4.18 shows the automated background vaccination reminder view.
+P484: Figure 4.19 shows the Express REST API service architecture.
+P487: Figure 4.20 shows the appointment booking REST API responses.
+P490: Figure 4.21 shows the maternal and immunization REST API responses.
+P493: Figure 4.22 shows the Flask machine learning microservice API response.
+P496: Figure 4.23 shows the MongoDB collections and data schema structure.
+P520: Table 5.1 lists the test cases and execution results of the system.

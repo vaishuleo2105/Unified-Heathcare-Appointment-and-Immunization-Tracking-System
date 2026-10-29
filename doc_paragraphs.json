@@ -1,0 +1,2512 @@
+[
+  {
+    "index": 0,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 1,
+    "style": "normal",
+    "text": "UNIFIED HEALTHCARE APPOINTMENT AND IMMUNIZATION TRACKING SYSTEM"
+  },
+  {
+    "index": 2,
+    "style": "normal",
+    "text": "INDUJA E - 25MX315"
+  },
+  {
+    "index": 3,
+    "style": "normal",
+    "text": "VAISHALI S - 25MX355"
+  },
+  {
+    "index": 4,
+    "style": "normal",
+    "text": "DISSERTATION SUBMITTED IN PARTIAL FULFILLMENT OF THE"
+  },
+  {
+    "index": 5,
+    "style": "normal",
+    "text": "REQUIREMENTS FOR THE DEGREE OF"
+  },
+  {
+    "index": 6,
+    "style": "normal",
+    "text": "MASTER OF COMPUTER APPLICATIONS"
+  },
+  {
+    "index": 7,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 8,
+    "style": "normal",
+    "text": "ANNA UNIVERSITY"
+  },
+  {
+    "index": 9,
+    "style": "normal",
+    "text": "OCTOBER 2026"
+  },
+  {
+    "index": 10,
+    "style": "normal",
+    "text": "DEPARTMENT OF COMPUTER APPLICATIONS"
+  },
+  {
+    "index": 11,
+    "style": "normal",
+    "text": "PSG COLLEGE OF TECHNOLOGY"
+  },
+  {
+    "index": 12,
+    "style": "normal",
+    "text": "(Autonomous Institution)"
+  },
+  {
+    "index": 13,
+    "style": "normal",
+    "text": "COIMBATORE - 641 004"
+  },
+  {
+    "index": 14,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 15,
+    "style": "normal",
+    "text": "PSG COLLEGE OF TECHNOLOGY"
+  },
+  {
+    "index": 16,
+    "style": "normal",
+    "text": "(Autonomous Institution)"
+  },
+  {
+    "index": 17,
+    "style": "normal",
+    "text": "COIMBATORE - 641 004"
+  },
+  {
+    "index": 18,
+    "style": "normal",
+    "text": "UNIFIED HEALTHCARE APPOINTMENT & IMMUNIZATION TRACKING SYSTEM"
+  },
+  {
+    "index": 19,
+    "style": "normal",
+    "text": "A MERN AND ML-POWERED PLATFORM FOR PATIENT CARE, IMMUNIZATION AND WORKLOAD BALANCING"
+  },
+  {
+    "index": 20,
+    "style": "normal",
+    "text": "Bonafide record of work done by"
+  },
+  {
+    "index": 21,
+    "style": "normal",
+    "text": "INDUJA E - 25MX315"
+  },
+  {
+    "index": 22,
+    "style": "normal",
+    "text": "VAISHALI S - 25MX355"
+  },
+  {
+    "index": 23,
+    "style": "normal",
+    "text": "23MX37 - MINI PROJECT"
+  },
+  {
+    "index": 24,
+    "style": "normal",
+    "text": "REPORT SUBMITTED IN PARTIAL FULFILLMENT OF THE REQUIREMENTS"
+  },
+  {
+    "index": 25,
+    "style": "normal",
+    "text": "FOR THE DEGREE OF"
+  },
+  {
+    "index": 26,
+    "style": "normal",
+    "text": "MASTER OF COMPUTER APPLICATIONS"
+  },
+  {
+    "index": 27,
+    "style": "normal",
+    "text": "OF ANNA UNIVERSITY"
+  },
+  {
+    "index": 28,
+    "style": "normal",
+    "text": "OCTOBER 2026"
+  },
+  {
+    "index": 29,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 30,
+    "style": "normal",
+    "text": "Faculty Guide"
+  },
+  {
+    "index": 31,
+    "style": "normal",
+    "text": "……………………."
+  },
+  {
+    "index": 32,
+    "style": "normal",
+    "text": "Ms. A. Kalyani"
+  },
+  {
+    "index": 33,
+    "style": "normal",
+    "text": "ACKNOWLEDGEMENT"
+  },
+  {
+    "index": 34,
+    "style": "normal",
+    "text": "We take this opportunity to express our sincere gratitude to our beloved Principal,  Dr. G. THILAGAVATHI, PSG College of Technology, for providing us with the opportunity and necessary facilities to carry out this project."
+  },
+  {
+    "index": 35,
+    "style": "normal",
+    "text": "We are deeply indebted to Dr. ILAYARAJA N, Professor and Head, Department of Computer Applications, PSG College of Technology, for his continual support and motivation throughout the project."
+  },
+  {
+    "index": 36,
+    "style": "normal",
+    "text": "We extend our sincere  thanks to our Programme Coordinator and Faculty Guide    Ms. A. KALYANI, Assistant Professor, Department of Computer Applications, PSG College of Technology, whose motivation and support encouraged us to undertake and successfully complete this project."
+  },
+  {
+    "index": 37,
+    "style": "normal",
+    "text": "We also extend our sincere thanks to all the faculty members and non-teaching staff of the Department of Computer Applications for their kind cooperation, encouragement, and support."
+  },
+  {
+    "index": 38,
+    "style": "normal",
+    "text": "We also thank our parents, friends, and everyone who helped us directly or indirectly in completing this project."
+  },
+  {
+    "index": 39,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 40,
+    "style": "normal",
+    "text": "SYNOPSIS"
+  },
+  {
+    "index": 41,
+    "style": "normal",
+    "text": "Unified Healthcare Appointment and Immunization Tracking System is a web-based comprehensive healthcare management platform designed to eliminate record fragmentation across hospitals, streamline appointment scheduling, manage maternal and child immunization schedules, and optimize clinical doctor workloads. Patient medical information often remains isolated within individual hospital databases, leading to delayed emergency treatment, redundant diagnostic tests, and untracked vaccination milestones. The system consolidates medical histories into a unified record accessible to authorized healthcare providers across participating institutions."
+  },
+  {
+    "index": 42,
+    "style": "normal",
+    "text": "The system supports Patient, Doctor, Hospital Staff, and Hospital Administrator workflows. Built on the MERN stack (MongoDB, Express.js, React.js, Node.js) and integrated with a Python Flask Machine Learning microservice, it manages patient registration, digital ABHA ID authentication, online appointment booking, unified medical history tracking, inter-hospital emergency referrals, government maternal ID (RCH/PICME) tracking, and multi-language accessibility across six regional languages (English, Hindi, Tamil, Telugu, Kannada, Malayalam). Machine learning algorithms, specifically Gradient Boosting Classifiers, are implemented to predict appointment urgency types (Emergency, Consultation, Follow-up, Vaccination, General Checkup) and calculate doctor workload risk scores (0-100) for effective clinical schedule balancing."
+  },
+  {
+    "index": 43,
+    "style": "normal",
+    "text": "The application utilizes React.js with TailwindCSS for a responsive client interface, Node.js and Express.js for core REST API services, MongoDB with Mongoose for document storage, node-cron for automated background reminder scheduling, and Python Flask for machine learning inference. Digital health identity is integrated using standard ABHA (Ayushman Bharat Health Account) Sandbox API specifications. Inter-hospital referral features allow instant transfer of emergency medical summaries, current medications, allergies, and diagnoses during patient transfers. An automated background reminder scheduler runs continuously to notify patients of upcoming appointments, follow-ups, medication schedules, and child vaccination due dates."
+  },
+  {
+    "index": 44,
+    "style": "normal",
+    "text": "The main objective of the system is to provide an integrated, intelligent environment for healthcare administration and clinical record continuity. By combining electronic health records, predictive machine learning models, ABHA digital health identities, maternal-child health tracking, automated reminder schedulers, and robust API services, the platform establishes a reliable foundation for modern healthcare management."
+  },
+  {
+    "index": 45,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 46,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 47,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 48,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 49,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 50,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 51,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 52,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 53,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 54,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 55,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 56,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 57,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 58,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 59,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 60,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 61,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 62,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 63,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 64,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 65,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 66,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 67,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 68,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 69,
+    "style": "normal",
+    "text": "TABLE OF CONTENTS"
+  },
+  {
+    "index": 70,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 71,
+    "style": "normal",
+    "text": "CHAPTER 1"
+  },
+  {
+    "index": 72,
+    "style": "normal",
+    "text": "INTRODUCTION"
+  },
+  {
+    "index": 73,
+    "style": "normal",
+    "text": "1.1 PROJECT OVERVIEW"
+  },
+  {
+    "index": 74,
+    "style": "normal",
+    "text": "Healthcare delivery systems depend heavily on continuous patient information access, timely clinical decision-making, and proactive preventive care. Patients frequently consult multiple healthcare providers across different hospitals. When medical histories are maintained in isolated hospital databases, doctors lack access to previous diagnoses, prescriptions, lab results, and known allergies."
+  },
+  {
+    "index": 75,
+    "style": "normal",
+    "text": "The Unified Healthcare Appointment and Immunization Tracking System is a web-based comprehensive healthcare platform proposed to address these challenges. It provides a centralized environment for managing patient appointments, consolidating electronic health records across hospitals, authenticating national ABHA (Ayushman Bharat Health Account) health IDs, tracking maternal and child immunization schedules using government-issued registration IDs (RCH/PICME), delivering multi-language UI accessibility, and balancing clinical doctor workloads using machine learning."
+  },
+  {
+    "index": 76,
+    "style": "normal",
+    "text": "The system incorporates clinical patient datasets to train predictive models. Machine learning algorithms, including Gradient Boosting Classifiers and Random Forest models, are trained to perform two main tasks: predicting appointment urgency types (Emergency, Consultation, Follow-up, Vaccination, General Checkup) based on patient clinical parameters, and computing clinical workload risk scores (0-100) to assist in balancing doctor consultation schedules."
+  },
+  {
+    "index": 77,
+    "style": "normal",
+    "text": "The platform supports four principal user roles: Patient, Doctor, Hospital Staff, and Hospital Administrator. Patients can search for doctors, book appointment slots, view their unified medical history, track vaccination due dates, link ABHA health IDs, select their preferred language, and receive automated reminders. Doctors can manage consultation slots, view complete patient histories, record diagnoses and prescriptions, initiate inter-hospital emergency referrals, and review their workload risk scores. Hospital Staff assist in patient onboarding, slot management, and vaccination logging. Hospital Administrators oversee doctor onboarding, department configuration, and overall system operations."
+  },
+  {
+    "index": 78,
+    "style": "normal",
+    "text": "The application integrates React.js for the responsive frontend user interface, Node.js and Express.js for backend RESTful APIs, node-cron for automated background reminder scheduling, MongoDB for flexible document database storage, Python Flask for machine learning inference, and scikit-learn for model training. The system is designed as a production-ready web application providing a scalable solution for modern healthcare delivery."
+  },
+  {
+    "index": 79,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 80,
+    "style": "normal",
+    "text": "Figure 1.1: Workflow Diagram"
+  },
+  {
+    "index": 81,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 82,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 83,
+    "style": "normal",
+    "text": "1.2 PROJECT OBJECTIVES"
+  },
+  {
+    "index": 84,
+    "style": "normal",
+    "text": "The primary objective of this project is to construct a unified digital healthcare platform that eliminates data fragmentation across medical facilities. By maintaining a single portable Electronic Health Record (EHR) accessible across authorized institutions, the system aims to improve clinical decision-making speed during emergency referrals, prevent duplicate diagnostic testing, and ensure uninterrupted long-term patient care continuity."
+  },
+  {
+    "index": 85,
+    "style": "normal",
+    "text": "Additionally, the platform integrates automated preventive care management for maternal and pediatric health. By linking government-issued registration references (such as RCH / ABHA IDs) with automated dose calculators and notification schedulers, the system ensures timely antenatal checkups and child immunization tracking regardless of where care is delivered. Multi-language UI localization (across 6 regional languages) and machine-learning triage models further optimize patient accessibility and clinical doctor workload balancing."
+  },
+  {
+    "index": 86,
+    "style": "normal",
+    "text": "1.3 SCOPE OF THE PROJECT"
+  },
+  {
+    "index": 87,
+    "style": "normal",
+    "text": "The scope of this project encompasses a full-stack MERN (MongoDB, Express.js, React.js, Node.js) web application serving four distinct user roles: Patients, Doctors, Hospital Staff, and Hospital Administrators. The core functionality centers on a consolidated electronic health record (EHR) module that tracks patient diagnoses, active prescriptions, laboratory results, and documented allergies across participating facilities. Additionally, the scope includes an inter-hospital referral data transfer module that allows emergency medical summaries to be shared instantly between hospitals during critical care patient transfers, alongside digital health identity verification using national ABHA Sandbox API standards."
+  },
+  {
+    "index": 88,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 89,
+    "style": "normal",
+    "text": "To support preventive healthcare delivery, the system includes dedicated maternal health tracking linked with government-issued RCH / PICME registration IDs, as well as a child immunization tracking module featuring automated dose milestone scheduling and background node-cron email reminders. Accessibility is enhanced through multi-language UI localization across six regional languages (English, Hindi, Tamil, Telugu, Kannada, and Malayalam). Furthermore, the scope integrates a Python Flask Machine Learning microservice executing trained Gradient Boosting Classifiers to predict appointment urgency triage types and compute clinical doctor workload risk scores (0–100) for schedule optimization. All data transactions are secured using JSON Web Tokens (JWT), bcryptjs password hashing, and role-based access control."
+  },
+  {
+    "index": 90,
+    "style": "normal",
+    "text": "1.4 TOOLS AND TECHNOLOGIES USED"
+  },
+  {
+    "index": 91,
+    "style": "normal",
+    "text": "CHAPTER 2"
+  },
+  {
+    "index": 92,
+    "style": "normal",
+    "text": "SYSTEM ANALYSIS"
+  },
+  {
+    "index": 93,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 94,
+    "style": "normal",
+    "text": "2.1 EXISTING SYSTEM"
+  },
+  {
+    "index": 95,
+    "style": "normal",
+    "text": "In traditional healthcare delivery, patient records are maintained independently by each hospital or clinic in isolated electronic systems or paper files. When a patient visits a new hospital or is transferred during a medical emergency, doctors cannot access previous diagnoses, active prescriptions, lab results, or known allergies. National digital health identification such as ABHA ID is often absent, preventing record interoperability."
+  },
+  {
+    "index": 96,
+    "style": "normal",
+    "text": "Maternal care and child immunization tracking are often handled through physical paper cards or isolated regional registers. Mothers frequently miss antenatal checkups or vaccination due dates due to lack of automated background reminders. Language barriers in rural areas further hinder patient interaction. Furthermore, appointment scheduling relies on manual queuing, and doctor consultation workloads are assigned without considering patient clinical severity."
+  },
+  {
+    "index": 97,
+    "style": "normal",
+    "text": "The existing approach represents a fragmented healthcare environment in which medical history continuity, emergency referral data sharing, digital health identity, immunization tracking, and doctor workload management operate in silos without an integrated technological framework."
+  },
+  {
+    "index": 98,
+    "style": "normal",
+    "text": "2.2 LIMITATIONS OF EXISTING SYSTEM"
+  },
+  {
+    "index": 99,
+    "style": "normal",
+    "text": "Fragmented health records – medical histories are isolated within individual hospital databases."
+  },
+  {
+    "index": 100,
+    "style": "normal",
+    "text": "Lack of digital health identity – absence of ABHA ID integration prevents seamless cross-hospital patient identification."
+  },
+  {
+    "index": 101,
+    "style": "normal",
+    "text": "Delayed emergency care – emergency physicians lack immediate access to transferred patients' medical histories and allergies during referrals."
+  },
+  {
+    "index": 102,
+    "style": "normal",
+    "text": "Untracked immunizations and missed checkups – physical paper cards and lack of automated cron reminders lead to missed vaccination doses."
+  },
+  {
+    "index": 103,
+    "style": "normal",
+    "text": "Redundant diagnostic testing – doctors order duplicate lab tests due to missing historical medical records."
+  },
+  {
+    "index": 104,
+    "style": "normal",
+    "text": "Language accessibility barriers – interfaces lack regional language support for rural patients."
+  },
+  {
+    "index": 105,
+    "style": "normal",
+    "text": "Manual appointment triage – appointments are scheduled without evaluating clinical urgency or patient risk."
+  },
+  {
+    "index": 106,
+    "style": "normal",
+    "text": "Unbalanced doctor workloads – consultation schedules do not account for cumulative patient severity."
+  },
+  {
+    "index": 107,
+    "style": "normal",
+    "text": "2.3 PROPOSED SYSTEM"
+  },
+  {
+    "index": 108,
+    "style": "normal",
+    "text": "The proposed Unified Healthcare Appointment and Immunization Tracking System establishes a web-based platform that unifies patient health records, integrates national ABHA digital health identities, streamlines online appointment booking, automates maternal and child immunization tracking, dispatches automated background reminders via node-cron, supports six regional languages, and applies machine learning for clinical triage and doctor workload balancing. The system integrates a MERN stack web application with a Python Flask machine learning microservice."
+  },
+  {
+    "index": 109,
+    "style": "normal",
+    "text": "The proposed architecture separates application responsibilities into a presentation layer (React.js + TailwindCSS + i18n), backend REST API layer (Node.js & Express.js + node-cron + ABHA API), database layer (MongoDB), and machine learning service layer (Flask & scikit-learn). MongoDB stores document collections for users, doctors, appointments, slots, maternal records, immunizations, and medical history, while the ML service exposes endpoints for appointment type prediction and workload risk scoring."
+  },
+  {
+    "index": 110,
+    "style": "normal",
+    "text": "The major functions of the proposed system are:"
+  },
+  {
+    "index": 111,
+    "style": "normal",
+    "text": "User registration and role-based authentication (Patient, Doctor, Staff, Admin)"
+  },
+  {
+    "index": 112,
+    "style": "normal",
+    "text": "ABHA (Ayushman Bharat Health Account) digital health identity registration and lookup"
+  },
+  {
+    "index": 113,
+    "style": "normal",
+    "text": "Multi-language UI localization across six regional languages"
+  },
+  {
+    "index": 114,
+    "style": "normal",
+    "text": "Doctor search, slot availability viewing, and online appointment booking"
+  },
+  {
+    "index": 115,
+    "style": "normal",
+    "text": "Unified medical history consolidation across healthcare providers"
+  },
+  {
+    "index": 116,
+    "style": "normal",
+    "text": "Inter-hospital emergency referral data sharing"
+  },
+  {
+    "index": 117,
+    "style": "normal",
+    "text": "Maternal health tracking integrated with government RCH / PICME registration IDs"
+  },
+  {
+    "index": 118,
+    "style": "normal",
+    "text": "Child immunization tracking and automated background vaccination due date reminders"
+  },
+  {
+    "index": 119,
+    "style": "normal",
+    "text": "Machine Learning appointment type triage using Gradient Boosting Classifier"
+  },
+  {
+    "index": 120,
+    "style": "normal",
+    "text": "Clinical doctor workload risk score calculation and schedule optimization"
+  },
+  {
+    "index": 121,
+    "style": "normal",
+    "text": "2.4 ADVANTAGES OF PROPOSED SYSTEM"
+  },
+  {
+    "index": 122,
+    "style": "normal",
+    "text": "Provides a single unified platform for patient care, medical history, digital identity, and immunization tracking."
+  },
+  {
+    "index": 123,
+    "style": "normal",
+    "text": "Eliminates record fragmentation by consolidating medical histories across all visited hospitals."
+  },
+  {
+    "index": 124,
+    "style": "normal",
+    "text": "Integrates national ABHA ID for standardized digital health identification."
+  },
+  {
+    "index": 125,
+    "style": "normal",
+    "text": "Accelerates emergency decision-making by making patient history immediately accessible during inter-hospital referrals."
+  },
+  {
+    "index": 126,
+    "style": "normal",
+    "text": "Improves maternal and child health outcomes through RCH ID tracking and node-cron automated background reminders."
+  },
+  {
+    "index": 127,
+    "style": "normal",
+    "text": "Enhances accessibility through multi-language UI support in six regional languages (English, Hindi, Tamil, Telugu, Kannada, Malayalam)."
+  },
+  {
+    "index": 128,
+    "style": "normal",
+    "text": "Applies machine learning to predict appointment urgency types and categorize patient severity."
+  },
+  {
+    "index": 129,
+    "style": "normal",
+    "text": "Balances doctor consultation workloads using model-derived clinical risk scores."
+  },
+  {
+    "index": 130,
+    "style": "normal",
+    "text": "Eliminates duplicate diagnostic testing through shared clinical history records."
+  },
+  {
+    "index": 131,
+    "style": "normal",
+    "text": "Exposes clean RESTful API services separating frontend logic from backend data processing."
+  },
+  {
+    "index": 132,
+    "style": "normal",
+    "text": "Establishes a foundation for future integration with AI diagnostic imaging and wearable IoT health monitoring devices."
+  },
+  {
+    "index": 133,
+    "style": "normal",
+    "text": "2.5 FUNCTIONAL REQUIREMENTS"
+  },
+  {
+    "index": 134,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 135,
+    "style": "normal",
+    "text": "2.6 NON-FUNCTIONAL REQUIREMENTS"
+  },
+  {
+    "index": 136,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 137,
+    "style": "normal",
+    "text": "CHAPTER 3"
+  },
+  {
+    "index": 138,
+    "style": "normal",
+    "text": "SYSTEM DESIGN"
+  },
+  {
+    "index": 139,
+    "style": "normal",
+    "text": "3.1 SYSTEM ARCHITECTURE"
+  },
+  {
+    "index": 140,
+    "style": "normal",
+    "text": "The Unified Healthcare Appointment and Immunization Tracking System follows a multi-tier microservice architecture. The React.js frontend application with i18n localization acts as the presentation layer. The Express.js backend handles business logic, session management, node-cron background reminder execution, ABHA Sandbox API integration, and CRUD operations. The Python Flask service acts as an independent machine learning microservice for model inference. MongoDB serves as the data persistence layer for all application records."
+  },
+  {
+    "index": 141,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 142,
+    "style": "normal",
+    "text": "Figure 3.1 – Unified Healthcare System Architecture"
+  },
+  {
+    "index": 143,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 144,
+    "style": "normal",
+    "text": "The architecture can be described through the following layers:"
+  },
+  {
+    "index": 145,
+    "style": "normal",
+    "text": "Presentation Layer – React.js single-page application styled with TailwindCSS following Organic Modernist design principles, featuring i18n multi-language support (English, Hindi, Tamil, Telugu, Kannada, Malayalam)."
+  },
+  {
+    "index": 146,
+    "style": "normal",
+    "text": "Application / API Layer – Node.js and Express.js RESTful web services managing routing, authentication middleware, ABHA API integration, node-cron background reminder scheduler, and database operations."
+  },
+  {
+    "index": 147,
+    "style": "normal",
+    "text": "Machine Learning Microservice Layer – Python Flask service executing pre-trained Gradient Boosting Classifier models for triage and workload risk scoring."
+  },
+  {
+    "index": 148,
+    "style": "normal",
+    "text": "Data Layer – MongoDB database maintaining document collections for users, doctors, appointments, slots, maternal records, immunizations, and unified medical history."
+  },
+  {
+    "index": 149,
+    "style": "normal",
+    "text": "Integration & Security Layer – ABHA Sandbox API integration, JWT authentication, bcryptjs password hashing, and CORS middleware for safe cross-origin communication."
+  },
+  {
+    "index": 150,
+    "style": "normal",
+    "text": "Visualization Layer – Interactive clinical dashboards, doctor workload risk indicators, multi-language controls, and vaccination schedule timelines."
+  },
+  {
+    "index": 151,
+    "style": "normal",
+    "text": "Architecture Flow: Streamlit Interface → FastAPI Services → Pydantic Validation → SQLite / ML / Optimization Processing → Prediction, Index & Allocation → Streamlit Visualization"
+  },
+  {
+    "index": 152,
+    "style": "normal",
+    "text": "3.2 SYSTEM WORKFLOW"
+  },
+  {
+    "index": 153,
+    "style": "normal",
+    "text": "The overall system workflow encompasses patient registration, ABHA ID authentication, language selection, doctor schedule management, appointment booking, ML-driven triage, medical record updating, maternal health tracking, child immunization management, automated background reminders, and inter-hospital referrals."
+  },
+  {
+    "index": 154,
+    "style": "normal",
+    "text": "Data and Machine Learning Workflow:"
+  },
+  {
+    "index": 155,
+    "style": "normal",
+    "text": "Patient submits appointment request with clinical symptoms and profile parameters."
+  },
+  {
+    "index": 156,
+    "style": "normal",
+    "text": "Express backend forwards clinical parameters to the Flask ML microservice."
+  },
+  {
+    "index": 157,
+    "style": "normal",
+    "text": "Flask ML service encodes features and executes Gradient Boosting Classifier for appointment type prediction."
+  },
+  {
+    "index": 158,
+    "style": "normal",
+    "text": "ML service computes clinical risk score for the patient profile."
+  },
+  {
+    "index": 159,
+    "style": "normal",
+    "text": "Appointment is registered in MongoDB with predicted urgency type and risk score."
+  },
+  {
+    "index": 160,
+    "style": "normal",
+    "text": "Doctor dashboard retrieves updated appointment list and recalculates cumulative workload risk score."
+  },
+  {
+    "index": 161,
+    "style": "normal",
+    "text": "During consultation, the doctor accesses the patient's unified medical history across all previously visited hospitals."
+  },
+  {
+    "index": 162,
+    "style": "normal",
+    "text": "The doctor logs new diagnosis, prescription, and follow-up notes into the unified health record."
+  },
+  {
+    "index": 163,
+    "style": "normal",
+    "text": "For maternal cases, records are linked under the patient's government RCH / PICME ID and ABHA digital health ID."
+  },
+  {
+    "index": 164,
+    "style": "normal",
+    "text": "For child immunizations, vaccination due dates are calculated, scheduled, and monitored."
+  },
+  {
+    "index": 165,
+    "style": "normal",
+    "text": "Automated background reminder notifications are executed by node-cron for upcoming checkups, follow-ups, and vaccinations."
+  },
+  {
+    "index": 166,
+    "style": "normal",
+    "text": "User Workflow:"
+  },
+  {
+    "index": 167,
+    "style": "normal",
+    "text": "Patient logs in, selects doctor, picks an open slot, and completes booking."
+  },
+  {
+    "index": 168,
+    "style": "normal",
+    "text": "Doctor logs in, views the daily schedule, accesses unified patient history, and conducts consultation."
+  },
+  {
+    "index": 169,
+    "style": "normal",
+    "text": "Admin logs in, manages doctor profiles, configures consultation slots, and monitors system activity."
+  },
+  {
+    "index": 170,
+    "style": "normal",
+    "text": "System processes requests, updates MongoDB collections, and returns JSON API responses."
+  },
+  {
+    "index": 171,
+    "style": "normal",
+    "text": "Dashboard displays real-time updates through interactive UI components."
+  },
+  {
+    "index": 172,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 173,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 174,
+    "style": "normal",
+    "text": "3.3 UML ACTIVITY DIAGRAM"
+  },
+  {
+    "index": 175,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 176,
+    "style": "normal",
+    "text": "Figure 3.2 – UML Activity Diagram of Unified Healthcare System"
+  },
+  {
+    "index": 177,
+    "style": "normal",
+    "text": "The activity workflow begins with user authentication and role selection. Patients can search doctors, book slots, view unified history, and track immunizations. Doctors can review appointment queues, examine clinical histories, record diagnoses, and evaluate workload risk scores. Admins manage doctor profiles and consultation slots. All actions update the underlying database and trigger corresponding UI responses."
+  },
+  {
+    "index": 178,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 179,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 180,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 181,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 182,
+    "style": "normal",
+    "text": "3.4 BPMN DIAGRAM"
+  },
+  {
+    "index": 183,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 184,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 185,
+    "style": "normal",
+    "text": "Figure 3.3 – BPMN Diagram of Unified Healthcare System"
+  },
+  {
+    "index": 186,
+    "style": "normal",
+    "text": "BPMN Process Explanation:"
+  },
+  {
+    "index": 187,
+    "style": "normal",
+    "text": "Step 1 – Registration & Authentication: User creates account and authenticates via JWT."
+  },
+  {
+    "index": 188,
+    "style": "normal",
+    "text": "Step 2 – Appointment Booking: Patient selects doctor, slot, and inputs clinical details."
+  },
+  {
+    "index": 189,
+    "style": "normal",
+    "text": "Step 3 – ML Triage Execution: Flask service predicts appointment type and patient risk score."
+  },
+  {
+    "index": 190,
+    "style": "normal",
+    "text": "Step 4 – Workload Score Calculation: Doctor schedule risk score is updated."
+  },
+  {
+    "index": 191,
+    "style": "normal",
+    "text": "Step 5 – Clinical Consultation: Doctor accesses unified history and records diagnosis/prescription."
+  },
+  {
+    "index": 192,
+    "style": "normal",
+    "text": "Step 6 – Maternal / Child Care Linking: Records are registered under RCH ID and vaccination dates scheduled."
+  },
+  {
+    "index": 193,
+    "style": "normal",
+    "text": "Step 7 – Inter-Hospital Transfer: Emergency referral summary is transferred to target hospital."
+  },
+  {
+    "index": 194,
+    "style": "normal",
+    "text": "Step 8 – Reminder Dispatch: System dispatches automated notifications for checkups and vaccines."
+  },
+  {
+    "index": 195,
+    "style": "normal",
+    "text": "3.5 DATABASE DESIGN"
+  },
+  {
+    "index": 196,
+    "style": "normal",
+    "text": "MongoDB is used as the document-oriented database for the system. It provides high flexibility for storing complex, nested medical records, prescriptions, and dynamic immunization schedules."
+  },
+  {
+    "index": 197,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 198,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 199,
+    "style": "normal",
+    "text": "Figure 3.4 – Healthcare System Database Schema"
+  },
+  {
+    "index": 200,
+    "style": "normal",
+    "text": "The database maintains structured document collections for users, doctors, appointments, slots, maternal records, and child immunizations."
+  },
+  {
+    "index": 201,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 202,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 203,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 204,
+    "style": "normal",
+    "text": "3.6 ENTITY DESCRIPTION"
+  },
+  {
+    "index": 205,
+    "style": "normal",
+    "text": "3.7 MACHINE LEARNING WORKFLOW"
+  },
+  {
+    "index": 206,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 207,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 208,
+    "style": "normal",
+    "text": "Figure 3.5 – Machine Learning Workflow"
+  },
+  {
+    "index": 209,
+    "style": "normal",
+    "text": "The machine learning pipeline uses clinical features including Age, Gender, Blood Type, Medical Condition, Medication, and Test Results. Categorical variables are transformed using LabelEncoder. The dataset is split into 80% training and 20% testing subsets. Gradient Boosting Classifier models are trained for appointment type prediction (Emergency, Consultation, Follow-up, Vaccination, General Checkup) and clinical risk level scoring (Low, Moderate, High, Critical), achieving high classification accuracy."
+  },
+  {
+    "index": 210,
+    "style": "normal",
+    "text": "CHAPTER 4"
+  },
+  {
+    "index": 211,
+    "style": "normal",
+    "text": "SYSTEM IMPLEMENTATION"
+  },
+  {
+    "index": 212,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 213,
+    "style": "normal",
+    "text": "The system implementation follows a 3-Tier Model-View-Controller (MVC) architecture connecting React.js single-page applications, Express.js RESTful API services, Python Flask machine learning microservices, and MongoDB document databases."
+  },
+  {
+    "index": 214,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 215,
+    "style": "normal",
+    "text": "Figure 4.1: Complete 3-Tier MVC System Architecture Diagram."
+  },
+  {
+    "index": 216,
+    "style": "normal",
+    "text": "4.1 USER PORTALS & MULTILINGUAL PRESENTATION LAYER"
+  },
+  {
+    "index": 217,
+    "style": "normal",
+    "text": "Purpose"
+  },
+  {
+    "index": 218,
+    "style": "normal",
+    "text": "The Home / Dashboard serves as the primary portal for the system. It provides role-based navigation for Patients, Doctors, Hospital Staff, and Hospital Administrators, allowing seamless access to ABHA ID verification, appointment booking, medical history, immunization tracking, multi-language switching, and clinical workload management."
+  },
+  {
+    "index": 219,
+    "style": "normal",
+    "text": "The interface presents key health summary cards, upcoming appointment reminders, vaccination due dates, and quick action buttons. It abstracts complex backend API workflows into a clean, modern user interface."
+  },
+  {
+    "index": 220,
+    "style": "normal",
+    "text": "How It Works"
+  },
+  {
+    "index": 221,
+    "style": "normal",
+    "text": "When a user logs in, JWT tokens are authenticated, and the React frontend renders the appropriate dashboard layout according to the user's role. Summary metrics are fetched asynchronously from Express REST API endpoints."
+  },
+  {
+    "index": 222,
+    "style": "normal",
+    "text": "Patients can view active bookings and due vaccines; doctors view daily appointment schedules and workload risk scores; admins view hospital doctor lists and overall system statistics."
+  },
+  {
+    "index": 223,
+    "style": "normal",
+    "text": "The dashboard acts as an integration hub combining user session state, appointment feeds, and clinical summary widgets."
+  },
+  {
+    "index": 224,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 225,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 226,
+    "style": "normal",
+    "text": "Implementation Details"
+  },
+  {
+    "index": 227,
+    "style": "normal",
+    "text": "Built with React functional components and TailwindCSS using an Organic Modernist color palette (#ba894d primary, #fdfae3 background). Custom hooks handle data fetching, state management, and authentication context."
+  },
+  {
+    "index": 228,
+    "style": "normal",
+    "text": "The layout reflows dynamically across desktop, tablet, and mobile viewports."
+  },
+  {
+    "index": 229,
+    "style": "normal",
+    "text": "Technologies Used"
+  },
+  {
+    "index": 230,
+    "style": "normal",
+    "text": "●  \tReact.js"
+  },
+  {
+    "index": 231,
+    "style": "normal",
+    "text": "●  \tTailwindCSS"
+  },
+  {
+    "index": 232,
+    "style": "normal",
+    "text": "●  \tExpress.js"
+  },
+  {
+    "index": 233,
+    "style": "normal",
+    "text": "●  \tMongoDB"
+  },
+  {
+    "index": 234,
+    "style": "normal",
+    "text": "●  \tNode.js"
+  },
+  {
+    "index": 235,
+    "style": "normal",
+    "text": "●  \tJSON Web Token"
+  },
+  {
+    "index": 236,
+    "style": "normal",
+    "text": "●  \tFlask ML Service"
+  },
+  {
+    "index": 237,
+    "style": "normal",
+    "text": "●  \tscikit-learn"
+  },
+  {
+    "index": 238,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 239,
+    "style": "normal",
+    "text": "Figure 4.2: Authentication and Login Page."
+  },
+  {
+    "index": 240,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 241,
+    "style": "normal",
+    "text": "Figure 4.3: Patient Dashboard."
+  },
+  {
+    "index": 242,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 243,
+    "style": "normal",
+    "text": "Figure 4.4: Multilingual Regional Language Controls (EN, HI, TA, TE, KN, ML)."
+  },
+  {
+    "index": 244,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 245,
+    "style": "normal",
+    "text": "Figure 4.5: Digital ABHA ID Verification Portal."
+  },
+  {
+    "index": 246,
+    "style": "normal",
+    "text": "Purpose"
+  },
+  {
+    "index": 247,
+    "style": "normal",
+    "text": "The Administrator Module allows hospital management to onboard doctors, assign clinical departments, configure consultation fee structures, manage staff accounts, and generate doctor appointment slots."
+  },
+  {
+    "index": 248,
+    "style": "normal",
+    "text": "How It Works"
+  },
+  {
+    "index": 249,
+    "style": "normal",
+    "text": "Admins log into a dedicated portal to view all registered doctors and hospital departments. New doctor accounts are created, and consultation slot schedules are generated for specific dates and time intervals."
+  },
+  {
+    "index": 250,
+    "style": "normal",
+    "text": "Implementation Details"
+  },
+  {
+    "index": 251,
+    "style": "normal",
+    "text": "Admin operations communicate with Express.js API endpoints (/api/auth, /api/doctors, /api/slots). Data inputs are validated against Mongoose schemas before updating MongoDB."
+  },
+  {
+    "index": 252,
+    "style": "normal",
+    "text": "Technologies Used"
+  },
+  {
+    "index": 253,
+    "style": "normal",
+    "text": "●  \tReact.js"
+  },
+  {
+    "index": 254,
+    "style": "normal",
+    "text": "●  \tExpress.js"
+  },
+  {
+    "index": 255,
+    "style": "normal",
+    "text": "●  \tNode.js"
+  },
+  {
+    "index": 256,
+    "style": "normal",
+    "text": "●  \tMongoDB"
+  },
+  {
+    "index": 257,
+    "style": "normal",
+    "text": "●  \tJWT"
+  },
+  {
+    "index": 258,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 259,
+    "style": "normal",
+    "text": "Figure 4.4: Hospital Administrator System Management Module."
+  },
+  {
+    "index": 260,
+    "style": "normal",
+    "text": "4.1.1 Digital ABHA ID Integration & Multilingual Support"
+  },
+  {
+    "index": 261,
+    "style": "normal",
+    "text": "Purpose"
+  },
+  {
+    "index": 262,
+    "style": "normal",
+    "text": "The Doctor & Patient Portal handles core clinical interaction, digital health identity integration, and regional accessibility. Patients search for doctors by specialization, view available slots, submit booking requests, authenticate their ABHA ID, and toggle their preferred language. Doctors review appointment queues, view patient histories across hospitals, and conduct consultations."
+  },
+  {
+    "index": 263,
+    "style": "normal",
+    "text": "How It Works"
+  },
+  {
+    "index": 264,
+    "style": "normal",
+    "text": "Patients browse doctor profiles, select an available time slot, and enter clinical details. The ABHA ID integration module (AbhaPage.jsx) allows patients to register and authenticate their 14-digit ABHA health ID using standard ABHA Sandbox API specifications, linking their digital identity with health records. Multi-language support (i18n) allows instant switching across English, Hindi, Tamil, Telugu, Kannada, and Malayalam. Upon submitting symptoms, the request is processed by the ML service to classify appointment type. Doctors view scheduled patients, access historical records, log diagnostic notes, and view their workload risk scores."
+  },
+  {
+    "index": 265,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 266,
+    "style": "normal",
+    "text": "Implementation Details"
+  },
+  {
+    "index": 267,
+    "style": "normal",
+    "text": "React components render real-time status badges (Confirmed, Pending, Completed). Doctor dashboards dynamically display calculated workload risk scores based on patient severity."
+  },
+  {
+    "index": 268,
+    "style": "normal",
+    "text": "Technologies Used"
+  },
+  {
+    "index": 269,
+    "style": "normal",
+    "text": "●  \tReact.js & react-i18next"
+  },
+  {
+    "index": 270,
+    "style": "normal",
+    "text": "●  \tExpress.js & ABHA Sandbox API"
+  },
+  {
+    "index": 271,
+    "style": "normal",
+    "text": "●  \tNode.js"
+  },
+  {
+    "index": 272,
+    "style": "normal",
+    "text": "●  \tMongoDB"
+  },
+  {
+    "index": 273,
+    "style": "normal",
+    "text": "●  \tFlask ML Service"
+  },
+  {
+    "index": 274,
+    "style": "normal",
+    "text": "●  \tscikit-learn"
+  },
+  {
+    "index": 275,
+    "style": "normal",
+    "text": "●  \tFlask ML Service"
+  },
+  {
+    "index": 276,
+    "style": "normal",
+    "text": "●  \tscikit-learn"
+  },
+  {
+    "index": 277,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 278,
+    "style": "normal",
+    "text": "Figure 4.5: Doctor & Patient Consultation Portal Overview."
+  },
+  {
+    "index": 279,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 280,
+    "style": "normal",
+    "text": "4.2 UNIFIED EHR & EMERGENCY INTER-HOSPITAL REFERRAL ENGINE"
+  },
+  {
+    "index": 281,
+    "style": "normal",
+    "text": "Purpose"
+  },
+  {
+    "index": 282,
+    "style": "normal",
+    "text": "Consolidates patient diagnoses, prescriptions, lab test results, vitals, and allergy records across all visited hospitals into a single, unified electronic health record accessible to authorized clinical staff."
+  },
+  {
+    "index": 283,
+    "style": "normal",
+    "text": "The module provides the data foundation required by the preprocessing, prediction, infrastructure analysis and visualization components."
+  },
+  {
+    "index": 284,
+    "style": "normal",
+    "text": "How It Works"
+  },
+  {
+    "index": 285,
+    "style": "normal",
+    "text": "When a patient visits any affiliated hospital, their historical records are retrieved via their unique Patient ID. Attending physicians can review previous treatments regardless of where they were originally recorded."
+  },
+  {
+    "index": 286,
+    "style": "normal",
+    "text": "Implementation Details"
+  },
+  {
+    "index": 287,
+    "style": "normal",
+    "text": "Medical records are stored as structured documents in MongoDB. The Express backend aggregates historical records and exposes unified endpoints for clinical review."
+  },
+  {
+    "index": 288,
+    "style": "normal",
+    "text": "The database also provides patient medical records required for clinical history consolidation and doctor consultation."
+  },
+  {
+    "index": 289,
+    "style": "normal",
+    "text": "Technologies Used"
+  },
+  {
+    "index": 290,
+    "style": "normal",
+    "text": "●  \tReact.js"
+  },
+  {
+    "index": 291,
+    "style": "normal",
+    "text": "●  \tExpress.js"
+  },
+  {
+    "index": 292,
+    "style": "normal",
+    "text": "●  \tMongoDB"
+  },
+  {
+    "index": 293,
+    "style": "normal",
+    "text": "●  \tNode.js"
+  },
+  {
+    "index": 294,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 295,
+    "style": "normal",
+    "text": "Figure 4.6: Unified Patient Electronic Health Record (EHR) History View."
+  },
+  {
+    "index": 296,
+    "style": "normal",
+    "text": "4.3 MACHINE LEARNING TRIAGE & WORKLOAD RISK MICROSERVICE"
+  },
+  {
+    "index": 297,
+    "style": "normal",
+    "text": "Purpose"
+  },
+  {
+    "index": 298,
+    "style": "normal",
+    "text": "Preprocesses raw patient clinical parameters (Age, Gender, Blood Type, Medical Condition, Medication, Test Results) for machine learning classification models."
+  },
+  {
+    "index": 299,
+    "style": "normal",
+    "text": "How It Works"
+  },
+  {
+    "index": 300,
+    "style": "normal",
+    "text": "Categorical string variables are cleaned and encoded using scikit-learn LabelEncoders. Features are formatted into numerical matrices before model fitting."
+  },
+  {
+    "index": 301,
+    "style": "normal",
+    "text": "Implementation Details"
+  },
+  {
+    "index": 302,
+    "style": "normal",
+    "text": "Uses Python pandas and scikit-learn preprocessing utilities. Encoded dictionary artifacts (encoders.pkl, label_encoder.pkl) are serialized for real-time Flask API execution."
+  },
+  {
+    "index": 303,
+    "style": "normal",
+    "text": "Feature selection is performed to identify clinical variables relevant to appointment type prediction. The resulting feature matrix is supplied to the classification algorithms during model training."
+  },
+  {
+    "index": 304,
+    "style": "normal",
+    "text": "Technologies Used"
+  },
+  {
+    "index": 305,
+    "style": "normal",
+    "text": "●  \tPython"
+  },
+  {
+    "index": 306,
+    "style": "normal",
+    "text": "●  \tpandas"
+  },
+  {
+    "index": 307,
+    "style": "normal",
+    "text": "●  \tscikit-learn"
+  },
+  {
+    "index": 308,
+    "style": "normal",
+    "text": "●  \tjoblib"
+  },
+  {
+    "index": 309,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 310,
+    "style": "normal",
+    "text": "Figure 4.7: Clinical Data Preprocessing & Feature Encoding Pipeline."
+  },
+  {
+    "index": 311,
+    "style": "normal",
+    "text": "4.3.1 Appointment Urgency Triage Prediction Model"
+  },
+  {
+    "index": 312,
+    "style": "normal",
+    "text": "Purpose"
+  },
+  {
+    "index": 313,
+    "style": "normal",
+    "text": "Predicts appointment urgency categories (Emergency, Consultation, Follow-up, Vaccination, General Checkup) using patient clinical parameters."
+  },
+  {
+    "index": 314,
+    "style": "normal",
+    "text": "The prediction capability allows patient clinical parameters to be transformed into an estimated appointment urgency type and doctor workload risk score."
+  },
+  {
+    "index": 315,
+    "style": "normal",
+    "text": "When an appointment is requested, input parameters are sent to Flask /predict-type. The Gradient Boosting Classifier predicts the urgency type and confidence score."
+  },
+  {
+    "index": 316,
+    "style": "normal",
+    "text": "The prediction process begins with the required input variables. These inputs are prepared using the same feature-processing approach used during model development."
+  },
+  {
+    "index": 317,
+    "style": "normal",
+    "text": "The processed values are passed to the selected classification model. The model generates a triage prediction, which is then returned to the React frontend interface and displayed to the user."
+  },
+  {
+    "index": 318,
+    "style": "normal",
+    "text": "Implementation Details"
+  },
+  {
+    "index": 319,
+    "style": "normal",
+    "text": "Models evaluated include Gradient Boosting Classifier, Random Forest Classifier, and Decision Trees. Gradient Boosting achieved top performance."
+  },
+  {
+    "index": 320,
+    "style": "normal",
+    "text": "●  \tGradient Boosting Classifier"
+  },
+  {
+    "index": 321,
+    "style": "normal",
+    "text": "●  \tRandom Forest Regressor"
+  },
+  {
+    "index": 322,
+    "style": "normal",
+    "text": "●  \tGradient Boosting Regressor"
+  },
+  {
+    "index": 323,
+    "style": "normal",
+    "text": "The models are trained using the training portion of the dataset and evaluated using the testing portion. Based on the implemented model comparison, Gradient Boosting Regressor is selected for the final prediction workflow.The prediction result can subsequently be used by other planning modules and visualized through the application."
+  },
+  {
+    "index": 324,
+    "style": "normal",
+    "text": "Technologies Used"
+  },
+  {
+    "index": 325,
+    "style": "normal",
+    "text": "●  \tPython"
+  },
+  {
+    "index": 326,
+    "style": "normal",
+    "text": "●  \tFlask"
+  },
+  {
+    "index": 327,
+    "style": "normal",
+    "text": "●  \tscikit-learn"
+  },
+  {
+    "index": 328,
+    "style": "normal",
+    "text": "●  \tGradient Boosting"
+  },
+  {
+    "index": 329,
+    "style": "normal",
+    "text": "●  \tFastAPI where applicable"
+  },
+  {
+    "index": 330,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 331,
+    "style": "normal",
+    "text": "Figure 4.8: Gradient Boosting Appointment Urgency Triage Prediction View."
+  },
+  {
+    "index": 332,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 333,
+    "style": "normal",
+    "text": "4.3.2 ML Model Evaluation & Performance Metrics"
+  },
+  {
+    "index": 334,
+    "style": "normal",
+    "text": "Purpose"
+  },
+  {
+    "index": 335,
+    "style": "normal",
+    "text": "Evaluates machine learning model classification metrics (Accuracy, Precision, Recall, F1-Score) to ensure accurate clinical triage."
+  },
+  {
+    "index": 336,
+    "style": "normal",
+    "text": "How It Works"
+  },
+  {
+    "index": 337,
+    "style": "normal",
+    "text": "Dataset is split 80:20 for training and testing. Models generate predictions on test samples, evaluated against ground truth labels."
+  },
+  {
+    "index": 338,
+    "style": "normal",
+    "text": "The following models are trained:"
+  },
+  {
+    "index": 339,
+    "style": "normal",
+    "text": "●  \tGradient Boosting Classifier"
+  },
+  {
+    "index": 340,
+    "style": "normal",
+    "text": "●  \tRandom Forest Regressor"
+  },
+  {
+    "index": 341,
+    "style": "normal",
+    "text": "●  \tGradient Boosting Regressor"
+  },
+  {
+    "index": 342,
+    "style": "normal",
+    "text": "After training, the models generate predictions for the testing dataset. Their performance is evaluated using the implemented regression metrics, such as Mean Absolute Error (MAE), Root Mean Squared Error (RMSE) and R² Score, where applicable."
+  },
+  {
+    "index": 343,
+    "style": "normal",
+    "text": "The evaluation results are presented to the user through the clinical dashboard interface."
+  },
+  {
+    "index": 344,
+    "style": "normal",
+    "text": "Implementation Details"
+  },
+  {
+    "index": 345,
+    "style": "normal",
+    "text": "Gradient Boosting Classifier demonstrated superior performance across Emergency and Consultation classes compared to baseline models."
+  },
+  {
+    "index": 346,
+    "style": "normal",
+    "text": "Technologies Used"
+  },
+  {
+    "index": 347,
+    "style": "normal",
+    "text": "●  \tPython"
+  },
+  {
+    "index": 348,
+    "style": "normal",
+    "text": "●  \tscikit-learn"
+  },
+  {
+    "index": 349,
+    "style": "normal",
+    "text": "●  \tpandas"
+  },
+  {
+    "index": 350,
+    "style": "normal",
+    "text": "●  \tFlask"
+  },
+  {
+    "index": 351,
+    "style": "normal",
+    "text": "Figure 4.9: Machine Learning Model Classification & Performance Evaluation."
+  },
+  {
+    "index": 352,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 353,
+    "style": "normal",
+    "text": "4.2.1 Inter-Hospital Referral & Emergency Data Sharing"
+  },
+  {
+    "index": 354,
+    "style": "normal",
+    "text": "Purpose"
+  },
+  {
+    "index": 355,
+    "style": "normal",
+    "text": "Enables instant transfer of medical summaries, current medications, blood type, drug allergies, and historical diagnoses between hospitals during emergency patient referrals or specialist transfers."
+  },
+  {
+    "index": 356,
+    "style": "normal",
+    "text": "How It Works"
+  },
+  {
+    "index": 357,
+    "style": "normal",
+    "text": "Referring hospital selects target hospital and dispatches referral record. Receiving hospital receives instant access to consolidated history."
+  },
+  {
+    "index": 358,
+    "style": "normal",
+    "text": "Implementation Details"
+  },
+  {
+    "index": 359,
+    "style": "normal",
+    "text": "Built using Express REST routes (/api/maternal/referral, /api/patients). Secure token authorization restricts data access to authorized medical staff."
+  },
+  {
+    "index": 360,
+    "style": "normal",
+    "text": "Technologies Used"
+  },
+  {
+    "index": 361,
+    "style": "normal",
+    "text": "●  \tReact.js"
+  },
+  {
+    "index": 362,
+    "style": "normal",
+    "text": "●  \tExpress.js"
+  },
+  {
+    "index": 363,
+    "style": "normal",
+    "text": "●  \tMongoDB"
+  },
+  {
+    "index": 364,
+    "style": "normal",
+    "text": "●  \tNode.js"
+  },
+  {
+    "index": 365,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 366,
+    "style": "normal",
+    "text": "Figure 4.10: Inter-Hospital Emergency Referral & Data Snapshot Dispatch Portal."
+  },
+  {
+    "index": 367,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 368,
+    "style": "normal",
+    "text": "4.3.3 Doctor Workload Risk Scoring & Schedule Balancing"
+  },
+  {
+    "index": 369,
+    "style": "normal",
+    "text": "Purpose"
+  },
+  {
+    "index": 370,
+    "style": "normal",
+    "text": "Calculates a cumulative workload risk score (0-100) for each doctor based on the clinical severity of their active appointments, assisting in schedule balancing."
+  },
+  {
+    "index": 371,
+    "style": "normal",
+    "text": "How It Works"
+  },
+  {
+    "index": 372,
+    "style": "normal",
+    "text": "Flask /doctor-risk-score receives patient profiles for a doctor's schedule. Gradient Boosting model evaluates risk scores (Low, Moderate, High, Critical) and computes average workload burden."
+  },
+  {
+    "index": 373,
+    "style": "normal",
+    "text": "Implementation Details"
+  },
+  {
+    "index": 374,
+    "style": "normal",
+    "text": "Workload risk score prevents doctor burnout and identifies overwhelmed departments, allowing admins to reassign slots."
+  },
+  {
+    "index": 375,
+    "style": "normal",
+    "text": "Technologies Used"
+  },
+  {
+    "index": 376,
+    "style": "normal",
+    "text": "●  \tPython"
+  },
+  {
+    "index": 377,
+    "style": "normal",
+    "text": "●  \tFlask"
+  },
+  {
+    "index": 378,
+    "style": "normal",
+    "text": "●  \tGradient Boosting"
+  },
+  {
+    "index": 379,
+    "style": "normal",
+    "text": "●  \tscikit-learn"
+  },
+  {
+    "index": 380,
+    "style": "normal",
+    "text": "●  \tReact.js"
+  },
+  {
+    "index": 381,
+    "style": "normal",
+    "text": "●  \tMongoDB"
+  },
+  {
+    "index": 382,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 383,
+    "style": "normal",
+    "text": "Figure 4.11: Doctor Workload Risk Score Meter & Schedule Optimization Analytics."
+  },
+  {
+    "index": 384,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 385,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 386,
+    "style": "normal",
+    "text": "4.4 MATERNAL & CHILD IMMUNIZATION TRACKING MODULE"
+  },
+  {
+    "index": 387,
+    "style": "normal",
+    "text": "Purpose"
+  },
+  {
+    "index": 388,
+    "style": "normal",
+    "text": "Links pregnancy records, antenatal checkups, delivery details, and child immunization history using the government RCH / PICME registration ID."
+  },
+  {
+    "index": 389,
+    "style": "normal",
+    "text": "How It Works"
+  },
+  {
+    "index": 390,
+    "style": "normal",
+    "text": "Maternal records are registered with RCH ID. Antenatal visits, high-risk flags, and delivery outcomes are tracked across any hospital visited by the mother."
+  },
+  {
+    "index": 391,
+    "style": "normal",
+    "text": "Implementation Details"
+  },
+  {
+    "index": 392,
+    "style": "normal",
+    "text": "Express maternal routes (/api/maternal) handle RCH ID registration and antenatal visit logging in MongoDB."
+  },
+  {
+    "index": 393,
+    "style": "normal",
+    "text": "Technologies Used"
+  },
+  {
+    "index": 394,
+    "style": "normal",
+    "text": "●  \tReact.js"
+  },
+  {
+    "index": 395,
+    "style": "normal",
+    "text": "●  \tExpress.js"
+  },
+  {
+    "index": 396,
+    "style": "normal",
+    "text": "●  \tMongoDB"
+  },
+  {
+    "index": 397,
+    "style": "normal",
+    "text": "●  \tNode.js"
+  },
+  {
+    "index": 398,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 399,
+    "style": "normal",
+    "text": "Figure 4.12: Maternal Healthcare & Antenatal Checkup Tracker (RCH / PICME ID)."
+  },
+  {
+    "index": 400,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 401,
+    "style": "normal",
+    "text": "4.4.1 Child Immunization Milestone Tracker & Reminders"
+  },
+  {
+    "index": 402,
+    "style": "normal",
+    "text": "Purpose"
+  },
+  {
+    "index": 403,
+    "style": "normal",
+    "text": "Maintains comprehensive vaccination tracking for child patients from birth through recommended milestones, generating automated schedules and dispatching background reminders for upcoming doses."
+  },
+  {
+    "index": 404,
+    "style": "normal",
+    "text": "How It Works"
+  },
+  {
+    "index": 405,
+    "style": "normal",
+    "text": "When a child is registered under their mother's RCH ID, a standard immunization schedule is created. Healthcare providers log administered doses with timestamps and staff details. An automated background reminder scheduler (reminderScheduler.js) powered by node-cron executes periodic background tasks every hour/day to check upcoming vaccination due dates, antenatal checkups, and appointment follow-ups, dispatching automated dashboard notifications to patients."
+  },
+  {
+    "index": 406,
+    "style": "normal",
+    "text": "Implementation Details"
+  },
+  {
+    "index": 407,
+    "style": "normal",
+    "text": "Express immunization routes (/api/immunizations) manage schedule queries, status updates, and automated reminder alerts."
+  },
+  {
+    "index": 408,
+    "style": "normal",
+    "text": "Technologies Used"
+  },
+  {
+    "index": 409,
+    "style": "normal",
+    "text": "●  \tReact.js"
+  },
+  {
+    "index": 410,
+    "style": "normal",
+    "text": "●  \tExpress.js"
+  },
+  {
+    "index": 411,
+    "style": "normal",
+    "text": "●  \tMongoDB"
+  },
+  {
+    "index": 412,
+    "style": "normal",
+    "text": "●  \tNode.js"
+  },
+  {
+    "index": 413,
+    "style": "normal",
+    "text": "●  \tpandas"
+  },
+  {
+    "index": 414,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 415,
+    "style": "normal",
+    "text": "Figure 4.13: Child Immunization Tracker Overview & Milestone Schedule."
+  },
+  {
+    "index": 416,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 417,
+    "style": "normal",
+    "text": "Figure 4.14: Child Vaccination Schedule Timeline & Milestone Tracker."
+  },
+  {
+    "index": 418,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 419,
+    "style": "normal",
+    "text": "Figure 4.15: Vaccination Status Update & Dose Batch Logging View."
+  },
+  {
+    "index": 420,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 421,
+    "style": "normal",
+    "text": "Figure 4.16: Automated Background Vaccination Reminder View (Nodemailer)."
+  },
+  {
+    "index": 422,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 423,
+    "style": "normal",
+    "text": "4.5 CORE REST API & SECURITY INFRASTRUCTURE"
+  },
+  {
+    "index": 424,
+    "style": "normal",
+    "text": "Purpose"
+  },
+  {
+    "index": 425,
+    "style": "normal",
+    "text": "Provides structured RESTful communication between React client, Express API server, and Flask ML microservice."
+  },
+  {
+    "index": 426,
+    "style": "normal",
+    "text": "How It Works"
+  },
+  {
+    "index": 427,
+    "style": "normal",
+    "text": "Client sends requests to Express API server. For ML tasks, Express calls Flask ML endpoints (/predict-type, /doctor-risk-score, /health). Responses returned as JSON."
+  },
+  {
+    "index": 428,
+    "style": "normal",
+    "text": "Implementation Details"
+  },
+  {
+    "index": 429,
+    "style": "normal",
+    "text": "Express routes implement middleware for JWT authorization and Mongoose input validation. Flask handles CORS and returns structured prediction objects."
+  },
+  {
+    "index": 430,
+    "style": "normal",
+    "text": "API Request Flow"
+  },
+  {
+    "index": 431,
+    "style": "normal",
+    "text": "The general API communication process can be represented as:"
+  },
+  {
+    "index": 432,
+    "style": "normal",
+    "text": "User Action → Streamlit Interface → FastAPI Endpoint → Pydantic Validation → Backend Processing → SQLite / ML Component → API Response → Streamlit Interface"
+  },
+  {
+    "index": 433,
+    "style": "normal",
+    "text": "Technologies Used"
+  },
+  {
+    "index": 434,
+    "style": "normal",
+    "text": "●  \tNode.js"
+  },
+  {
+    "index": 435,
+    "style": "normal",
+    "text": "●  \tExpress.js"
+  },
+  {
+    "index": 436,
+    "style": "normal",
+    "text": "●  \tFlask"
+  },
+  {
+    "index": 437,
+    "style": "normal",
+    "text": "●  \tMongoDB"
+  },
+  {
+    "index": 438,
+    "style": "normal",
+    "text": "●  \tReact.js"
+  },
+  {
+    "index": 439,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 440,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 441,
+    "style": "normal",
+    "text": "Figure 4.17: Express REST API Service Architecture & Middleware Pipeline."
+  },
+  {
+    "index": 442,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 443,
+    "style": "normal",
+    "text": "Figure 4.18: Appointment Booking & Triage REST API Endpoint Responses."
+  },
+  {
+    "index": 444,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 445,
+    "style": "normal",
+    "text": "Figure 4.19: Maternal Healthcare & Immunization REST API Endpoint Responses."
+  },
+  {
+    "index": 446,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 447,
+    "style": "normal",
+    "text": "Figure 4.20: Python Flask ML Microservice Endpoint Response."
+  },
+  {
+    "index": 448,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 449,
+    "style": "normal",
+    "text": "Figure 4.21: MongoDB Document Collections & Clinical Data Schema Structure."
+  },
+  {
+    "index": 450,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 451,
+    "style": "normal",
+    "text": "CHAPTER 5"
+  },
+  {
+    "index": 452,
+    "style": "normal",
+    "text": "SYSTEM TESTING"
+  },
+  {
+    "index": 453,
+    "style": "normal",
+    "text": "5.1 TESTING INTRODUCTION"
+  },
+  {
+    "index": 454,
+    "style": "normal",
+    "text": "Testing was conducted to verify that the Unified Healthcare Appointment and Immunization Tracking System operates reliably across all modules. Test cases cover user authentication, ABHA ID verification, multi-language UI switching, doctor slot management, appointment booking, unified medical history retrieval, emergency referral data transfer, maternal RCH ID tracking, child immunization status updates, node-cron background reminder triggers, ML appointment triage, and doctor workload risk scoring."
+  },
+  {
+    "index": 455,
+    "style": "normal",
+    "text": "All test cases were executed against the MERN stack application and Python Flask ML microservice, verifying expected functional outputs and HTTP response statuses."
+  },
+  {
+    "index": 456,
+    "style": "normal",
+    "text": "5.2 TESTING TECHNIQUES"
+  },
+  {
+    "index": 457,
+    "style": "normal",
+    "text": "1. Unit Testing"
+  },
+  {
+    "index": 458,
+    "style": "normal",
+    "text": "Individual API routes, Mongoose models, and Flask ML functions were tested independently with valid and edge-case inputs."
+  },
+  {
+    "index": 459,
+    "style": "normal",
+    "text": "2. Integration Testing"
+  },
+  {
+    "index": 460,
+    "style": "normal",
+    "text": "Different components are tested together. Example: Streamlit → FastAPI → Pydantic → SQLite, or Streamlit → ML prediction workflow → optimization workflow.Inter-module communication between React components, Express REST APIs, MongoDB database, and Flask ML microservice was verified."
+  },
+  {
+    "index": 461,
+    "style": "normal",
+    "text": "3. System Testing"
+  },
+  {
+    "index": 462,
+    "style": "normal",
+    "text": "End-to-end workflows from patient registration and appointment booking to clinical consultation and immunization status updating were tested."
+  },
+  {
+    "index": 463,
+    "style": "normal",
+    "text": "4. Functional Testing"
+  },
+  {
+    "index": 464,
+    "style": "normal",
+    "text": "Each feature was checked against defined functional requirements (FR1 to FR15)."
+  },
+  {
+    "index": 465,
+    "style": "normal",
+    "text": "5. API Testing"
+  },
+  {
+    "index": 466,
+    "style": "normal",
+    "text": "Express and Flask REST endpoints were tested using Postman and client Axios calls for payload structure and HTTP status codes."
+  },
+  {
+    "index": 467,
+    "style": "normal",
+    "text": "6. Model Evaluation"
+  },
+  {
+    "index": 468,
+    "style": "normal",
+    "text": "Machine learning models were evaluated on test datasets to verify classification accuracy, precision, and recall."
+  },
+  {
+    "index": 469,
+    "style": "normal",
+    "text": ""
+  },
+  {
+    "index": 470,
+    "style": "normal",
+    "text": "5.3 TEST CASES"
+  },
+  {
+    "index": 471,
+    "style": "normal",
+    "text": "CHAPTER 6"
+  },
+  {
+    "index": 472,
+    "style": "normal",
+    "text": "CONCLUSION"
+  },
+  {
+    "index": 473,
+    "style": "normal",
+    "text": "6.1 CONCLUSION"
+  },
+  {
+    "index": 474,
+    "style": "normal",
+    "text": "The Unified Healthcare Appointment and Immunization Tracking System successfully addresses the challenges of fragmented medical records, inefficient appointment scheduling, untracked maternal and child immunizations, language barriers, and unbalanced doctor consultation workloads. By integrating a MERN stack web platform with national ABHA digital health identities, node-cron automated background reminders, six-language localization, and a Python Flask machine learning microservice, the system provides a comprehensive technological solution for modern healthcare management."
+  },
+  {
+    "index": 475,
+    "style": "normal",
+    "text": "The application features digital ABHA ID authentication, multi-language accessibility (English, Hindi, Tamil, Telugu, Kannada, Malayalam), unified medical history tracking across healthcare providers, emergency referral data sharing, maternal record linking via government RCH / PICME registration IDs, automated child vaccination schedules, background cron reminder dispatching, and machine learning triage using Gradient Boosting Classifiers. The ML service predicts appointment urgency types and computes doctor workload risk scores to optimize schedule distribution."
+  },
+  {
+    "index": 476,
+    "style": "normal",
+    "text": "Built with React.js, TailwindCSS, Express.js, Node.js, MongoDB, node-cron, Flask, and scikit-learn, the platform demonstrates a modular, scalable architecture. Role-based access control and JWT authentication ensure data privacy and security. The system bridges the gap between patient access, clinical workflow, and administrative oversight."
+  },
+  {
+    "index": 477,
+    "style": "normal",
+    "text": "By combining electronic health record continuity, predictive clinical machine learning, maternal-child health tracking, and robust RESTful API services, the system establishes a strong foundation for digital healthcare transformation."
+  },
+  {
+    "index": 478,
+    "style": "normal",
+    "text": "The implemented system has been fully tested across unit, integration, functional, API, and machine learning evaluation criteria."
+  },
+  {
+    "index": 479,
+    "style": "normal",
+    "text": "6.2 FUTURE ENHANCEMENTS"
+  },
+  {
+    "index": 480,
+    "style": "normal",
+    "text": "Integration of video telemedicine consultation capabilities for remote healthcare access."
+  },
+  {
+    "index": 481,
+    "style": "normal",
+    "text": "Integration of IoT medical device data streams for continuous vitals monitoring."
+  },
+  {
+    "index": 482,
+    "style": "normal",
+    "text": "Implementation of an AI-powered conversational chatbot for preliminary patient symptom inquiry."
+  },
+  {
+    "index": 483,
+    "style": "normal",
+    "text": "Integration of automated SMS and WhatsApp notification gateways for vaccination reminders."
+  },
+  {
+    "index": 484,
+    "style": "normal",
+    "text": "Integration of AI-driven diagnostic imaging analysis for automated radiograph and scan screening."
+  },
+  {
+    "index": 485,
+    "style": "normal",
+    "text": "Implementation of blockchain-based immutable audit logging for patient medical consent and record access."
+  },
+  {
+    "index": 486,
+    "style": "normal",
+    "text": "Predictive analytics for hospital bed occupancy, ICU capacity, and emergency room resource planning."
+  },
+  {
+    "index": 487,
+    "style": "normal",
+    "text": "Migration to cloud microservices architecture with Kubernetes for enterprise scaling."
+  },
+  {
+    "index": 488,
+    "style": "normal",
+    "text": "Enhanced data encryption and HIPAA-compliant security standards for enterprise deployment."
+  },
+  {
+    "index": 489,
+    "style": "normal",
+    "text": "Mobile native applications (iOS and Android) for field health workers."
+  },
+  {
+    "index": 490,
+    "style": "normal",
+    "text": "BIBLIOGRAPHY"
+  },
+  {
+    "index": 491,
+    "style": "normal",
+    "text": "Express.js Documentation – https://expressjs.com/"
+  },
+  {
+    "index": 492,
+    "style": "normal",
+    "text": "Git Documentation – https://git-scm.com/doc"
+  },
+  {
+    "index": 493,
+    "style": "normal",
+    "text": "GitHub Documentation – https://docs.github.com/"
+  },
+  {
+    "index": 494,
+    "style": "normal",
+    "text": "Ministry of Health and Family Welfare, Govt. of India – Reproductive and Child Health (RCH) Guidelines."
+  },
+  {
+    "index": 495,
+    "style": "normal",
+    "text": "MongoDB Documentation – https://www.mongodb.com/docs/"
+  },
+  {
+    "index": 496,
+    "style": "normal",
+    "text": "Node.js Documentation – https://nodejs.org/docs/"
+  },
+  {
+    "index": 497,
+    "style": "normal",
+    "text": "Python Flask Documentation – https://flask.palletsprojects.com/"
+  },
+  {
+    "index": 498,
+    "style": "normal",
+    "text": "React Documentation – https://react.dev/"
+  },
+  {
+    "index": 499,
+    "style": "normal",
+    "text": "scikit-learn Documentation – https://scikit-learn.org/stable/"
+  },
+  {
+    "index": 500,
+    "style": "normal",
+    "text": "TailwindCSS Documentation – https://tailwindcss.com/docs"
+  },
+  {
+    "index": 501,
+    "style": "normal",
+    "text": "Unified Healthcare Appointment and Immunization Tracking System – Project repository and source code."
+  }
+]

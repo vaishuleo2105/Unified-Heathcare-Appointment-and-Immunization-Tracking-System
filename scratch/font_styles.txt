@@ -1,0 +1,95 @@
+P71 [normal]:
+  font=Times New Roman, size=16.0, bold=True, italic=None, text='CHAPTER 1'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P72 [normal]:
+  font=Times New Roman, size=16.0, bold=True, italic=None, text='INTRODUCTION'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P73 [normal]:
+  font=None, size=None, bold=None, italic=None, text=''
+  font=Times New Roman, size=14.0, bold=True, italic=None, text='1.1 PROJECT OVERVIEW'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P74 [normal]:
+  font=Times New Roman, size=12.0, bold=None, italic=None, text='Healthcare delivery systems depend heavily on continuous patient information access, timely clinical decision-making, and proactive preventive care. Patients frequently consult multiple healthcare providers across different hospitals. When medical histories are maintained in isolated hospital databases, doctors lack access to previous diagnoses, prescriptions, lab results, and known allergies.'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P80 [normal]:
+  font=None, size=None, bold=True, italic=None, text='Figure 1.1: Workflow Diagram'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P91 [normal]:
+  font=None, size=None, bold=None, italic=None, text=''
+  font=Times New Roman, size=16.0, bold=True, italic=None, text='CHAPTER 2'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P92 [normal]:
+  font=None, size=16.0, bold=True, italic=None, text='SYSTEM ANALYSIS'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P94 [normal]:
+  font=Times New Roman, size=14.0, bold=True, italic=None, text='2.1 EXISTING SYSTEM'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P95 [normal]:
+  font=Times New Roman, size=12.0, bold=None, italic=None, text='In traditional healthcare delivery, patient records are maintained independently by each hospital or clinic in isolated electronic systems or paper files. When a patient visits a new hospital or is transferred during a medical emergency, doctors cannot access previous diagnoses, active prescriptions, lab results, or known allergies. National digital health identification such as ABHA ID is often absent, preventing record interoperability.'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P137 [normal]:
+  font=Times New Roman, size=16.0, bold=True, italic=None, text='CHAPTER 3'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P138 [normal]:
+  font=Times New Roman, size=16.0, bold=True, italic=None, text=' SYSTEM DESIGN'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P140 [normal]:
+  font=Times New Roman, size=12.0, bold=None, italic=None, text='The Unified Healthcare Appointment and Immunization Tracking System follows a multi-tier microservice architecture. The React.js frontend application with i18n localization acts as the presentation layer. The Express.js backend handles business logic, session management, node-cron background reminder execution, ABHA Sandbox API integration, and CRUD operations. The Python Flask service acts as an independent machine learning microservice for model inference. MongoDB serves as the data persistence layer for all application records.'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P142 [normal]:
+  font=Times New Roman, size=11.0, bold=True, italic=False, text='Figure 3.1 – Unified Healthcare System Architecture'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P210 [normal]:
+  font=Times New Roman, size=16.0, bold=True, italic=None, text='CHAPTER 4'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P211 [normal]:
+  font=Times New Roman, size=16.0, bold=True, italic=None, text='SYSTEM IMPLEMENTATION'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P215 [normal]:
+  font=None, size=None, bold=True, italic=None, text='Figure 4.1: Complete 3-Tier MVC System Architecture Diagram.'
+
+P216 [normal]:
+  font=None, size=14.0, bold=True, italic=None, text='4.1 USER PORTALS & MULTILINGUAL PRESENTATION LAYER'
+
+P218 [normal]:
+  font=None, size=None, bold=None, italic=None, text='The Home / Dashboard serves as the primary portal for the system. It provides role-based navigation for Patients, Doctors, Hospital Staff, and Hospital Administrators, allowing seamless access to ABHA ID verification, appointment booking, medical history, immunization tracking, multi-language switching, and clinical workload management.'
+
+P451 [normal]:
+  font=Times New Roman, size=16.0, bold=True, italic=None, text='CHAPTER 5'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P452 [normal]:
+  font=Times New Roman, size=16.0, bold=True, italic=None, text='SYSTEM TESTING'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P454 [normal]:
+  font=Times New Roman, size=12.0, bold=None, italic=None, text='Testing was conducted to verify that the Unified Healthcare Appointment and Immunization Tracking System operates reliably across all modules. Test cases cover user authentication, ABHA ID verification, multi-language UI switching, doctor slot management, appointment booking, unified medical history retrieval, emergency referral data transfer, maternal RCH ID tracking, child immunization status updates, node-cron background reminder triggers, ML appointment triage, and doctor workload risk scoring.'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P471 [normal]:
+  font=Times New Roman, size=16.0, bold=True, italic=None, text='CHAPTER 6'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P472 [normal]:
+  font=Times New Roman, size=16.0, bold=True, italic=None, text='CONCLUSION'
+  font=None, size=None, bold=None, italic=None, text=''
+
+P474 [normal]:
+  font=Times New Roman, size=12.0, bold=None, italic=None, text='The Unified Healthcare Appointment and Immunization Tracking System successfully addresses the challenges of fragmented medical records, inefficient appointment scheduling, untracked maternal and child immunizations, language barriers, and unbalanced doctor consultation workloads. By integrating a MERN stack web platform with national ABHA digital health identities, node-cron automated background reminders, six-language localization, and a Python Flask machine learning microservice, the system provides a comprehensive technological solution for modern healthcare management.'
+  font=None, size=None, bold=None, italic=None, text=''
+

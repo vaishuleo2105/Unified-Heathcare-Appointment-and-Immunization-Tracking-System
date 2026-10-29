@@ -9,6 +9,7 @@ dotenv.config()
 
 
 
+const User = require('./models/User')
 const authRoutes         = require('./routes/auth')
 const maternalRoutes     = require('./routes/maternal')
 const appointmentRoutes  = require('./routes/appointments')
@@ -58,22 +59,70 @@ app.get('/api/health', (req, res) => {
   })
 })
 
-app.get('/api/test-email', async (req, res) => {
+
+app.get('/api/telegram-sync', async (req, res) => {
+  const axios = require('axios')
+  const { resolveTelegramChatId } = require('./utils/smsService')
+  const token = (process.env.TELEGRAM_BOT_TOKEN || '').trim()
+  if (!token) {
+    return res.status(400).json({ success: false, message: 'TELEGRAM_BOT_TOKEN is missing in server/.env' })
+  }
+
   try {
-    const axios = require('axios')
-    const result = await axios.post(
-      'https://api.resend.com/emails',
-      {
-        from: 'Unified Health <onboarding@resend.dev>',
-        to: [req.query.to || 'indujae35@gmail.com'],
-        subject: 'Test Email from Unified Health',
-        html: '<p>If you see this, Resend is working correctly!</p>',
-      },
-      { headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' } }
-    )
-    res.json({ success: true, data: result.data })
+    // 1. Check Bot Identity
+    const meResp = await axios.get(`https://api.telegram.org/bot${token}/getMe`, { timeout: 10000 })
+    const botInfo = meResp.data?.result
+
+    // 2. Allow manual chatId override query param
+    let explicitChatId = req.query.chatId ? String(req.query.chatId).trim() : null
+    let activeChatId = await resolveTelegramChatId(token, explicitChatId)
+
+    if (activeChatId) {
+      // If user is authenticated, update their user document
+      try {
+        const authHeader = req.headers.authorization
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          const jwt = require('jsonwebtoken')
+          const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET)
+          if (decoded && decoded.id) {
+            await User.findByIdAndUpdate(decoded.id, { telegramChatId: activeChatId })
+          }
+        }
+      } catch (authErr) {}
+
+      // Send immediate welcome test alert
+      const testSend = await axios.post(
+        `https://api.telegram.org/bot${token}/sendMessage`,
+        {
+          chat_id: activeChatId,
+          text: `🎉 <b>Unified Health Connected!</b>\n\nYour Telegram is linked to receive appointment alerts for <b>9791868857</b>.\nAll booking and cancellation notices will arrive here instantly.`,
+          parse_mode: 'HTML',
+        },
+        { timeout: 10000 }
+      )
+      return res.json({
+        success: true,
+        message: `Successfully connected to Telegram! Test message delivered to chat ${activeChatId}.`,
+        chatId: activeChatId,
+        bot: botInfo,
+        testSend: testSend.data,
+      })
+    }
+
+    // 3. If no chat found yet, inspect raw getUpdates to guide user
+    const updatesResp = await axios.get(`https://api.telegram.org/bot${token}/getUpdates`, { timeout: 10000 })
+    return res.json({
+      success: false,
+      message: "Telegram Bot is active, but you haven't pressed START or sent a message in the bot chat yet.",
+      instruction: "1. Open https://t.me/uni_h3alth_bot on your phone or PC\n2. Tap START (or send 'hi')\n3. Refresh this page or re-test!",
+      bot: botInfo,
+      rawUpdatesCount: (updatesResp.data?.result || []).length,
+    })
   } catch (err) {
-    res.status(500).json({ error: err.response?.data || err.message })
+    return res.status(500).json({
+      success: false,
+      error: err.response?.data?.description || err.message,
+    })
   }
 })
 
@@ -87,14 +136,39 @@ app.get('/{*splat}', (req, res, next) => {
 })
 
 const PORT = process.env.PORT || 5000
+const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/uhaits'
+const localMongoUri = 'mongodb://127.0.0.1:27017/uhaits'
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('MongoDB connected')
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
-    startReminderScheduler()
-  })
-  .catch((err) => {
-    console.error('MongoDB connection failed:', err.message)
-  })
+async function startServer() {
+  try {
+    await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5000 })
+    console.log('MongoDB connected (Primary URI)')
+  } catch (err) {
+    console.warn('Primary MongoDB connection failed:', err.message)
+    console.log('Attempting fallback to local MongoDB instance...')
+    try {
+      await mongoose.connect(localMongoUri, { serverSelectionTimeoutMS: 5000 })
+      console.log('MongoDB connected (Local Fallback URI)')
+    } catch (fallbackErr) {
+      console.error('Local MongoDB connection also failed:', fallbackErr.message)
+    }
+  }
+
+  // Ensure all users in MongoDB have phone set to 9791868857
+  try {
+    const syncRes = await User.updateMany(
+      { $or: [{ phone: { $ne: '9791868857' } }, { phone: { $exists: false } }] },
+      { $set: { phone: '9791868857' } }
+    )
+    if (syncRes.modifiedCount > 0) {
+      console.log(`[User Sync] Set mobile number to 9791868857 for ${syncRes.modifiedCount} user(s).`)
+    }
+  } catch (syncErr) {
+    console.warn('[User Sync] Auto-update phone numbers skipped:', syncErr.message)
+  }
+
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+  startReminderScheduler()
+}
+
+startServer()

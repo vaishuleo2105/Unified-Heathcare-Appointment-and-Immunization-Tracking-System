@@ -1,0 +1,300 @@
+
+=========================================
+FIGURE PARAGRAPH P80: Figure 1.1: Workflow Diagram
+-----------------------------------------
+  PREV P77: The platform supports four principal user roles: Patient, Doctor, Hospital Staff, and Hospital Administrator. 
+  PREV P78: The application integrates React.js for the responsive frontend user interface, Node.js and Express.js for bac
+  PREV P79: 
+  NEXT P81: 
+  NEXT P82: 
+  NEXT P83: 1.2 PROJECT OBJECTIVES
+
+=========================================
+FIGURE PARAGRAPH P142: Figure 3.1 – Unified Healthcare System Architecture
+-----------------------------------------
+  PREV P139: 3.1 SYSTEM ARCHITECTURE
+  PREV P140: The Unified Healthcare Appointment and Immunization Tracking System follows a multi-tier microservice architec
+  PREV P141: 
+  NEXT P143: 
+  NEXT P144: The architecture can be described through the following layers:
+  NEXT P145: Presentation Layer – React.js single-page application styled with TailwindCSS following Organic Modernist desi
+
+=========================================
+FIGURE PARAGRAPH P176: Figure 3.2 – UML Activity Diagram of Unified Healthcare System
+-----------------------------------------
+  PREV P173: 
+  PREV P174: 3.3 UML ACTIVITY DIAGRAM
+  PREV P175: 
+  NEXT P177: The activity workflow begins with user authentication and role selection. Patients can search doctors, book sl
+  NEXT P178: 
+  NEXT P179: 
+
+=========================================
+FIGURE PARAGRAPH P185: Figure 3.3 – BPMN Diagram of Unified Healthcare System
+-----------------------------------------
+  PREV P182: 3.4 BPMN DIAGRAM
+  PREV P183: 
+  PREV P184: 
+  NEXT P186: BPMN Process Explanation:
+  NEXT P187: Step 1 – Registration & Authentication: User creates account and authenticates via JWT.
+  NEXT P188: Step 2 – Appointment Booking: Patient selects doctor, slot, and inputs clinical details.
+
+=========================================
+FIGURE PARAGRAPH P199: Figure 3.4 – Healthcare System Database Schema
+-----------------------------------------
+  PREV P196: MongoDB is used as the document-oriented database for the system. It provides high flexibility for storing com
+  PREV P197: 
+  PREV P198: 
+  NEXT P200: The database maintains structured document collections for users, doctors, appointments, slots, maternal recor
+  NEXT P201: 
+  NEXT P202: 
+
+=========================================
+FIGURE PARAGRAPH P208: Figure 3.5 – Machine Learning Workflow
+-----------------------------------------
+  PREV P205: 3.7 MACHINE LEARNING WORKFLOW
+  PREV P206: 
+  PREV P207: 
+  NEXT P209: The machine learning pipeline uses clinical features including Age, Gender, Blood Type, Medical Condition, Med
+  NEXT P210: CHAPTER 4
+  NEXT P211: SYSTEM IMPLEMENTATION
+
+=========================================
+FIGURE PARAGRAPH P215: Figure 4.1: Complete 3-Tier MVC System Architecture Diagram.
+-----------------------------------------
+  PREV P212: 
+  PREV P213: The system implementation follows a 3-Tier Model-View-Controller (MVC) architecture connecting React.js single
+  PREV P214: 
+  NEXT P216: 4.1 USER PORTALS & MULTILINGUAL PRESENTATION LAYER
+  NEXT P217: Purpose
+  NEXT P218: The Home / Dashboard serves as the primary portal for the system. It provides role-based navigation for Patien
+
+=========================================
+FIGURE PARAGRAPH P239: Figure 4.2: Authentication and Login Page.
+-----------------------------------------
+  PREV P236: ●  	Flask ML Service
+  PREV P237: ●  	scikit-learn
+  PREV P238: 
+  NEXT P240: 
+  NEXT P241: Figure 4.3: Patient Dashboard.
+  NEXT P242: 
+
+=========================================
+FIGURE PARAGRAPH P241: Figure 4.3: Patient Dashboard.
+-----------------------------------------
+  PREV P238: 
+  PREV P239: Figure 4.2: Authentication and Login Page.
+  PREV P240: 
+  NEXT P242: 
+  NEXT P243: Figure 4.4: Multilingual Regional Language Controls (EN, HI, TA, TE, KN, ML).
+  NEXT P244: 
+
+=========================================
+FIGURE PARAGRAPH P243: Figure 4.4: Multilingual Regional Language Controls (EN, HI, TA, TE, KN, ML).
+-----------------------------------------
+  PREV P240: 
+  PREV P241: Figure 4.3: Patient Dashboard.
+  PREV P242: 
+  NEXT P244: 
+  NEXT P245: Figure 4.5: Digital ABHA ID Verification Portal.
+  NEXT P246: Purpose
+
+=========================================
+FIGURE PARAGRAPH P245: Figure 4.5: Digital ABHA ID Verification Portal.
+-----------------------------------------
+  PREV P242: 
+  PREV P243: Figure 4.4: Multilingual Regional Language Controls (EN, HI, TA, TE, KN, ML).
+  PREV P244: 
+  NEXT P246: Purpose
+  NEXT P247: The Administrator Module allows hospital management to onboard doctors, assign clinical departments, configure
+  NEXT P248: How It Works
+
+=========================================
+FIGURE PARAGRAPH P247: The Administrator Module allows hospital management to onboard doctors, assign clinical departments, configure consultation fee structures, manage staff accounts, and generate doctor appointment slots.
+-----------------------------------------
+  PREV P244: 
+  PREV P245: Figure 4.5: Digital ABHA ID Verification Portal.
+  PREV P246: Purpose
+  NEXT P248: How It Works
+  NEXT P249: Admins log into a dedicated portal to view all registered doctors and hospital departments. New doctor account
+  NEXT P250: Implementation Details
+
+=========================================
+FIGURE PARAGRAPH P259: Figure 4.4: Hospital Administrator System Management Module.
+-----------------------------------------
+  PREV P256: ●  	MongoDB
+  PREV P257: ●  	JWT
+  PREV P258: 
+  NEXT P260: 4.1.1 Digital ABHA ID Integration & Multilingual Support
+  NEXT P261: Purpose
+  NEXT P262: The Doctor & Patient Portal handles core clinical interaction, digital health identity integration, and region
+
+=========================================
+FIGURE PARAGRAPH P278: Figure 4.5: Doctor & Patient Consultation Portal Overview.
+-----------------------------------------
+  PREV P275: ●  	Flask ML Service
+  PREV P276: ●  	scikit-learn
+  PREV P277: 
+  NEXT P279: 
+  NEXT P280: 4.2 UNIFIED EHR & EMERGENCY INTER-HOSPITAL REFERRAL ENGINE
+  NEXT P281: Purpose
+
+=========================================
+FIGURE PARAGRAPH P295: Figure 4.6: Unified Patient Electronic Health Record (EHR) History View.
+-----------------------------------------
+  PREV P292: ●  	MongoDB
+  PREV P293: ●  	Node.js
+  PREV P294: 
+  NEXT P296: 4.3 MACHINE LEARNING TRIAGE & WORKLOAD RISK MICROSERVICE
+  NEXT P297: Purpose
+  NEXT P298: Preprocesses raw patient clinical parameters (Age, Gender, Blood Type, Medical Condition, Medication, Test Res
+
+=========================================
+FIGURE PARAGRAPH P310: Figure 4.7: Clinical Data Preprocessing & Feature Encoding Pipeline.
+-----------------------------------------
+  PREV P307: ●  	scikit-learn
+  PREV P308: ●  	joblib
+  PREV P309: 
+  NEXT P311: 4.3.1 Appointment Urgency Triage Prediction Model
+  NEXT P312: Purpose
+  NEXT P313: Predicts appointment urgency categories (Emergency, Consultation, Follow-up, Vaccination, General Checkup) usi
+
+=========================================
+FIGURE PARAGRAPH P331: Figure 4.8: Gradient Boosting Appointment Urgency Triage Prediction View.
+-----------------------------------------
+  PREV P328: ●  	Gradient Boosting
+  PREV P329: ●  	FastAPI where applicable
+  PREV P330: 
+  NEXT P332: 
+  NEXT P333: 4.3.2 ML Model Evaluation & Performance Metrics
+  NEXT P334: Purpose
+
+=========================================
+FIGURE PARAGRAPH P351: Figure 4.9: Machine Learning Model Classification & Performance Evaluation.
+-----------------------------------------
+  PREV P348: ●  	scikit-learn
+  PREV P349: ●  	pandas
+  PREV P350: ●  	Flask
+  NEXT P352: 
+  NEXT P353: 4.2.1 Inter-Hospital Referral & Emergency Data Sharing
+  NEXT P354: Purpose
+
+=========================================
+FIGURE PARAGRAPH P366: Figure 4.10: Inter-Hospital Emergency Referral & Data Snapshot Dispatch Portal.
+-----------------------------------------
+  PREV P363: ●  	MongoDB
+  PREV P364: ●  	Node.js
+  PREV P365: 
+  NEXT P367: 
+  NEXT P368: 4.3.3 Doctor Workload Risk Scoring & Schedule Balancing
+  NEXT P369: Purpose
+
+=========================================
+FIGURE PARAGRAPH P383: Figure 4.11: Doctor Workload Risk Score Meter & Schedule Optimization Analytics.
+-----------------------------------------
+  PREV P380: ●  	React.js
+  PREV P381: ●  	MongoDB
+  PREV P382: 
+  NEXT P384: 
+  NEXT P385: 
+  NEXT P386: 4.4 MATERNAL & CHILD IMMUNIZATION TRACKING MODULE
+
+=========================================
+FIGURE PARAGRAPH P399: Figure 4.12: Maternal Healthcare & Antenatal Checkup Tracker (RCH / PICME ID).
+-----------------------------------------
+  PREV P396: ●  	MongoDB
+  PREV P397: ●  	Node.js
+  PREV P398: 
+  NEXT P400: 
+  NEXT P401: 4.4.1 Child Immunization Milestone Tracker & Reminders
+  NEXT P402: Purpose
+
+=========================================
+FIGURE PARAGRAPH P415: Figure 4.13: Child Immunization Tracker Overview & Milestone Schedule.
+-----------------------------------------
+  PREV P412: ●  	Node.js
+  PREV P413: ●  	pandas
+  PREV P414: 
+  NEXT P416: 
+  NEXT P417: Figure 4.14: Child Vaccination Schedule Timeline & Milestone Tracker.
+  NEXT P418: 
+
+=========================================
+FIGURE PARAGRAPH P417: Figure 4.14: Child Vaccination Schedule Timeline & Milestone Tracker.
+-----------------------------------------
+  PREV P414: 
+  PREV P415: Figure 4.13: Child Immunization Tracker Overview & Milestone Schedule.
+  PREV P416: 
+  NEXT P418: 
+  NEXT P419: Figure 4.15: Vaccination Status Update & Dose Batch Logging View.
+  NEXT P420: 
+
+=========================================
+FIGURE PARAGRAPH P419: Figure 4.15: Vaccination Status Update & Dose Batch Logging View.
+-----------------------------------------
+  PREV P416: 
+  PREV P417: Figure 4.14: Child Vaccination Schedule Timeline & Milestone Tracker.
+  PREV P418: 
+  NEXT P420: 
+  NEXT P421: Figure 4.16: Automated Background Vaccination Reminder View (Nodemailer).
+  NEXT P422: 
+
+=========================================
+FIGURE PARAGRAPH P421: Figure 4.16: Automated Background Vaccination Reminder View (Nodemailer).
+-----------------------------------------
+  PREV P418: 
+  PREV P419: Figure 4.15: Vaccination Status Update & Dose Batch Logging View.
+  PREV P420: 
+  NEXT P422: 
+  NEXT P423: 4.5 CORE REST API & SECURITY INFRASTRUCTURE
+  NEXT P424: Purpose
+
+=========================================
+FIGURE PARAGRAPH P441: Figure 4.17: Express REST API Service Architecture & Middleware Pipeline.
+-----------------------------------------
+  PREV P438: ●  	React.js
+  PREV P439: 
+  PREV P440: 
+  NEXT P442: 
+  NEXT P443: Figure 4.18: Appointment Booking & Triage REST API Endpoint Responses.
+  NEXT P444: 
+
+=========================================
+FIGURE PARAGRAPH P443: Figure 4.18: Appointment Booking & Triage REST API Endpoint Responses.
+-----------------------------------------
+  PREV P440: 
+  PREV P441: Figure 4.17: Express REST API Service Architecture & Middleware Pipeline.
+  PREV P442: 
+  NEXT P444: 
+  NEXT P445: Figure 4.19: Maternal Healthcare & Immunization REST API Endpoint Responses.
+  NEXT P446: 
+
+=========================================
+FIGURE PARAGRAPH P445: Figure 4.19: Maternal Healthcare & Immunization REST API Endpoint Responses.
+-----------------------------------------
+  PREV P442: 
+  PREV P443: Figure 4.18: Appointment Booking & Triage REST API Endpoint Responses.
+  PREV P444: 
+  NEXT P446: 
+  NEXT P447: Figure 4.20: Python Flask ML Microservice Endpoint Response.
+  NEXT P448: 
+
+=========================================
+FIGURE PARAGRAPH P447: Figure 4.20: Python Flask ML Microservice Endpoint Response.
+-----------------------------------------
+  PREV P444: 
+  PREV P445: Figure 4.19: Maternal Healthcare & Immunization REST API Endpoint Responses.
+  PREV P446: 
+  NEXT P448: 
+  NEXT P449: Figure 4.21: MongoDB Document Collections & Clinical Data Schema Structure.
+  NEXT P450: 
+
+=========================================
+FIGURE PARAGRAPH P449: Figure 4.21: MongoDB Document Collections & Clinical Data Schema Structure.
+-----------------------------------------
+  PREV P446: 
+  PREV P447: Figure 4.20: Python Flask ML Microservice Endpoint Response.
+  PREV P448: 
+  NEXT P450: 
+  NEXT P451: CHAPTER 5
+  NEXT P452: SYSTEM TESTING

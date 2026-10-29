@@ -1,0 +1,618 @@
+=== PARAGRAPHS ===
+P[0] (Style: normal): 
+P[1] (Style: normal): FREIGHT-OPT
+P[2] (Style: normal): SMART FREIGHT INFRASTRUCTURE PLANNING AND BUDGET OPTIMIZATION SYSTEM FOR TAMIL NADU
+P[3] (Style: normal): SWEATHA A M - 25MX128
+P[4] (Style: normal): DEVIBALA N - 25MX206
+P[5] (Style: normal): DISSERTATION SUBMITTED IN PARTIAL FULFILLMENT OF THE
+P[6] (Style: normal): REQUIREMENTS FOR THE DEGREE OF
+P[7] (Style: normal): MASTER OF COMPUTER APPLICATIONS
+P[8] (Style: normal): 
+P[9] (Style: normal): ANNA UNIVERSITY
+P[10] (Style: normal): OCTOBER 2026
+P[11] (Style: normal): DEPARTMENT OF COMPUTER APPLICATIONS
+P[12] (Style: normal): PSG COLLEGE OF TECHNOLOGY
+P[13] (Style: normal): (Autonomous Institution)
+P[14] (Style: normal): COIMBATORE - 641 004
+P[15] (Style: normal): 
+P[16] (Style: normal): PSG COLLEGE OF TECHNOLOGY
+P[17] (Style: normal): (Autonomous Institution)
+P[18] (Style: normal): COIMBATORE - 641 004
+P[19] (Style: normal): FREIGHTOPT
+P[20] (Style: normal): SMART FREIGHT INFRASTRUCTURE PLANNING AND BUDGET OPTIMIZATION SYSTEM FOR TAMIL NADU
+P[21] (Style: normal): Bonafide record of work done by
+P[22] (Style: normal): SWEATHA A M - 25MX128
+P[23] (Style: normal): DEVIBALA N - 25MX206
+P[24] (Style: normal): 23MX37 - MINI PROJECT
+P[25] (Style: normal): REPORT SUBMITTED IN PARTIAL FULFILLMENT OF THE REQUIREMENTS
+P[26] (Style: normal): FOR THE DEGREE OF
+P[27] (Style: normal): MASTER OF COMPUTER APPLICATIONS
+P[28] (Style: normal): OF ANNA UNIVERSITY
+P[29] (Style: normal): OCTOBER 2026
+P[30] (Style: normal): 
+P[31] (Style: normal): Faculty Guide
+P[32] (Style: normal): …………………….
+P[33] (Style: normal): Ms. A. Kalyani
+P[34] (Style: normal): ACKNOWLEDGEMENT
+P[35] (Style: normal): We take this opportunity to express our sincere gratitude to our beloved Principal,  Dr. G. THILAGAVATHI, PSG College of Technology, for providing us with the opportunity and necessary facilities to carry out this project.
+P[36] (Style: normal): We are deeply indebted to Dr. ILAYARAJA N, Professor and Head, Department of Computer Applications, PSG College of Technology, for his continual support and motivation throughout the project.
+P[37] (Style: normal): We extend our sincere  thanks to our Programme Coordinator, Ms. A. KALYANI, Assistant Professor, Department of Computer Applications, PSG College of Technology, whose motivation and support encouraged us to undertake and successfully complete this project.
+P[38] (Style: normal): We express our heartfelt gratitude to our Faculty Guide, Ms. A. KALYANI, Assistant Professor,  Department of Computer Applications, PSG College of Technology, for her valuable guidance, constructive suggestions,  and continual support throughout the project.
+P[39] (Style: normal): We also extend our sincere thanks to all the faculty members and non-teaching staff of the Department of Computer Applications for their kind cooperation, encouragement, and support.
+P[40] (Style: normal): We also thank our parents, friends, and everyone who helped us directly or indirectly in completing this project.
+P[41] (Style: normal): 
+P[42] (Style: normal): SYNOPSIS
+P[43] (Style: normal): FreightOpt is a web-based intelligent freight planning and demand prediction system designed to support freight analysis through historical data, machine learning and interactive visualization. Freight-related information can be difficult to interpret when it is maintained as separate datasets or analysed manually. FreightOpt brings the relevant data processing, predictive modelling and visualization activities into a unified application.
+P[44] (Style: normal): The system supports administrator and government-planner workflows. Freight-related data for the period 2020–2026, covering 38 districts of Tamil Nadu, is organized and prepared for predictive analysis. The system performs data preprocessing, feature selection and an 80:20 training and testing split before training regression models. Three machine learning approaches are implemented: Ridge Regression, Random Forest Regressor and Gradient Boosting Regressor, of which the Gradient Boosting model performs best. A multi-pillar Infrastructure Deficit Index and a Linear Programming based budget optimizer (using SciPy's linprog) are also incorporated to support planning decisions.
+P[45] (Style: normal): The application uses Streamlit for the interactive client interface, FastAPI with Pydantic for REST API services and request/response validation, SQLite for data storage and Folium for interactive map visualization. The backend currently exposes seven API endpoints. Analytical views present freight-related patterns and prediction results in a form that can be interpreted by planning users.
+P[46] (Style: normal): The main objective of FreightOpt is to provide a structured, data-driven environment for freight demand analysis and planning. By combining historical data, predictive modelling, an infrastructure deficit index, budget optimization, API services, database management and visualization, the system provides a foundation for informed freight planning and can be extended with additional datasets, optimization methods and deployment capabilities.
+P[47] (Style: normal): 
+P[48] (Style: normal): CONTENTS
+P[49] (Style: normal): 
+P[50] (Style: normal): CHAPTER 1INTRODUCTION
+P[51] (Style: normal): 1.1 PROJECT OVERVIEW
+P[52] (Style: normal): Freight transportation supports industrial activity, trade and regional economic development. Planning freight movement requires the ability to understand historical freight patterns and estimate future demand. When data is maintained in separate files and analysed manually, planners may need to perform repeated calculations and compare multiple views before obtaining useful insights.
+P[53] (Style: normal): FreightOpt is a web-based intelligent freight planning and demand prediction system proposed to address this requirement. It provides a unified environment for storing, processing, analysing and visualizing freight-related data and for generating demand predictions using machine learning, for 38 districts of Tamil Nadu.
+P[54] (Style: normal): The system uses historical freight-related data covering the period 2020–2026. Relevant variables are selected and prepared for modelling. The processed data is divided into training and testing subsets using an 80:20 ratio. Ridge Regression, Random Forest Regressor and Gradient Boosting Regressor are trained and evaluated as alternative regression models, with Gradient Boosting selected as the best performer.
+P[55] (Style: normal): The platform supports two principal user roles: Administrator and Government Planner. The Administrator-oriented functions support system/data management, while the Government Planner-oriented functions focus on analysing freight information, viewing predictions, the Infrastructure Deficit Index, budget optimization results, and using visualizations for planning.
+P[56] (Style: normal): FreightOpt combines Streamlit for the interactive application interface, FastAPI and Pydantic for REST services and validation, SQLite for persistent data storage, scikit-learn based regression models for prediction, SciPy for Linear Programming based budget optimization, and Folium for geographic visualization. The system is designed as a project-level application and provides a foundation that can be extended for larger-scale freight planning.
+P[57] (Style: normal): Example workflow:
+P[58] (Style: normal): Freight data is prepared and stored for analysis.
+P[59] (Style: normal): Relevant features are selected and the data is preprocessed.
+P[60] (Style: normal): The dataset is divided into 80% training and 20% testing data.
+P[61] (Style: normal): Ridge Regression, Random Forest Regressor and Gradient Boosting Regressor are trained.
+P[62] (Style: normal): Model performance is compared using regression evaluation measures.
+P[63] (Style: normal): The selected model generates freight demand predictions.
+P[64] (Style: normal): The Infrastructure Deficit Index is computed for each district.
+P[65] (Style: normal): The budget optimizer allocates funds across districts using Linear Programming.
+P[66] (Style: normal): Charts and Folium maps present the results for interpretation.
+P[67] (Style: normal): 1.2 PROJECT OBJECTIVES
+P[68] (Style: normal): To provide a unified platform for freight data analysis and planning across Tamil Nadu.
+P[69] (Style: normal): To organize historical freight-related data (2020–2026) for predictive analysis.
+P[70] (Style: normal): To preprocess freight data and select relevant features for machine learning.
+P[71] (Style: normal): To train and compare Ridge Regression, Random Forest Regressor and Gradient Boosting Regressor models.
+P[72] (Style: normal): To generate freight demand predictions from the selected regression model.
+P[73] (Style: normal): To compute a multi-pillar Infrastructure Deficit Index for each district.
+P[74] (Style: normal): To optimize budget allocation across districts using Linear Programming.
+P[75] (Style: normal): To provide analytical visualizations for understanding freight patterns.
+P[76] (Style: normal): To provide map-based visualization of geographically relevant freight information using Folium.
+P[77] (Style: normal): To expose structured REST API services through FastAPI and validate data using Pydantic.
+P[78] (Style: normal): To maintain application data using SQLite.
+P[79] (Style: normal): To support administrator and government-planner workflows through an interactive interface.
+P[80] (Style: normal): 1.3 SCOPE OF THE PROJECT
+P[81] (Style: normal): Historical freight-data processing for the available 2020–2026, 38-district Tamil Nadu dataset.
+P[82] (Style: normal): Feature selection and preprocessing for regression-based prediction.
+P[83] (Style: normal): 80:20 training/testing split for model development and evaluation.
+P[84] (Style: normal): Training and comparison of Ridge Regression, Random Forest Regressor and Gradient Boosting Regressor.
+P[85] (Style: normal): Freight demand prediction using the selected model.
+P[86] (Style: normal): Computation of a multi-pillar Infrastructure Deficit Index.
+P[87] (Style: normal): Linear Programming based budget optimization using SciPy's linprog.
+P[88] (Style: normal): Interactive analytical dashboards and visualizations.
+P[89] (Style: normal): Map-based visualization using Folium.
+P[90] (Style: normal): REST API services using FastAPI and Pydantic.
+P[91] (Style: normal): Local relational data storage using SQLite.
+P[92] (Style: normal): Support for administrator and government-planner activities.
+P[93] (Style: normal): The present project scope is based on the implemented application. Advanced large-scale optimization, live external data feeds and production-scale distributed deployment are treated as future enhancements unless they are added to the implementation.
+P[94] (Style: normal): 1.4 TOOLS AND TECHNOLOGIES USED
+P[95] (Style: normal): CHAPTER 2
+P[96] (Style: normal): SYSTEM ANALYSIS
+P[97] (Style: normal): 2.1 EXISTING SYSTEM
+P[98] (Style: normal): In a conventional freight-planning workflow, freight information may be maintained in separate datasets, spreadsheets or reports. Analysts may have to clean the data, calculate indicators and generate charts separately. Demand estimation can also depend on manual calculations or isolated analytical scripts.
+P[99] (Style: normal): Geographic interpretation may be handled separately from numerical analysis, making it difficult to view demand patterns and spatial information in one place. Infrastructure gaps across districts may not be quantified in a structured way, and budget allocation may rely on manual judgement rather than an optimization-based approach.
+P[100] (Style: normal): The existing approach considered for FreightOpt therefore represents a fragmented workflow in which data preparation, prediction, infrastructure assessment, budget planning and visualization are not necessarily integrated into one application.
+P[101] (Style: normal): 2.2 LIMITATIONS OF EXISTING SYSTEM
+P[102] (Style: normal): Fragmented data processing – freight information may be spread across multiple files or sources.
+P[103] (Style: normal): Manual analysis – repeated calculations and preparation of visualizations can require additional effort.
+P[104] (Style: normal): Limited predictive support – conventional analysis may not provide an integrated demand prediction workflow.
+P[105] (Style: normal): Difficulty comparing models – different regression approaches may need to be executed separately.
+P[106] (Style: normal): No structured deficit measurement – infrastructure gaps across districts are not quantified consistently.
+P[107] (Style: normal): No optimization-based budgeting – fund allocation may be manual rather than model-driven.
+P[108] (Style: normal): Separated geographic analysis – map-based interpretation may not be available alongside numerical analysis.
+P[109] (Style: normal): Lack of a unified planning interface – data, predictions and visualizations may not be available in one application.
+P[110] (Style: normal): 
+P[111] (Style: normal): 2.3 PROPOSED SYSTEM
+P[112] (Style: normal): FreightOpt proposes a unified web-based application that combines freight data management, preprocessing, machine learning, an infrastructure deficit index, budget optimization, visualization and API services. The system processes the available historical dataset, prepares features, trains multiple regression models and presents the resulting predictions through an interactive interface.
+P[113] (Style: normal): The proposed system separates application responsibilities into a presentation layer, API/service layer, data layer, machine learning workflow and optimization layer. Streamlit provides the user-facing interface, FastAPI exposes backend services, SQLite provides persistent storage, scikit-learn based models provide predictive capabilities, and SciPy's linprog performs budget optimization.
+P[114] (Style: normal): The major functions of the proposed system are:
+P[115] (Style: normal): Freight data management and preparation
+P[116] (Style: normal): Data preprocessing and feature selection
+P[117] (Style: normal): Model training and model comparison
+P[118] (Style: normal): Freight demand prediction
+P[119] (Style: normal): Infrastructure Deficit Index computation
+P[120] (Style: normal): Linear Programming based budget optimization
+P[121] (Style: normal): Freight analysis and visualization
+P[122] (Style: normal): Map-based visualization
+P[123] (Style: normal): REST API services
+P[124] (Style: normal): Administrator and government-planner workflows
+P[125] (Style: normal): 2.4 ADVANTAGES OF PROPOSED SYSTEM
+P[126] (Style: normal): Provides a single environment for freight data analysis and prediction.
+P[127] (Style: normal): Reduces repetitive manual processing through structured preprocessing and modelling.
+P[128] (Style: normal): Allows comparison of multiple regression algorithms.
+P[129] (Style: normal): Provides demand predictions based on historical freight-related data.
+P[130] (Style: normal): Quantifies infrastructure gaps across districts through a composite deficit index.
+P[131] (Style: normal): Supports data-driven budget allocation through Linear Programming.
+P[132] (Style: normal): Combines numerical analysis with interactive geographic visualization.
+P[133] (Style: normal): Provides REST API services through FastAPI.
+P[134] (Style: normal): Uses SQLite for simple and lightweight data persistence.
+P[135] (Style: normal): Provides an interactive interface through Streamlit.
+P[136] (Style: normal): Creates a foundation for future freight optimization and larger-scale deployment.
+P[137] (Style: normal): 2.5 FUNCTIONAL REQUIREMENTS
+P[138] (Style: normal): 2.6 NON-FUNCTIONAL REQUIREMENTS
+P[139] (Style: normal): 
+P[140] (Style: normal): 
+P[141] (Style: normal): CHAPTER 3
+P[142] (Style: normal): SYSTEM DESIGN
+P[143] (Style: normal): 3.1 SYSTEM ARCHITECTURE
+P[144] (Style: normal): FreightOpt follows a layered application architecture in which the interactive interface, API services, data storage, machine learning and optimization components perform separate responsibilities. Streamlit acts as the presentation layer. FastAPI provides REST services and Pydantic validates structured API data. SQLite provides persistent storage, the machine learning layer prepares data, trains regression models and generates predictions, and the optimization layer applies Linear Programming for budget allocation.
+P[145] (Style: normal): 
+P[146] (Style: normal):  
+P[147] (Style: normal): Figure 3.1 – FreightOpt System Architecture
+P[148] (Style: normal): 
+P[149] (Style: normal): 
+P[150] (Style: normal): 
+P[151] (Style: normal): 
+P[152] (Style: normal): The architecture can be described through the following layers:
+P[153] (Style: normal): Presentation Layer – Streamlit-based interactive user interface.
+P[154] (Style: normal): Application/API Layer – FastAPI REST endpoints and Pydantic data validation.
+P[155] (Style: normal): Machine Learning Layer – preprocessing, feature preparation, model training, evaluation and prediction.
+P[156] (Style: normal): Optimization Layer – Infrastructure Deficit Index computation and Linear Programming based budget optimization.
+P[157] (Style: normal): Data Layer – SQLite database for persistent application data.
+P[158] (Style: normal): Visualization Layer – analytical charts and Folium map visualization.
+P[159] (Style: normal): 
+P[160] (Style: normal): 3.2 SYSTEM WORKFLOW
+P[161] (Style: normal): The overall workflow of FreightOpt consists of data preparation, model development, prediction, optimization and visualization. The administrator-oriented workflow manages relevant system data, while the government-planner workflow consumes the analytical and predictive outputs.
+P[162] (Style: normal): Data and Machine Learning Workflow:
+P[163] (Style: normal): Load or access the freight dataset.
+P[164] (Style: normal): Perform data cleaning and preprocessing.
+P[165] (Style: normal): Select relevant features and target variables.
+P[166] (Style: normal): Split the dataset into 80% training and 20% testing data.
+P[167] (Style: normal): Train Ridge Regression, Random Forest Regressor and Gradient Boosting Regressor.
+P[168] (Style: normal): Evaluate the trained models on the test dataset.
+P[169] (Style: normal): Compare the evaluation results and select the best-performing model.
+P[170] (Style: normal): Generate freight demand predictions.
+P[171] (Style: normal): Compute the Infrastructure Deficit Index for each district.
+P[172] (Style: normal): Run the Linear Programming optimizer to allocate budget.
+P[173] (Style: normal): Display predictions, index values, allocations, analytical charts and map-based information.
+P[174] (Style: normal): User Workflow:
+P[175] (Style: normal): The user opens the FreightOpt application.
+P[176] (Style: normal): The user selects the required planning or analysis function.
+P[177] (Style: normal): Application retrieves or processes the relevant data.
+P[178] (Style: normal): Prediction and optimization functions execute when requested.
+P[179] (Style: normal): Results are displayed through tables, charts and maps.
+P[180] (Style: normal): 3.3 UML ACTIVITY DIAGRAM
+P[181] (Style: normal): Figure 3.2 – UML Activity Diagram of FreightOpt
+P[182] (Style: normal): The activity flow begins with application access and module selection. The user can proceed to data analysis, prediction, index computation, budget optimization or visualization. For prediction, the system prepares the inputs, executes the trained regression model and presents the resulting demand estimate. For analytical functions, the system retrieves the relevant data and displays the requested visualization.
+P[183] (Style: normal): 3.4 BPMN DIAGRAM
+P[184] (Style: normal): 
+P[185] (Style: normal): Figure 3.3 – BPMN Diagram of FreightOpt
+P[186] (Style: normal): BPMN Process Explanation:
+P[187] (Style: normal): Step 1 – Data Preparation: freight data is collected or loaded and prepared for processing.
+P[188] (Style: normal): Step 2 – Processing: relevant variables are cleaned, transformed and selected.
+P[189] (Style: normal): Step 3 – Model Training: the three regression models are trained using the training subset.
+P[190] (Style: normal): Step 4 – Evaluation: model performance is evaluated on the test subset.
+P[191] (Style: normal): Step 5 – Prediction: the selected model produces freight demand estimates.
+P[192] (Style: normal): Step 6 – Index & Optimization: the Infrastructure Deficit Index is computed and the budget  is optimized.
+P[193] (Style: normal): Step 7 – Visualization: results are presented through charts and geographic maps.
+P[194] (Style: normal): Step 8 – Planning Interpretation: users interpret the outputs for freight planning.
+P[195] (Style: normal): 3.5 DATABASE DESIGN
+P[196] (Style: normal): SQLite is used as the relational database for FreightOpt. It provides a lightweight local database suitable for the current project implementation.
+P[197] (Style: normal): 
+P[198] (Style: normal): Figure 3.4 – FreightOpt Database Schema
+P[199] (Style: normal): The database persists application information required by the implemented modules, covering the 38-district Tamil Nadu freight dataset for 2020–2026.
+P[200] (Style: normal): 
+P[201] (Style: normal): 
+P[202] (Style: normal): 
+P[203] (Style: normal): 
+P[204] (Style: normal): 
+P[205] (Style: normal): 
+P[206] (Style: normal): 3.6 ENTITY DESCRIPTION
+P[207] (Style: normal): 3.7 MACHINE LEARNING WORKFLOW
+P[208] (Style: normal): 
+P[209] (Style: normal): Figure 3.5 – Machine Learning Workflow
+P[210] (Style: normal): The machine learning workflow begins with the 2020–2026 dataset covering 38 districts of Tamil Nadu. After preprocessing and feature selection, the dataset is divided into training and testing subsets using an 80:20 split. Three regression algorithms are trained. Their predictions are evaluated on unseen test observations, and the model comparison is used to select Gradient Boosting Regressor as the model for demand prediction.
+P[211] (Style: normal): CHAPTER 4
+P[212] (Style: normal): SYSTEM IMPLEMENTATION
+P[213] (Style: normal): This chapter describes the implementation of the FreightOpt – Intelligent Freight Planning and Demand Prediction System. The system integrates freight data management, machine learning-based demand prediction, infrastructure assessment, budget optimization, geographic visualization and REST API services into a unified application.
+P[214] (Style: normal): The application is implemented using Python as the primary programming language. Streamlit is used to provide the interactive user interface, while FastAPI provides RESTful backend services and Pydantic is used for structured request and response validation. SQLite is used for persistent data storage. The machine learning component uses regression algorithms including Ridge Regression, Random Forest Regressor and Gradient Boosting Regressor. Folium is used to provide interactive geographic visualization, while SciPy Linear Programming (scipy.optimize.linprog) is used for budget optimization.
+P[215] (Style: normal): The major modules implemented in FreightOpt are described in the following sections.
+P[216] (Style: normal): 4.1 HOME / DASHBOARD
+P[217] (Style: normal): Purpose
+P[218] (Style: normal): The Home / Dashboard serves as the primary entry point of the FreightOpt application. It provides users with access to the major functionalities of the system, including freight analysis, demand prediction, infrastructure deficit assessment, budget optimization and map-based visualization.
+P[219] (Style: normal): The dashboard is designed to provide an overview of the application and allow users to navigate to the functionality relevant to their role. The interface presents the major operations in an organized manner so that users do not need to interact directly with the underlying database, machine learning models or API services.
+P[220] (Style: normal): How It Works
+P[221] (Style: normal): The dashboard is implemented using Streamlit, which provides interactive widgets and page components for the application. When the application is launched, the Streamlit interface initializes the required components and presents the available modules to the user.
+P[222] (Style: normal): 
+P[223] (Style: normal): Based on the selected operation, the application invokes the corresponding processing function. For example, a user requesting freight demand prediction is directed to the prediction workflow, while a user interested in infrastructure planning can access the Infrastructure Deficit Index and Budget Optimization modules.
+P[224] (Style: normal): The dashboard therefore acts as an integration point between the user interface and the different analytical components of FreightOpt.
+P[225] (Style: normal): Implementation Details
+P[226] (Style: normal): The dashboard communicates with the application logic and, where required, backend services. Data retrieved from SQLite and results generated by the machine learning and optimization modules are converted into user-readable tables, charts and visualizations.
+P[227] (Style: normal): The dashboard also provides a consistent interface for presenting system outputs, reducing the need for users to work directly with raw datasets.
+P[228] (Style: normal): Technologies Used
+P[229] (Style: normal): Python
+P[230] (Style: normal): Streamlit
+P[231] (Style: normal): FastAPI
+P[232] (Style: normal): SQLite
+P[233] (Style: normal): pandas
+P[234] (Style: normal): scikit-learn
+P[235] (Style: normal): Folium
+P[236] (Style: normal): SciPy
+P[237] (Style: normal): 
+P[238] (Style: normal): Figure 4.1 – FreightOpt Home / Dashboard
+P[239] (Style: normal): 
+P[240] (Style: normal): 4.2 ADMINISTRATOR MODULE
+P[241] (Style: normal): Purpose
+P[242] (Style: normal): The Administrator Module is designed to support administrative and data-oriented operations within FreightOpt. The administrator has access to functions required for managing the application's data and monitoring the analytical information generated by the system.The module provides an organized interface through which administrative operations can be performed without directly accessing the SQLite database or application source code.
+P[243] (Style: normal): How It Works
+P[244] (Style: normal): When the administrator accesses the application, the relevant administrator functions are presented through the Streamlit interface. Data-related operations are handled through the application logic and, where applicable, through FastAPI services. The module interacts with the SQLite database for storing and retrieving application data. This allows the administrator to work with the data used by the freight analysis and prediction components.
+P[245] (Style: normal): Implementation Details
+P[246] (Style: normal): The administrator workflow follows a layered architecture. The Streamlit interface receives the administrator's interaction, the application logic processes the request, and the required database or analytical operation is performed. Pydantic models are used in the API layer where structured data validation is required. This helps ensure that data exchanged between the interface and backend services follows the expected format.
+P[247] (Style: normal): Technologies Used
+P[248] (Style: normal): Python
+P[249] (Style: normal): Streamlit
+P[250] (Style: normal): FastAPI
+P[251] (Style: normal): Pydantic
+P[252] (Style: normal): SQLite
+P[253] (Style: normal): 
+P[254] (Style: normal): Figure 4.2 – FreightOpt Administrator Module
+P[255] (Style: normal): 4.3 GOVERNMENT PLANNER MODULE
+P[256] (Style: normal): Purpose
+P[257] (Style: normal): The Government Planner Module is intended for planning-oriented analysis of freight and infrastructure information. It provides access to freight demand predictions, historical freight analysis, infrastructure deficit information, budget optimization and geographic visualization. The module brings together the outputs generated by the different analytical components so that planning-related information can be interpreted through a common interface.
+P[258] (Style: normal): 
+P[259] (Style: normal): 
+P[260] (Style: normal): How It Works
+P[261] (Style: normal): The planner selects the required analytical function from the application interface. Depending on the selected operation, the system retrieves the required data from SQLite or invokes the relevant machine learning or optimization component. For example, the planner can access freight demand prediction to obtain estimated demand values, examine infrastructure deficit values for districts, or use the budget optimization module to generate an allocation plan based on the available constraints.
+P[262] (Style: normal): Implementation Details
+P[263] (Style: normal): The module combines outputs from multiple system components. Machine learning results are used for demand prediction, the Infrastructure Deficit Index provides district-level infrastructure information, and the budget optimization module uses planning constraints to generate an allocation.The results are presented using tables, charts and geographic maps, enabling the planner to examine both numerical and spatial information.
+P[264] (Style: normal): Technologies Used
+P[265] (Style: normal): Python
+P[266] (Style: normal): Streamlit
+P[267] (Style: normal): FastAPI
+P[268] (Style: normal): SQLite
+P[269] (Style: normal): pandas
+P[270] (Style: normal): scikit-learn
+P[271] (Style: normal): Folium
+P[272] (Style: normal): SciPy
+P[273] (Style: normal): 
+P[274] (Style: normal): Figure 4.3 – FreightOpt Government Planner
+P[275] (Style: normal): 
+P[276] (Style: normal): 4.4 DATASET MANAGEMENT
+P[277] (Style: normal): Purpose
+P[278] (Style: normal): The Dataset Management Module manages the freight dataset used by FreightOpt for analysis and machine learning. The available dataset contains freight-related information covering 2020–2026 across 38 districts of Tamil Nadu.
+P[279] (Style: normal): The module provides the data foundation required by the preprocessing, prediction, infrastructure analysis and visualization components.
+P[280] (Style: normal): How It Works
+P[281] (Style: normal): The dataset is organized into structured records containing the variables required by the implemented analytical workflow. The application retrieves the required information and prepares it for subsequent processing. The historical observations provide the basis for identifying freight-related patterns and training the regression models. The data can also be retrieved for analytical visualization and district-level assessment.
+P[282] (Style: normal): Implementation Details
+P[283] (Style: normal): The dataset management process separates the raw or available freight information from the subsequent processing stages. This allows preprocessing operations to be applied before the information is passed to the machine learning models.
+P[284] (Style: normal): The dataset also provides district-level information required for infrastructure analysis and geographic visualization.
+P[285] (Style: normal): 
+P[286] (Style: normal): Technologies Used
+P[287] (Style: normal): Python
+P[288] (Style: normal): pandas
+P[289] (Style: normal): Streamlit
+P[290] (Style: normal): SQLite
+P[291] (Style: normal): 
+P[292] (Style: normal): Figure 4.4 – FreightOpt Dataset Management
+P[293] (Style: normal): 4.5 DATA PREPROCESSING
+P[294] (Style: normal): Purpose
+P[295] (Style: normal): Data preprocessing is an important stage of the FreightOpt machine learning workflow. Its purpose is to transform the available freight data into a suitable format for model training and prediction. Raw data may contain missing values, inconsistent representations or variables that require preparation before they can be used by a machine learning algorithm.
+P[296] (Style: normal): How It Works
+P[297] (Style: normal): The preprocessing component receives the available freight dataset and prepares the required feature and target variables. Relevant observations are organized, and the required preprocessing operations are performed according to the implemented workflow. The processed data is then divided into training and testing subsets using an 80:20 ratio. The training data is used to train the regression models, while the testing data is reserved for evaluating their performance on unseen observations.
+P[298] (Style: normal): Implementation Details
+P[299] (Style: normal): The preprocessing workflow uses Python-based data processing tools. pandas is used for data manipulation and preparation, while the machine learning workflow uses scikit-learn utilities where required.
+P[300] (Style: normal): Feature selection is performed to identify variables relevant to freight demand prediction. The resulting feature matrix is supplied to the regression algorithms during model training.
+P[301] (Style: normal): Technologies Used
+P[302] (Style: normal): Python
+P[303] (Style: normal): pandas
+P[304] (Style: normal): scikit-learn
+P[305] (Style: normal): Streamlit
+P[306] (Style: normal): 
+P[307] (Style: normal): Figure 4.5 – FreightOpt Data Preprocessing
+P[308] (Style: normal): 4.6 FREIGHT DEMAND PREDICTION
+P[309] (Style: normal): Purpose
+P[310] (Style: normal): The Freight Demand Prediction Module is one of the major analytical components of FreightOpt. Its purpose is to estimate freight demand based on the input features used by the trained machine learning model.
+P[311] (Style: normal): The prediction capability allows historical freight information to be transformed into an estimated future or target-period demand value.
+P[312] (Style: normal): How It Works
+P[313] (Style: normal): The prediction process begins with the required input variables. These inputs are prepared using the same feature-processing approach used during model development.
+P[314] (Style: normal): The processed values are passed to the selected regression model. The model generates a numerical prediction, which is then returned to the Streamlit interface and displayed to the user.
+P[315] (Style: normal): Implementation Details
+P[316] (Style: normal): FreightOpt implements three regression algorithms:
+P[317] (Style: normal): Ridge Regression
+P[318] (Style: normal): Random Forest Regressor
+P[319] (Style: normal): Gradient Boosting Regressor
+P[320] (Style: normal): The models are trained using the training portion of the dataset and evaluated using the testing portion. Based on the implemented model comparison, Gradient Boosting Regressor is selected for the final prediction workflow.The prediction result can subsequently be used by other planning modules and visualized through the application.
+P[321] (Style: normal): Technologies Used
+P[322] (Style: normal): Python
+P[323] (Style: normal): pandas
+P[324] (Style: normal): scikit-learn
+P[325] (Style: normal): Streamlit
+P[326] (Style: normal): FastAPI where applicable
+P[327] (Style: normal): 
+P[328] (Style: normal): Figure 4.6 – FreightOpt Freight Demand Prediction
+P[329] (Style: normal): 
+P[330] (Style: normal): 4.7 MODEL COMPARISON
+P[331] (Style: normal): Purpose
+P[332] (Style: normal): The Model Comparison Module evaluates multiple regression algorithms to determine which model provides the most suitable predictive performance for the implemented freight demand prediction task. Rather than depending on a single algorithm, FreightOpt evaluates three different regression approaches and compares their results.
+P[333] (Style: normal): How It Works
+P[334] (Style: normal): The prepared dataset is divided into training and testing data using the 80:20 split.
+P[335] (Style: normal): The following models are trained:
+P[336] (Style: normal): Ridge Regression
+P[337] (Style: normal): Random Forest Regressor
+P[338] (Style: normal): Gradient Boosting Regressor
+P[339] (Style: normal): After training, the models generate predictions for the testing dataset. Their performance is evaluated using the implemented regression metrics, such as Mean Absolute Error (MAE), Root Mean Squared Error (RMSE) and R² Score, where applicable.
+P[340] (Style: normal): The comparison results are presented to the user through the Streamlit interface.
+P[341] (Style: normal): Implementation Details
+P[342] (Style: normal): Ridge Regression provides a regularized linear regression approach. Random Forest Regressor combines multiple decision trees to model nonlinear relationships, while Gradient Boosting Regressor builds an ensemble sequentially to improve prediction performance. Based on the model comparison implemented in FreightOpt, Gradient Boosting Regressor is selected for the prediction workflow.
+P[343] (Style: normal): Technologies Used
+P[344] (Style: normal): Python
+P[345] (Style: normal): scikit-learn
+P[346] (Style: normal): pandas
+P[347] (Style: normal): Streamlit
+P[348] (Style: normal): 
+P[349] (Style: normal): Figure 4.7 – FreightOpt Model Comparison
+P[350] (Style: normal): 
+P[351] (Style: normal): 4.8 INFRASTRUCTURE DEFICIT INDEX
+P[352] (Style: normal): Purpose
+P[353] (Style: normal): The Infrastructure Deficit Index module provides a district-level measure of infrastructure deficit for the 38 districts of Tamil Nadu. The purpose of this module is to combine multiple infrastructure indicators into a composite index that can be used to identify districts requiring greater planning attention. The index provides an additional analytical dimension beyond freight demand prediction.
+P[354] (Style: normal): How It Works
+P[355] (Style: normal): Relevant infrastructure indicators are grouped into appropriate infrastructure pillars. The indicators are processed and normalized so that values from different measurement scales can be combined. The normalized values are then aggregated to produce a composite deficit score for each district. The resulting index provides a numerical representation of infrastructure deficit and can subsequently be used as an input to planning and budget allocation activities.
+P[356] (Style: normal): Implementation Details
+P[357] (Style: normal): The module uses district-level infrastructure information and performs numerical calculations using Python and pandas. The resulting index values are associated with the corresponding districts and can be stored or retrieved through the application's SQLite database. The generated deficit values can also be represented geographically using the map visualization component.
+P[358] (Style: normal): Technologies Used
+P[359] (Style: normal): Python
+P[360] (Style: normal): pandas
+P[361] (Style: normal): Streamlit
+P[362] (Style: normal): SQLite
+P[363] (Style: normal): 
+P[364] (Style: normal): Figure 4.8 – FreightOpt Infrastructure Deficit Index
+P[365] (Style: normal): 
+P[366] (Style: normal): 4.9 BUDGET OPTIMIZATION
+P[367] (Style: normal): Purpose
+P[368] (Style: normal): The Budget Optimization Module is designed to support allocation of an available infrastructure budget across districts. The module uses Linear Programming to formulate the allocation problem under specified budget and planning constraints. The objective is to determine an allocation that considers the infrastructure requirements represented by the system's planning indicators.
+P[369] (Style: normal): How It Works
+P[370] (Style: normal): The optimization process begins by generating or retrieving the candidate district-level planning requirements. The available budget and relevant allocation constraints are then represented mathematically as a linear programming problem. The optimization problem is solved using SciPy's scipy.optimize.linprog function. The resulting solution provides the allocation values for the candidate planning activities.
+P[371] (Style: normal): 
+P[372] (Style: normal): 
+P[373] (Style: normal): Implementation Details
+P[374] (Style: normal): The optimization component uses a mathematical objective function together with constraints representing the available budget and allocation requirements. The system converts the planning information into the coefficient matrices and bounds required by linprog. After solving the optimization problem, the resulting allocation values are processed and presented through the Streamlit interface.The optimization results can be combined with the Infrastructure Deficit Index and freight demand information to support district-level planning analysis.
+P[375] (Style: normal): Technologies Used
+P[376] (Style: normal): Python
+P[377] (Style: normal): SciPy
+P[378] (Style: normal): scipy.optimize.linprog
+P[379] (Style: normal): pandas
+P[380] (Style: normal): Streamlit
+P[381] (Style: normal): SQLite where applicable
+P[382] (Style: normal): 
+P[383] (Style: normal): Figure 4.9 – FreightOpt Budget Optimization
+P[384] (Style: normal): 
+P[385] (Style: normal): 
+P[386] (Style: normal): 4.10 FREIGHT ANALYSIS
+P[387] (Style: normal): Purpose
+P[388] (Style: normal): The Freight Analysis Module provides an analytical view of historical and predicted freight information. The purpose of this module is to transform numerical data into visual representations that can be interpreted more easily by users.
+P[389] (Style: normal): How It Works
+P[390] (Style: normal): The application retrieves the relevant freight information and performs the required aggregation and calculation operations. The resulting values are represented using charts, tables and summary information. Users can use the analytical views to examine freight patterns across districts and years and to compare historical observations with prediction-related information.
+P[391] (Style: normal): Implementation Details
+P[392] (Style: normal): The analysis component uses pandas for data manipulation and the visualization functionality available within the Streamlit application. The generated charts are dynamically produced from the underlying dataset rather than being static images. The analytical outputs complement the machine learning predictions by allowing users to examine the historical context behind the predicted values.
+P[393] (Style: normal): Technologies Used
+P[394] (Style: normal): Python
+P[395] (Style: normal): pandas
+P[396] (Style: normal): Streamlit
+P[397] (Style: normal): Visualization libraries implemented in the application
+P[398] (Style: normal): 
+P[399] (Style: normal): Figure 4.10 – FreightOpt Freight Analysis
+P[400] (Style: normal): 
+P[401] (Style: normal): 4.11 MAP-BASED VISUALIZATION
+P[402] (Style: normal): Purpose
+P[403] (Style: normal): The Map-Based Visualization Module provides a geographic representation of freight and infrastructure-related information. It enables users to examine district-level information spatially rather than only through numerical tables and charts.
+P[404] (Style: normal): How It Works
+P[405] (Style: normal): Folium is used to create the interactive map. District-level geographic information, including latitude and longitude values, is associated with the relevant freight or infrastructure information. The map can be used to visualize district-level freight observations, Infrastructure Deficit Index values and budget-related information. This provides users with a spatial perspective of the analytical results.
+P[406] (Style: normal): Implementation Details
+P[407] (Style: normal): The geographic data is retrieved from the application's data layer and combined with the relevant analytical values. The resulting information is passed to Folium to generate interactive map markers or other geographic representations. The map is integrated into the Streamlit interface so that users can interact with the geographic representation without leaving the application.
+P[408] (Style: normal): Technologies Used
+P[409] (Style: normal): Python
+P[410] (Style: normal): Streamlit
+P[411] (Style: normal): Folium
+P[412] (Style: normal): SQLite
+P[413] (Style: normal): pandas
+P[414] (Style: normal): 
+P[415] (Style: normal): Figure 4.11.1 – FreightOpt Folium Map
+P[416] (Style: normal): 
+P[417] (Style: normal): Figure 4.11.2 – FreightOpt Folium Map
+P[418] (Style: normal): 
+P[419] (Style: normal): Figure 4.11.3 – FreightOpt Folium Map
+P[420] (Style: normal): 
+P[421] (Style: normal): Figure 4.11.4 – FreightOpt Folium Map
+P[422] (Style: normal): 
+P[423] (Style: normal): 4.12 API IMPLEMENTATION
+P[424] (Style: normal): Purpose
+P[425] (Style: normal): The API Implementation Module provides a structured communication layer between the application interface and backend services. FreightOpt uses FastAPI to expose RESTful endpoints for the operations implemented in the backend. The API layer helps separate presentation-related operations from application logic and data-processing operations.
+P[426] (Style: normal): How It Works
+P[427] (Style: normal): When an API operation is requested, the FastAPI application receives the request and validates the supplied information using Pydantic models where applicable. After validation, the request is passed to the corresponding backend operation. Depending on the endpoint, the operation may retrieve information from SQLite, process freight data, perform analytical calculations or interact with the machine learning components. The processed result is returned as a structured API response that can be consumed by the frontend.
+P[428] (Style: normal): Implementation Details
+P[429] (Style: normal): FastAPI automatically provides interactive API documentation through its Swagger/OpenAPI interface. This allows the implemented endpoints to be inspected and tested during development. Pydantic is used for defining structured data models and validating request and response information. This improves consistency in communication between the frontend and backend components. The current project implementation contains seven API endpoints, which provide backend services required by the application.
+P[430] (Style: normal): API Request Flow
+P[431] (Style: normal): The general API communication process can be represented as:
+P[432] (Style: normal): 
+P[433] (Style: normal): Technologies Used
+P[434] (Style: normal): Python
+P[435] (Style: normal): FastAPI
+P[436] (Style: normal): Pydantic
+P[437] (Style: normal): SQLite
+P[438] (Style: normal): Streamlit
+P[439] (Style: normal): 
+P[440] (Style: normal): 
+P[441] (Style: normal): Figure 4.12.1 – FreightOpt Report 
+P[442] (Style: normal): 
+P[443] (Style: normal): Figure 4.12.2 – FreightOpt Report 
+P[444] (Style: normal): 
+P[445] (Style: normal): Figure 4.12.3 – FreightOpt Report 
+P[446] (Style: normal): 
+P[447] (Style: normal): Figure 4.12.4 – FreightOpt Report Download
+P[448] (Style: normal): 
+P[449] (Style: normal): Figure 4.12.5 – FreightOpt Report Excel File
+P[450] (Style: normal): CHAPTER 5
+P[451] (Style: normal): SYSTEM TESTING
+P[452] (Style: normal): 5.1 TESTING INTRODUCTION
+P[453] (Style: normal): Testing is carried out to verify that FreightOpt performs the intended functions and that its modules work correctly individually and together. The test cases cover application access, data processing, prediction, model comparison, index computation, budget optimization, visualization, map display and API operations.
+P[454] (Style: normal): The final Actual Result / Status column should be updated after executing each test case on the final implementation.
+P[455] (Style: normal): 5.2 TESTING TECHNIQUES
+P[456] (Style: normal): 1. Unit Testing
+P[457] (Style: normal): Individual functions or processing components are tested independently. Example: testing the preprocessing function or prediction function with valid inputs.
+P[458] (Style: normal): 2. Integration Testing
+P[459] (Style: normal): 
+P[460] (Style: normal): 3. System Testing
+P[461] (Style: normal): The complete application is tested as an integrated system from data access through analysis, prediction, optimization and visualization.
+P[462] (Style: normal): 4. Functional Testing
+P[463] (Style: normal): Each implemented feature is checked against its expected functional requirement.
+P[464] (Style: normal): 5. API Testing
+P[465] (Style: normal): FastAPI endpoints are tested with valid and invalid request data and their responses are verified.
+P[466] (Style: normal): 6. Model Evaluation
+P[467] (Style: normal): Regression models are evaluated on the testing subset to measure predictive performance on unseen data.
+P[468] (Style: normal): 
+P[469] (Style: normal): 
+P[470] (Style: normal): 5.3 TEST CASES
+P[471] (Style: normal): CHAPTER 6
+P[472] (Style: normal): CONCLUSION
+P[473] (Style: normal): 6.1 CONCLUSION
+P[474] (Style: normal): FreightOpt provides a unified web-based approach to freight analysis, infrastructure assessment and demand prediction for Tamil Nadu. The system brings together historical freight data, preprocessing, machine learning, an infrastructure deficit index, Linear Programming based budget optimization, database management, REST API services and interactive visualization within a single application.
+P[475] (Style: normal): The project uses freight-related data for 38 districts of Tamil Nadu covering 2020–2026 and applies an 80:20 train-test strategy. Ridge Regression, Random Forest Regressor and Gradient Boosting Regressor are implemented and compared as alternative regression approaches, with Gradient Boosting selected as the best-performing model for freight demand prediction.
+P[476] (Style: normal): The application uses Streamlit for the interactive interface, FastAPI and Pydantic for backend services and validation, SQLite for data storage, SciPy for budget optimization and Folium for map-based visualization. These components provide a structured project-level architecture in which data, predictions and allocation outputs can be presented to administrators and government planners.
+P[477] (Style: normal): By integrating prediction, infrastructure assessment, optimization and visualization, FreightOpt provides a foundation for data-driven freight planning. The system can be further developed with additional datasets, advanced optimization methods and larger-scale deployment.
+P[478] (Style: normal): The final submitted version should include the actual model evaluation values, screenshots, database schema and executed test results obtained from the implemented system.
+P[479] (Style: normal): 6.2 FUTURE ENHANCEMENTS
+P[480] (Style: normal): Integration of larger and regularly updated freight datasets.
+P[481] (Style: normal): Integration of live external data sources where reliable data APIs are available.
+P[482] (Style: normal): Addition of advanced freight route and network optimization techniques.
+P[483] (Style: normal): Addition of more machine learning models and systematic hyperparameter tuning.
+P[484] (Style: normal): Time-series forecasting methods for longer-term demand estimation.
+P[485] (Style: normal): Advanced geographic and spatial analysis for freight corridors and facilities.
+P[486] (Style: normal): Centralized database deployment such as PostgreSQL for multi-system concurrent access.
+P[487] (Style: normal): Role-based authentication and stronger security for production deployment.
+P[488] (Style: normal): Cloud deployment and scalable API infrastructure.
+P[489] (Style: normal): Mobile or responsive planning interfaces for field and operational users.
+P[490] (Style: normal): BIBLIOGRAPHY
+P[491] (Style: normal): Python Software Foundation – Python Documentation – https://docs.python.org/
+P[492] (Style: normal): Streamlit – Streamlit Documentation – https://docs.streamlit.io/
+P[493] (Style: normal): FastAPI – FastAPI Documentation – https://fastapi.tiangolo.com/
+P[494] (Style: normal): Pydantic – Pydantic Documentation – https://docs.pydantic.dev/
+P[495] (Style: normal): SQLite – SQLite Documentation – https://www.sqlite.org/docs.html
+P[496] (Style: normal): scikit-learn – Scikit-learn Documentation – https://scikit-learn.org/stable/
+P[497] (Style: normal): SciPy – SciPy Documentation (linprog) – https://docs.scipy.org/doc/scipy/
+P[498] (Style: normal): Folium Contributors – Folium Documentation – https://python-visualization.github.io/folium/
+P[499] (Style: normal): Git – Git Documentation – https://git-scm.com/doc
+P[500] (Style: normal): GitHub – GitHub Documentation – https://docs.github.com/
+P[501] (Style: normal): FreightOpt – Project source code, dataset and implementation materials.
+
+=== TABLES ===
+--- Table 0 ---
+R[0]: ACKNOWLEDGEMENT | i
+R[1]: SYNOPSIS | ii
+R[2]: 1.  INTRODUCTION | 1
+R[3]: 1.1 Project Overview | 1
+R[4]: 1.2 Project Objectives | 2
+R[5]: 1.3 Scope of the Project | 2
+R[6]: 1.4 Tools and Technologies Used | 3
+R[7]: 2.  SYSTEM ANALYSIS | 4
+R[8]: 2.1 Existing System | 4
+R[9]: 2.2 Limitations of Existing System | 4
+R[10]: 2.3 Proposed System | 4
+R[11]: 2.4 Advantages of Proposed System | 5
+R[12]: 2.5 Functional Requirements | 6
+R[13]: 2.6 Non-Functional Requirements | 6
+R[14]: 3.  SYSTEM DESIGN | 8
+R[15]: 3.1 System Architecture | 8
+R[16]: 3.2 System Workflow | 8
+R[17]: 3.3 UML Activity Diagram | 9
+R[18]: 3.4 BPMN Diagram | 9
+R[19]: 3.5 Database Design | 10
+R[20]: 3.6 Entity Description | 10
+R[21]: 3.7 Machine Learning Workflow | 10
+R[22]: 4.  SYSTEM IMPLEMENTATION | 12
+R[23]: 4.1 Home / Dashboard | 12
+R[24]: 4.2 Administrator Module | 12
+R[25]: 4.3 Government Planner Module | 12
+R[26]: 4.4 Dataset Management | 13
+R[27]: 4.5 Data Preprocessing | 13
+R[28]: 4.6 Freight Demand Prediction | 14
+R[29]: 4.7 Model Comparison | 14
+R[30]: 4.8 Infrastructure Deficit Index | 15
+R[31]: 4.9 Budget Optimization | 15
+R[32]: 4.10 Freight Analysis | 15
+R[33]: 4.11 Map-Based Visualization | 16
+R[34]: 4.12 API Implementation | 16
+R[35]: 5.  SYSTEM TESTING | 18
+R[36]: 5.1 Testing Introduction | 18
+R[37]: 5.2 Testing Techniques | 18
+R[38]: 5.3 Test Cases | 18
+R[39]: 6.  CONCLUSION | 20
+R[40]: 6.1 Conclusion | 20
+R[41]: 6.2 Future Enhancements | 20
+R[42]: BIBLIOGRAPHY | 22
+--- Table 1 ---
+R[0]: Technology | Purpose
+R[1]: Python | Primary programming language for data processing, machine learning and application development.
+R[2]: Streamlit | Provides the interactive web application interface.
+R[3]: FastAPI | Provides REST API endpoints for backend services.
+R[4]: Pydantic | Provides validation and structured schemas for API data.
+R[5]: SQLite | Lightweight relational database used for persistent storage.
+R[6]: scikit-learn | Provides regression algorithms and model evaluation utilities.
+R[7]: SciPy (linprog) | Provides Linear Programming based budget optimization.
+R[8]: Ridge Regression | Regularized linear regression model used as a predictive baseline.
+R[9]: Random Forest Regressor | Tree ensemble regression model used to capture nonlinear relationships.
+R[10]: Gradient Boosting Regressor | Sequential ensemble regression model used for predictive modelling; selected as the best-performing model.
+R[11]: Folium | Provides interactive map-based visualization.
+R[12]: VS Code | Development environment and source-code editor.
+R[13]: Git / GitHub | Version control and source-code repository management.
+--- Table 2 ---
+R[0]: ID | Requirement | Description
+R[1]: FR1 | Application Access | The system shall provide an interactive interface for authorized project users.
+R[2]: FR2 | Data Management | The system shall store and retrieve relevant freight data.
+R[3]: FR3 | Data Preprocessing | The system shall prepare the freight dataset for analysis and modelling.
+R[4]: FR4 | Feature Selection | The system shall use relevant features for the prediction task.
+R[5]: FR5 | Train/Test Split | The system shall divide the prepared data into training and testing subsets using an 80:20 strategy.
+R[6]: FR6 | Model Training | The system shall train Ridge Regression, Random Forest Regressor and Gradient Boosting Regressor.
+R[7]: FR7 | Model Evaluation | The system shall evaluate and compare the regression models.
+R[8]: FR8 | Demand Prediction | The system shall generate freight demand predictions using the selected model.
+R[9]: FR9 | Infrastructure Deficit Index | The system shall compute a multi-pillar Infrastructure Deficit Index for each district.
+R[10]: FR10 | Budget Optimization | The system shall allocate budget across districts using Linear Programming (SciPy linprog).
+R[11]: FR11 | Data Visualization | The system shall present analytical results using charts or suitable visual representations.
+R[12]: FR12 | Map Visualization | The system shall provide interactive map-based visualization using Folium.
+R[13]: FR13 | API Services | The system shall expose backend operations through FastAPI endpoints.
+R[14]: FR14 | Data Validation | The system shall validate API request and response structures using Pydantic.
+R[15]: FR15 | Database Operations | The system shall use SQLite for application data persistence.
+--- Table 3 ---
+R[0]: ID | Requirement | Description
+R[1]: NFR1 | Usability  | The system shall provide an understandable and user-friendly interface for administrators and government planners. 
+R[2]: NFR2 | Performance  | The system shall process project-level freight data and API requests within a reasonable response time under normal operating conditions. 
+R[3]: NFR3 | Reliability  | The system shall provide consistent results for valid data inputs and supported prediction and optimization operations. 
+R[4]: NFR4 | Data Integrity  | The system shall maintain the consistency and validity of data stored in SQLite and data exchanged through the API services. 
+R[5]: NFR5 | Maintainability  | The system shall maintain separate application, API, database, machine learning and optimization components to facilitate maintenance and modification. 
+R[6]: NFR6 | Scalability  | The system architecture shall support future migration to a centralized database and larger-scale deployment. 
+R[7]: NFR7 | Portability  | The system shall be executable in a suitable Python environment with the required project dependencies. 
+R[8]: NFR8 | Extensibility  | The system shall allow future integration of additional machine learning models, datasets, optimization methods and visualization techniques. 
+--- Table 4 ---
+R[0]: Entity / Data Group | Purpose | Field Names
+R[1]: Freight Data | Stores district-wise freight and logistics observations used for analysis and modelling. | district, year, freight volume, infrastructure indicators
+R[2]: Infrastructure Deficit Index | Stores computed deficit index values for each district. | district, pillar scores, composite index
+R[3]: Prediction Data | Stores or represents prediction inputs/results where implemented. | district, input features, predicted demand
+R[4]: Budget Optimization Data | Stores optimizer inputs and allocation results. | district, allocated budget, constraints
+R[5]: User / Role Data | Represents application user or role information. | user id, role (Administrator / Government Planner)
+--- Table 5 ---
+R[0]: Test ID | Test Case | Expected Result
+R[1]: TC01 | Open FreightOpt application | Application loads and dashboard is displayed
+R[2]: TC02 | Open Administrator module | Administrator functions are displayed
+R[3]: TC03 | Open Government Planner module | Planner functions are displayed
+R[4]: TC04 | Load valid freight dataset | Dataset is accepted and available for processing
+R[5]: TC05 | Process valid dataset | Preprocessed data is generated without processing errors
+R[6]: TC06 | Execute 80:20 split | Training and testing subsets are created with the implemented ratio
+R[7]: TC07 | Train Ridge Regression | Model is trained successfully
+R[8]: TC08 | Train Random Forest Regressor | Model is trained successfully
+R[9]: TC09 | Train Gradient Boosting Regressor | Model is trained successfully
+R[10]: TC10 | Evaluate trained models | Evaluation metrics are generated for comparison
+R[11]: TC11 | Compute Infrastructure Deficit Index | Composite index is generated for each district
+R[12]: TC12 | Run budget optimizer | Optimized allocation is generated using linprog
+R[13]: TC13 | Generate freight demand prediction | Numerical prediction is generated
+R[14]: TC14 | Open Folium map view | Interactive map is displayed
+R[15]: TC15 | Call valid FastAPI endpoint | Expected API response is returned
+R[16]: TC16 | Call FastAPI endpoint with invalid data | Validation/error response is returned
+R[17]: TC17 | Access SQLite data | Expected stored records are retrieved
+R[18]: TC18 | Complete end-to-end prediction workflow | 

@@ -1,0 +1,72 @@
+P81: As illustrated in Figure 1.1, the operational workflow of the unified healthcare platform traces the continuous clinical interaction lifecycle from initial patient onboarding and role-based authentication through real-time slot booking, medical consultations, and proactive preventive care.
+
+P94: Table 1.1 outlines the primary software tools, frameworks, programming languages, and architectural components utilized across the multi-tier healthcare system, along with the technical justification for their selection.
+
+P141: Table 2.1 specifies the core functional requirements governing user authentication, appointment scheduling, reasoned cancellations, dual-mode notifications, emergency referrals, and preventive care tracking.
+
+P145: Table 2.2 enumerates the non-functional requirements defining the system's operational constraints, usability standards, latency thresholds, availability guarantees, and data security compliance.
+
+P154: Figure 3.1 depicts the comprehensive multi-tier architectural layout of the unified healthcare platform, detailing the seamless interactions between the presentation layer, the application controller services, external dual-mode notification gateways, and the cloud data persistence layer.
+
+P165: Algorithm 2 outlines the operational workflow for processing appointment cancellations with captured reasons and executing simultaneous dual-mode (SMS and rich HTML email) dispatch to assigned doctors, clinical staff, and patients.
+
+P191: Figure 3.2 illustrates the UML Activity Diagram modeling the asynchronous sequence of user authentication, doctor slot selection, appointment booking, reasoned cancellation handling, and clinical consultation recording.
+
+P201: Figure 3.3 presents the Business Process Model and Notation (BPMN) diagram characterizing the cross-functional coordination and asynchronous message exchanges among Patients, Doctors, Hospital Staff, and System Administrators.
+
+P216: Figure 3.4 outlines the entity-relationship database schema designed for MongoDB document collections, highlighting relational references, embedded clinical subdocuments, and indexing structures.
+
+P223: Table 3.1 summarizes the key MongoDB document collections, their primary clinical purposes, and the essential attribute fields defined in the Mongoose ODM schemas.
+
+P225: Algorithm 1 delineates the end-to-end clinical feature extraction, label encoding, and Gradient Boosting classification procedure used to evaluate patient appointment urgency and compute doctor workload risk scores.
+
+P230: Figure 3.5 demonstrates the machine learning engineering workflow pipeline, spanning patient clinical data ingestion, categorical label encoding, model training, evaluation, and microservice deployment via Flask.
+
+P239: Figure 4.1 illustrates the complete three-tier Model-View-Controller (MVC) architecture linking the React client interface to the Node.js/Express.js backend controllers, external notification gateways, and MongoDB Atlas collections.
+
+P265: As shown in Figure 4.2, the responsive authentication and login interface supports role-based access for patients, doctors, hospital staff, and administrators, incorporating mobile phone and ABHA identity validation.
+
+P268: Figure 4.3 displays the unified patient dashboard featuring active appointments, recent health summary cards, upcoming vaccination due dates, and quick action controls.
+
+P271: Figure 4.4 illustrates the multilingual localization interface allowing instantaneous switching across English, Hindi, Tamil, Telugu, Kannada, and Malayalam without requiring full page reloads.
+
+P274: Figure 4.5 presents the digital ABHA ID verification portal integrated with the National Health Authority sandbox to link citizen 14-digit health identifiers seamlessly.
+
+P289: Figure 4.6 demonstrates the hospital administrator management module for onboarding clinical departments, managing physician profiles, configuring consultation fees, and generating consultation slots.
+
+P309: Figure 4.7 illustrates the doctor consultation workspace and patient interaction view for recording clinical diagnoses, prescriptions, and follow-up directives.
+
+P327: Figure 4.8 displays the consolidated longitudinal Electronic Health Record (EHR) timeline aggregating past visits, prescriptions, lab reports, and appointment cancellation logs.
+
+P343: Figure 4.9 depicts the clinical data preprocessing and feature transformation pipeline used to encode categorical variables into numerical matrices for model training.
+
+P365: Figure 4.10 exhibits the machine learning triage inference view predicting appointment urgency classifications and associated confidence levels in real time.
+
+P386: Figure 4.11 presents the classification performance metrics comparing accuracy, precision, recall, and F1-score across evaluated machine learning algorithms.
+
+P402: Figure 4.12 shows the emergency referral interface enabling real-time transmission of patient health snapshots, allergies, and vital signs to receiving hospitals.
+
+P420: Figure 4.13 displays the clinical workload risk analytics meter monitoring physician consultation density to prevent burnout and rebalance patient queues.
+
+P437: Figure 4.14 illustrates the maternal healthcare tracking module capturing Antenatal Care (ANC) milestones, trimester progress, and government RCH/PICME identifiers.
+
+P454: Figure 4.15 displays the comprehensive child immunization dashboard tracking scheduled vaccine doses, administered dates, and upcoming deadlines.
+
+P457: Figure 4.16 depicts the age-stratified pediatric vaccination timeline from birth to adolescence, indicating administered vaccines and pending immunizations.
+
+P460: Figure 4.17 demonstrates the clinical staff logging interface for recording administered vaccine batch numbers, injection sites, and practitioner signatures.
+
+P463: Figure 4.18 exhibits the automated background reminder service interface dispatching scheduled alerts to patients before critical vaccination deadlines via dual SMS and email channels.
+
+P484: Figure 4.19 outlines the Node.js and Express.js REST API routing architecture, illustrating middleware interception, JWT authentication, and request handling.
+
+P487: Figure 4.20 presents the formatted JSON response payloads returned by the appointment management and triage REST API endpoints, including cancellation reasons and timestamps.
+
+P490: Figure 4.21 shows the structural JSON schema and response structures generated by the maternal health and immunization tracking API endpoints.
+
+P493: Figure 4.22 displays the JSON output returned by the Flask machine learning microservice during real-time triage urgency and workload risk inference.
+
+P496: Figure 4.23 illustrates the structural hierarchy of MongoDB document collections, indexes, and embedded document structures maintaining clinical records.
+
+P520: Table 5.1 presents the comprehensive suite of executed test cases, detailing the input conditions, functional evaluation steps, and observed results across all critical clinical modules.
+

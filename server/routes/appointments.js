@@ -4,7 +4,21 @@ const Appointment = require('../models/Appointment')
 const Slot = require('../models/Slot')
 const User = require('../models/User')
 const protect = require('../middleware/auth')
-const { sendBookingConfirmation } = require('../utils/reminderScheduler')
+const { sendBookingConfirmation, sendCancellationNotification } = require('../utils/reminderScheduler')
+
+function isLessThan24Hours(dateStr, timeStr) {
+  try {
+    const [year, month, day] = dateStr.split('-').map(Number)
+    const [hour, minute] = (timeStr || '09:00').split(':').map(Number)
+    const apptDateTime = new Date(year, month - 1, day, hour, minute, 0)
+    const now = new Date()
+    const msDiff = apptDateTime.getTime() - now.getTime()
+    const hoursDiff = msDiff / (1000 * 60 * 60)
+    return hoursDiff < 24
+  } catch (err) {
+    return false
+  }
+}
 
 const ML_SERVICE = 'http://localhost:5001'
 
@@ -19,8 +33,9 @@ router.get('/', async (req, res) => {
     else if (req.user.role === 'doctor') query.doctorId = req.user._id
 
     const appointments = await Appointment.find(query)
-      .populate('patientId', 'firstName lastName email')
-      .populate('doctorId', 'firstName lastName')
+      .populate('patientId', 'firstName lastName email phone')
+      .populate('doctorId', 'firstName lastName email phone')
+      .populate('cancelledBy', 'firstName lastName role')
       .sort({ date: 1, time: 1 })
 
     return res.json(appointments)
@@ -134,10 +149,10 @@ router.post('/', async (req, res) => {
       status: req.user.role === 'patient' ? 'Pending' : 'Confirmed',
     })
     const populated = await appointment.populate([
-      { path: 'patientId', select: 'firstName lastName email' },
-      { path: 'doctorId', select: 'firstName lastName' },
+      { path: 'patientId', select: 'firstName lastName email phone' },
+      { path: 'doctorId', select: 'firstName lastName email phone' },
     ])
-    sendBookingConfirmation(populated).catch((err) => console.error('[Email] Booking confirmation failed:', err.response?.data || err.message))
+    sendBookingConfirmation(populated).catch((err) => console.error('[Notification] Booking confirmation failed:', err.response?.data || err.message))
     return res.status(201).json(populated)
   } catch (err) {
     if (err.code === 11000) {
@@ -156,15 +171,37 @@ router.patch('/:id/status', async (req, res) => {
   if (!['staff', 'doctor', 'admin'].includes(req.user.role))
     return res.status(403).json({ message: 'Not authorized to update appointment status' })
   try {
-    const appointment = await Appointment.findByIdAndUpdate(
-      req.params.id,
-      { status, ...(status === 'Completed' ? { completedAt: new Date() } : {}) },
-      { new: true }
-    ).populate('patientId', 'firstName lastName email').populate('doctorId', 'firstName lastName')
+    const appointment = await Appointment.findById(req.params.id)
+      .populate('patientId', 'firstName lastName email phone')
+      .populate('doctorId', 'firstName lastName email phone')
     if (!appointment) return res.status(404).json({ message: 'Appointment not found' })
+
     if (status === 'Cancelled') {
-      await Slot.updateOne({ doctorId: appointment.doctorId._id, date: appointment.date, time: appointment.time }, { isBooked: false })
+      if (req.user.role === 'patient' && isLessThan24Hours(appointment.date, appointment.time)) {
+        return res.status(400).json({
+          message: 'Cancellation limit exceeded: Appointments can only be cancelled at least 24 hours prior to the scheduled time. Less than 24 hours remain before your appointment.'
+        })
+      }
+
+      const cancellationReason = req.body.cancellationReason || req.body.reason || 'Cancelled by staff/admin'
+      appointment.status = 'Cancelled'
+      appointment.cancellationReason = cancellationReason
+      appointment.cancelledBy = req.user._id
+      appointment.cancelledAt = new Date()
+      await appointment.save()
+      const doctorIdVal = appointment.doctorId?._id || appointment.doctorId
+      await Slot.updateOne({ doctorId: doctorIdVal, date: appointment.date, time: appointment.time }, { isBooked: false })
+      
+      // Dispatch email notification to doctors & nurses/staff
+      sendCancellationNotification(appointment, req.user, cancellationReason).catch(err =>
+        console.error('[Email] Cancellation notification failed:', err.message)
+      )
+    } else {
+      appointment.status = status
+      if (status === 'Completed') appointment.completedAt = new Date()
+      await appointment.save()
     }
+
     return res.json(appointment)
   } catch (err) {
     return res.status(500).json({ message: err.message })
@@ -351,21 +388,63 @@ router.get('/doctor-workload', async (req, res) => {
   }
 })
 
-// DELETE /api/appointments/:id  — patient cancels their own appointment
-router.delete('/:id', async (req, res) => {
+// Helper cancellation processor
+async function processCancellation(appointmentId, user, reason, res) {
   try {
-    const appointment = await Appointment.findById(req.params.id)
+    const appointment = await Appointment.findById(appointmentId)
+      .populate('patientId', 'firstName lastName email phone')
+      .populate('doctorId', 'firstName lastName email phone')
+
     if (!appointment) return res.status(404).json({ message: 'Appointment not found' })
+
+    const patientIdVal = appointment.patientId?._id ? appointment.patientId._id.toString() : appointment.patientId.toString()
     if (
-      req.user.role !== 'admin' &&
-      appointment.patientId.toString() !== req.user._id.toString()
-    ) return res.status(403).json({ message: 'Not authorized' })
-    await appointment.deleteOne()
-    await Slot.updateOne({ doctorId: appointment.doctorId, date: appointment.date, time: appointment.time }, { isBooked: false })
-    return res.json({ message: 'Appointment cancelled' })
+      user.role !== 'admin' &&
+      user.role !== 'staff' &&
+      patientIdVal !== user._id.toString()
+    ) return res.status(403).json({ message: 'Not authorized to cancel this appointment' })
+
+    // 24-HOUR CANCELLATION RESTRICTION CHECK FOR PATIENTS
+    if (user.role === 'patient' && isLessThan24Hours(appointment.date, appointment.time)) {
+      return res.status(400).json({
+        message: 'Cancellation limit exceeded: Appointments can only be cancelled at least 24 hours prior to the scheduled time. Less than 24 hours remain before your appointment. Please contact hospital staff for assistance.'
+      })
+    }
+
+    const doctorIdVal = appointment.doctorId?._id || appointment.doctorId
+    const cancellationReason = reason || 'Patient cancelled without stating a reason'
+
+    // Retain appointment record marked as Cancelled for history and auditing
+    appointment.status = 'Cancelled'
+    appointment.cancellationReason = cancellationReason
+    appointment.cancelledBy = user._id
+    appointment.cancelledAt = new Date()
+    await appointment.save()
+
+    // Free up time slot for others to book
+    await Slot.updateOne({ doctorId: doctorIdVal, date: appointment.date, time: appointment.time }, { isBooked: false })
+
+    // Dispatch notification to assigned doctor, staff and patient with the cancellation reason
+    sendCancellationNotification(appointment, user, cancellationReason).catch(err =>
+      console.error('[Notification] Cancellation notification failed:', err.message)
+    )
+
+    return res.json({ message: 'Appointment cancelled successfully', appointment })
   } catch (err) {
     return res.status(500).json({ message: err.message })
   }
+}
+
+// POST /api/appointments/:id/cancel — patient/admin/staff cancels with explicit reason
+router.post('/:id/cancel', async (req, res) => {
+  const reason = req.body?.cancellationReason || req.body?.reason
+  return processCancellation(req.params.id, req.user, reason, res)
+})
+
+// DELETE /api/appointments/:id — patient/admin cancels an appointment (supports body or query reason)
+router.delete('/:id', async (req, res) => {
+  const reason = req.body?.cancellationReason || req.body?.reason || req.query?.reason
+  return processCancellation(req.params.id, req.user, reason, res)
 })
 
 module.exports = router

@@ -1,0 +1,10 @@
+
+Processing D:\Unified_Healthcare_Project_Report_Updated.docx (Paragraphs: 554)...
+BIBLIOGRAPHY heading found at P542
+Number of existing bibliography paragraphs: 11
+Successfully updated and saved 18 enhanced references to: D:\Unified_Healthcare_Project_Report_Updated.docx
+
+Processing D:\Unified_Healthcare_Project_Report (1).docx (Paragraphs: 554)...
+BIBLIOGRAPHY heading found at P542
+Number of existing bibliography paragraphs: 11
+File D:\Unified_Healthcare_Project_Report (1).docx is currently locked by Word. Skipping direct write.

@@ -1,0 +1,151 @@
+=== CHAPTERS ===
+
+CHAPTER 1 (at P71):
+   P71 [normal]: CHAPTER 1
+   P72 [normal]: INTRODUCTION
+   P73 [normal]: 1.1 PROJECT OVERVIEW
+   P74 [normal]: Healthcare delivery systems depend heavily on continuous patient information access, timely clinical
+   P75 [normal]: The Unified Healthcare Appointment and Immunization Tracking System is a web-based comprehensive hea
+   P76 [normal]: The system incorporates clinical patient datasets to train predictive models. Machine learning algor
+
+CHAPTER 2 (at P91):
+   P91 [normal]: CHAPTER 2
+   P92 [normal]: SYSTEM ANALYSIS
+   P93 [normal]: 
+   P94 [normal]: 2.1 EXISTING SYSTEM
+   P95 [normal]: In traditional healthcare delivery, patient records are maintained independently by each hospital or
+   P96 [normal]: Maternal care and child immunization tracking are often handled through physical paper cards or isol
+
+CHAPTER 3 (at P137):
+   P137 [normal]: CHAPTER 3
+   P138 [normal]: SYSTEM DESIGN
+   P139 [normal]: 3.1 SYSTEM ARCHITECTURE
+   P140 [normal]: The Unified Healthcare Appointment and Immunization Tracking System follows a multi-tier microservic
+   P141 [normal]: 
+   P142 [normal]: Figure 3.1 – Unified Healthcare System Architecture
+
+CHAPTER 4 (at P210):
+   P210 [normal]: CHAPTER 4
+   P211 [normal]: SYSTEM IMPLEMENTATION
+   P212 [normal]: 
+   P213 [normal]: The system implementation follows a 3-Tier Model-View-Controller (MVC) architecture connecting React
+   P214 [normal]: 
+   P215 [normal]: Figure 4.1: Complete 3-Tier MVC System Architecture Diagram.
+
+CHAPTER 5 (at P451):
+   P451 [normal]: CHAPTER 5
+   P452 [normal]: SYSTEM TESTING
+   P453 [normal]: 5.1 TESTING INTRODUCTION
+   P454 [normal]: Testing was conducted to verify that the Unified Healthcare Appointment and Immunization Tracking Sy
+   P455 [normal]: All test cases were executed against the MERN stack application and Python Flask ML microservice, ve
+   P456 [normal]: 5.2 TESTING TECHNIQUES
+
+CHAPTER 6 (at P471):
+   P471 [normal]: CHAPTER 6
+   P472 [normal]: CONCLUSION
+   P473 [normal]: 6.1 CONCLUSION
+   P474 [normal]: The Unified Healthcare Appointment and Immunization Tracking System successfully addresses the chall
+   P475 [normal]: The application features digital ABHA ID authentication, multi-language accessibility (English, Hind
+   P476 [normal]: Built with React.js, TailwindCSS, Express.js, Node.js, MongoDB, node-cron, Flask, and scikit-learn, 
+
+=== ALL FIGURES ===
+P80: Figure 1.1: Workflow Diagram
+   PREV P79: 
+   NEXT P81: 
+P142: Figure 3.1 – Unified Healthcare System Architecture
+   PREV P141: 
+   NEXT P143: 
+P176: Figure 3.2 – UML Activity Diagram of Unified Healthcare System
+   PREV P175: 
+   NEXT P177: The activity workflow begins with user authentication and role selection. Patients can search doctor
+P185: Figure 3.3 – BPMN Diagram of Unified Healthcare System
+   PREV P184: 
+   NEXT P186: BPMN Process Explanation:
+P199: Figure 3.4 – Healthcare System Database Schema
+   PREV P198: 
+   NEXT P200: The database maintains structured document collections for users, doctors, appointments, slots, mate
+P208: Figure 3.5 – Machine Learning Workflow
+   PREV P207: 
+   NEXT P209: The machine learning pipeline uses clinical features including Age, Gender, Blood Type, Medical Cond
+P215: Figure 4.1: Complete 3-Tier MVC System Architecture Diagram.
+   PREV P214: 
+   NEXT P216: 4.1 USER PORTALS & MULTILINGUAL PRESENTATION LAYER
+P239: Figure 4.2: Authentication and Login Page.
+   PREV P238: 
+   NEXT P240: 
+P241: Figure 4.3: Patient Dashboard.
+   PREV P240: 
+   NEXT P242: 
+P243: Figure 4.4: Multilingual Regional Language Controls (EN, HI, TA, TE, KN, ML).
+   PREV P242: 
+   NEXT P244: 
+P245: Figure 4.5: Digital ABHA ID Verification Portal.
+   PREV P244: 
+   NEXT P246: Purpose
+P247: The Administrator Module allows hospital management to onboard doctors, assign clinical departments, configure consultation fee structures, manage staff accounts, and generate doctor appointment slots.
+   PREV P246: Purpose
+   NEXT P248: How It Works
+P259: Figure 4.4: Hospital Administrator System Management Module.
+   PREV P258: 
+   NEXT P260: 4.1.1 Digital ABHA ID Integration & Multilingual Support
+P278: Figure 4.5: Doctor & Patient Consultation Portal Overview.
+   PREV P277: 
+   NEXT P279: 
+P295: Figure 4.6: Unified Patient Electronic Health Record (EHR) History View.
+   PREV P294: 
+   NEXT P296: 4.3 MACHINE LEARNING TRIAGE & WORKLOAD RISK MICROSERVICE
+P310: Figure 4.7: Clinical Data Preprocessing & Feature Encoding Pipeline.
+   PREV P309: 
+   NEXT P311: 4.3.1 Appointment Urgency Triage Prediction Model
+P331: Figure 4.8: Gradient Boosting Appointment Urgency Triage Prediction View.
+   PREV P330: 
+   NEXT P332: 
+P351: Figure 4.9: Machine Learning Model Classification & Performance Evaluation.
+   PREV P350: ●  	Flask
+   NEXT P352: 
+P366: Figure 4.10: Inter-Hospital Emergency Referral & Data Snapshot Dispatch Portal.
+   PREV P365: 
+   NEXT P367: 
+P383: Figure 4.11: Doctor Workload Risk Score Meter & Schedule Optimization Analytics.
+   PREV P382: 
+   NEXT P384: 
+P399: Figure 4.12: Maternal Healthcare & Antenatal Checkup Tracker (RCH / PICME ID).
+   PREV P398: 
+   NEXT P400: 
+P415: Figure 4.13: Child Immunization Tracker Overview & Milestone Schedule.
+   PREV P414: 
+   NEXT P416: 
+P417: Figure 4.14: Child Vaccination Schedule Timeline & Milestone Tracker.
+   PREV P416: 
+   NEXT P418: 
+P419: Figure 4.15: Vaccination Status Update & Dose Batch Logging View.
+   PREV P418: 
+   NEXT P420: 
+P421: Figure 4.16: Automated Background Vaccination Reminder View (Nodemailer).
+   PREV P420: 
+   NEXT P422: 
+P441: Figure 4.17: Express REST API Service Architecture & Middleware Pipeline.
+   PREV P440: 
+   NEXT P442: 
+P443: Figure 4.18: Appointment Booking & Triage REST API Endpoint Responses.
+   PREV P442: 
+   NEXT P444: 
+P445: Figure 4.19: Maternal Healthcare & Immunization REST API Endpoint Responses.
+   PREV P444: 
+   NEXT P446: 
+P447: Figure 4.20: Python Flask ML Microservice Endpoint Response.
+   PREV P446: 
+   NEXT P448: 
+P449: Figure 4.21: MongoDB Document Collections & Clinical Data Schema Structure.
+   PREV P448: 
+   NEXT P450: 
+
+=== ALL TABLES ===
+P69: TABLE OF CONTENTS
+P84: The primary objective of this project is to construct a unified digital healthcare platform that eli
+P485: Implementation of blockchain-based immutable audit logging for patient medical consent and record ac
+
+=== ALL ALGORITHMS ===
+P42: The system supports Patient, Doctor, Hospital Staff, and Hospital Administrator workflows. Built on 
+P76: The system incorporates clinical patient datasets to train predictive models. Machine learning algor
+P303: Feature selection is performed to identify clinical variables relevant to appointment type predictio

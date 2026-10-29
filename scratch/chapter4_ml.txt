@@ -1,0 +1,130 @@
+P295 [normal]: Figure 4.6: Unified Patient Electronic Health Record (EHR) History View.
+
+P296 [normal]: 4.3 MACHINE LEARNING TRIAGE & WORKLOAD RISK MICROSERVICE
+
+P297 [normal]: Purpose
+
+P298 [normal]: Preprocesses raw patient clinical parameters (Age, Gender, Blood Type, Medical Condition, Medication, Test Results) for machine learning classification models.
+
+P299 [normal]: How It Works
+
+P300 [normal]: Categorical string variables are cleaned and encoded using scikit-learn LabelEncoders. Features are formatted into numerical matrices before model fitting.
+
+P301 [normal]: Implementation Details
+
+P302 [normal]: Uses Python pandas and scikit-learn preprocessing utilities. Encoded dictionary artifacts (encoders.pkl, label_encoder.pkl) are serialized for real-time Flask API execution.
+
+P303 [normal]: Feature selection is performed to identify clinical variables relevant to appointment type prediction. The resulting feature matrix is supplied to the classification algorithms during model training.
+
+P304 [normal]: Technologies Used
+
+P305 [normal]: ●  	Python
+
+P306 [normal]: ●  	pandas
+
+P307 [normal]: ●  	scikit-learn
+
+P308 [normal]: ●  	joblib
+
+P309 [normal]: 
+
+P310 [normal]: Figure 4.7: Clinical Data Preprocessing & Feature Encoding Pipeline.
+
+P311 [normal]: 4.3.1 Appointment Urgency Triage Prediction Model
+
+P312 [normal]: Purpose
+
+P313 [normal]: Predicts appointment urgency categories (Emergency, Consultation, Follow-up, Vaccination, General Checkup) using patient clinical parameters.
+
+P314 [normal]: The prediction capability allows patient clinical parameters to be transformed into an estimated appointment urgency type and doctor workload risk score.
+
+P315 [normal]: When an appointment is requested, input parameters are sent to Flask /predict-type. The Gradient Boosting Classifier predicts the urgency type and confidence score.
+
+P316 [normal]: The prediction process begins with the required input variables. These inputs are prepared using the same feature-processing approach used during model development.
+
+P317 [normal]: The processed values are passed to the selected classification model. The model generates a triage prediction, which is then returned to the React frontend interface and displayed to the user.
+
+P318 [normal]: Implementation Details
+
+P319 [normal]: Models evaluated include Gradient Boosting Classifier, Random Forest Classifier, and Decision Trees. Gradient Boosting achieved top performance.
+
+P320 [normal]: ●  	Gradient Boosting Classifier
+
+P321 [normal]: ●  	Random Forest Regressor
+
+P322 [normal]: ●  	Gradient Boosting Regressor
+
+P323 [normal]: The models are trained using the training portion of the dataset and evaluated using the testing portion. Based on the implemented model comparison, Gradient Boosting Regressor is selected for the final prediction workflow.The prediction result can subsequently be used by other planning modules and visualized through the application.
+
+P324 [normal]: Technologies Used
+
+P325 [normal]: ●  	Python
+
+P326 [normal]: ●  	Flask
+
+P327 [normal]: ●  	scikit-learn
+
+P328 [normal]: ●  	Gradient Boosting
+
+P329 [normal]: ●  	FastAPI where applicable
+
+P330 [normal]: 
+
+P331 [normal]: Figure 4.8: Gradient Boosting Appointment Urgency Triage Prediction View.
+
+P332 [normal]: 
+
+P333 [normal]: 4.3.2 ML Model Evaluation & Performance Metrics
+
+P334 [normal]: Purpose
+
+P335 [normal]: Evaluates machine learning model classification metrics (Accuracy, Precision, Recall, F1-Score) to ensure accurate clinical triage.
+
+P336 [normal]: How It Works
+
+P337 [normal]: Dataset is split 80:20 for training and testing. Models generate predictions on test samples, evaluated against ground truth labels.
+
+P338 [normal]: The following models are trained:
+
+P339 [normal]: ●  	Gradient Boosting Classifier
+
+P340 [normal]: ●  	Random Forest Regressor
+
+P341 [normal]: ●  	Gradient Boosting Regressor
+
+P342 [normal]: After training, the models generate predictions for the testing dataset. Their performance is evaluated using the implemented regression metrics, such as Mean Absolute Error (MAE), Root Mean Squared Error (RMSE) and R² Score, where applicable.
+
+P343 [normal]: The evaluation results are presented to the user through the clinical dashboard interface.
+
+P344 [normal]: Implementation Details
+
+P345 [normal]: Gradient Boosting Classifier demonstrated superior performance across Emergency and Consultation classes compared to baseline models.
+
+P346 [normal]: Technologies Used
+
+P347 [normal]: ●  	Python
+
+P348 [normal]: ●  	scikit-learn
+
+P349 [normal]: ●  	pandas
+
+P350 [normal]: ●  	Flask
+
+P351 [normal]: Figure 4.9: Machine Learning Model Classification & Performance Evaluation.
+
+P352 [normal]: 
+
+P353 [normal]: 4.2.1 Inter-Hospital Referral & Emergency Data Sharing
+
+P354 [normal]: Purpose
+
+P355 [normal]: Enables instant transfer of medical summaries, current medications, blood type, drug allergies, and historical diagnoses between hospitals during emergency patient referrals or specialist transfers.
+
+P356 [normal]: How It Works
+
+P357 [normal]: Referring hospital selects target hospital and dispatches referral record. Receiving hospital receives instant access to consolidated history.
+
+P358 [normal]: Implementation Details
+
+P359 [normal]: Built using Express REST routes (/api/maternal/referral, /api/patients). Secure token authorization restricts data access to authorized medical staff.
+

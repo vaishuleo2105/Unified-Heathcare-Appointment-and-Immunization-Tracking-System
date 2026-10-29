@@ -60,9 +60,16 @@ const tamilNaduHospitals = [
   { name: 'MuthuMeenakshi Hospitals Pvt Ltd', district: 'Pudukkottai', city: 'Pudukkottai', type: 'Private', isActive: true, code: 'TN-PUD-PVT01' },
 ]
 
-async function seed() {
-  await mongoose.connect(process.env.MONGO_URI)
-  console.log('Connected to MongoDB')
+async function seedTarget(uri, label) {
+  try {
+    await mongoose.connect(uri)
+    console.log(`Connected to MongoDB (${label})`)
+  } catch (err) {
+    console.warn(`Failed to connect to ${label}:`, err.message)
+    return
+  }
+
+  try {
 
   // ── 1. Seed Tamil Nadu Hospitals ──────────────────────────────────────────
   const createdHospitals = []
@@ -92,20 +99,20 @@ async function seed() {
 
 
   // ── 2. Create doctors, staff, admin with hospital associations ─────────────
-  const hash = await bcrypt.hash('password123', 10)
+  const plainPassword = 'password123'
 
   const doctorData = [
-    { firstName: 'Ramesh',  lastName: 'Kumar',  email: 'dr.ramesh@unifiedhealth.com',  role: 'doctor', hospitalId: cmch._id, department: 'General Medicine' },
-    { firstName: 'Priya',   lastName: 'Nair',   email: 'dr.priya@unifiedhealth.com',   role: 'doctor', hospitalId: peelameduUphc._id, department: 'Maternal & Child Health' },
-    { firstName: 'Suresh',  lastName: 'Menon',  email: 'dr.suresh@unifiedhealth.com',  role: 'doctor', hospitalId: rgggh._id, department: 'Cardiology' },
-    { firstName: 'Karthik', lastName: 'Sundaram', email: 'dr.karthik@unifiedhealth.com', role: 'doctor', hospitalId: grhMadurai._id, department: 'Emergency & Trauma' },
+    { firstName: 'Ramesh',  lastName: 'Kumar',  email: 'dr.ramesh@unifiedhealth.com',  phone: '9791868857', role: 'doctor', hospitalId: cmch._id, department: 'General Medicine' },
+    { firstName: 'Priya',   lastName: 'Nair',   email: 'dr.priya@unifiedhealth.com',   phone: '9791868857', role: 'doctor', hospitalId: peelameduUphc._id, department: 'Maternal & Child Health' },
+    { firstName: 'Suresh',  lastName: 'Menon',  email: 'dr.suresh@unifiedhealth.com',  phone: '9791868857', role: 'doctor', hospitalId: rgggh._id, department: 'Cardiology' },
+    { firstName: 'Karthik', lastName: 'Sundaram', email: 'dr.karthik@unifiedhealth.com', phone: '9791868857', role: 'doctor', hospitalId: grhMadurai._id, department: 'Emergency & Trauma' },
   ]
   const staffData = [
-    { firstName: 'Anitha',  lastName: 'Raj',    email: 'staff.anitha@unifiedhealth.com', role: 'staff', hospitalId: peelameduUphc._id, department: 'Registration & Triage' },
-    { firstName: 'Vijay',   lastName: 'Kumar',  email: 'staff.vijay@unifiedhealth.com',  role: 'staff', hospitalId: cmch._id, department: 'Records & Referral' },
+    { firstName: 'Anitha',  lastName: 'Raj',    email: 'staff.anitha@unifiedhealth.com', phone: '9791868857', role: 'staff', hospitalId: peelameduUphc._id, department: 'Registration & Triage' },
+    { firstName: 'Vijay',   lastName: 'Kumar',  email: 'staff.vijay@unifiedhealth.com',  phone: '9791868857', role: 'staff', hospitalId: cmch._id, department: 'Records & Referral' },
   ]
   const adminData = [
-    { firstName: 'Admin',   lastName: 'Officer', email: 'admin@unifiedhealth.com', role: 'admin', hospitalId: cmch._id, department: 'Administration' },
+    { firstName: 'Admin',   lastName: 'Officer', email: 'admin@unifiedhealth.com', phone: '9791868857', role: 'admin', hospitalId: cmch._id, department: 'Administration' },
   ]
 
   const allStaffUsers = [...doctorData, ...staffData, ...adminData]
@@ -114,11 +121,13 @@ async function seed() {
   for (const u of allStaffUsers) {
     let existing = await User.findOne({ email: u.email })
     if (!existing) {
-      existing = await User.create({ ...u, password: hash })
+      existing = await User.create({ ...u, password: plainPassword })
       console.log(`Created user: ${u.email} at ${u.department}`)
     } else {
       existing.hospitalId = u.hospitalId
       existing.department = u.department
+      existing.phone = '9791868857'
+      existing.password = plainPassword
       await existing.save()
     }
     if (u.role === 'doctor') createdDoctors.push(existing)
@@ -132,7 +141,8 @@ async function seed() {
       firstName: 'Induja',
       lastName: 'E',
       email: 'indujaee@gmail.com',
-      password: hash,
+      phone: '9791868857',
+      password: plainPassword,
       role: 'patient',
       age: 28,
       gender: 'Female',
@@ -146,6 +156,8 @@ async function seed() {
     })
     console.log('Created main patient user: indujaee@gmail.com')
   } else {
+    patientUser.phone = '9791868857'
+    patientUser.password = plainPassword
     patientUser.age = patientUser.age || 28
     patientUser.gender = patientUser.gender || 'Female'
     patientUser.bloodType = patientUser.bloodType || 'O+'
@@ -159,11 +171,19 @@ async function seed() {
     console.log('Updated patient user profile: indujaee@gmail.com')
   }
 
-  // Also assign hospitals to any other existing patients in database
+  // Also assign hospitals and phone to any other existing patients in database
   const allOtherPatients = await User.find({ role: 'patient' })
   for (const p of allOtherPatients) {
+    let changed = false
     if (!p.hospitalId) {
       p.hospitalId = peelameduUphc._id
+      changed = true
+    }
+    if (p.phone !== '9791868857') {
+      p.phone = '9791868857'
+      changed = true
+    }
+    if (changed) {
       await p.save()
     }
   }
@@ -252,7 +272,7 @@ async function seed() {
       { patientId, vaccineName: 'COVID-19',     date: '2021-09-18', status: 'Completed', dose: 'Dose 2',       administeredBy: dr2._id, notes: 'Covishield' },
       { patientId, vaccineName: 'COVID-19',     date: subDays(30),  status: 'Completed', dose: 'Booster',      administeredBy: dr3._id, notes: 'Corbevax booster' },
       { patientId, vaccineName: 'Influenza',    date: subDays(90),  status: 'Completed', dose: 'Annual',       administeredBy: dr1._id },
-      { patientId, vaccineName: 'Hepatitis B',  date: addDays(7),   status: 'Upcoming',  dose: 'Dose 3',       notes: 'Scheduled for 3rd dose completion' },
+      { patientId, vaccineName: 'Hepatitis B',  date: addDays(1),   status: 'Upcoming',  dose: 'Dose 3',       notes: 'Scheduled for 3rd dose completion' },
       { patientId, vaccineName: 'HPV',          date: addDays(30),  status: 'Upcoming',  dose: 'Dose 1',       notes: 'Recommended primary 2-dose HPV series' },
     ])
 
@@ -416,16 +436,27 @@ async function seed() {
 
   console.log('Emergency transfer and audit logs seeded')
 
-  console.log('\n✅ All dummy data & Tamil Nadu hospitals seeded successfully!')
+  console.log(`\n✅ Seeding complete for ${label}!`)
+  } catch (err) {
+    console.error(`Error seeding ${label}:`, err)
+  } finally {
+    await mongoose.disconnect()
+  }
+}
+
+async function seed() {
+  if (process.env.MONGO_URI) {
+    await seedTarget(process.env.MONGO_URI, 'Primary Mongo URI')
+  }
+  await seedTarget('mongodb://127.0.0.1:27017/uhaits', 'Local Fallback Mongo URI')
+
   console.log('\n── Login credentials ──────────────────────────')
-  console.log('Patient  : indujaee@gmail.com     / (password123 or existing)')
+  console.log('Patient  : indujaee@gmail.com     / password123 (or existing)')
   console.log('Doctor 1 : dr.ramesh@unifiedhealth.com  / password123 (CMCH Coimbatore)')
   console.log('Doctor 2 : dr.priya@unifiedhealth.com   / password123 (Peelamedu UPHC)')
   console.log('Doctor 3 : dr.suresh@unifiedhealth.com  / password123 (RGGGH Chennai)')
   console.log('Staff 1  : staff.anitha@unifiedhealth.com / password123 (Peelamedu UPHC)')
   console.log('Admin    : admin@unifiedhealth.com       / password123 (CMCH Coimbatore)')
-
-  await mongoose.disconnect()
 }
 
 seed().catch((err) => {

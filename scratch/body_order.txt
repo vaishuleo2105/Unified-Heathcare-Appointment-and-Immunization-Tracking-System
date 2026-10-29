@@ -1,0 +1,52 @@
+
+>>> [TABLE 0 AT ELEMENT 70]: Table 0 (36 rows) <<<
+   PREV P67: 
+   PREV P68: 
+   PREV P69: TABLE OF CONTENTS
+   NEXT P70: 
+   NEXT P71: CHAPTER 1
+   NEXT P72: INTRODUCTION
+
+
+>>> [TABLE 1 AT ELEMENT 92]: Table 1 (14 rows) <<<
+   PREV P88: 
+   PREV P89: To support preventive healthcare delivery, the system includes dedicated maternal health tracking li
+   PREV P90: 1.4 TOOLS AND TECHNOLOGIES USED
+   NEXT P91: CHAPTER 2
+   NEXT P92: SYSTEM ANALYSIS
+   NEXT P93: 
+
+
+>>> [TABLE 2 AT ELEMENT 136]: Table 2 (16 rows) <<<
+   PREV P131: Exposes clean RESTful API services separating frontend logic from backend data processing.
+   PREV P132: Establishes a foundation for future integration with AI diagnostic imaging and wearable IoT health m
+   PREV P133: 2.5 FUNCTIONAL REQUIREMENTS
+   NEXT P134: 
+   NEXT P135: 2.6 NON-FUNCTIONAL REQUIREMENTS
+
+
+>>> [TABLE 3 AT ELEMENT 139]: Table 3 (9 rows) <<<
+   PREV P134: 
+   PREV P135: 2.6 NON-FUNCTIONAL REQUIREMENTS
+   NEXT P136: 
+   NEXT P137: CHAPTER 3
+   NEXT P138: SYSTEM DESIGN
+
+
+>>> [TABLE 4 AT ELEMENT 209]: Table 4 (6 rows) <<<
+   PREV P202: 
+   PREV P203: 
+   PREV P204: 3.6 ENTITY DESCRIPTION
+   NEXT P205: 3.7 MACHINE LEARNING WORKFLOW
+   NEXT P206: 
+   NEXT P207: 
+
+
+>>> [TABLE 5 AT ELEMENT 476]: Table 5 (19 rows) <<<
+   PREV P468: Machine learning models were evaluated on test datasets to verify classification accuracy, precision
+   PREV P469: 
+   PREV P470: 5.3 TEST CASES
+   NEXT P471: CHAPTER 6
+   NEXT P472: CONCLUSION
+   NEXT P473: 6.1 CONCLUSION
+

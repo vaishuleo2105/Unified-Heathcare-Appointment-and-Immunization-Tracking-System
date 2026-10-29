@@ -18,6 +18,7 @@ function userPayload(user) {
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
+    phone: user.phone || '9791868857',
     role: user.role,
     age: user.age,
     gender: user.gender,
@@ -29,6 +30,7 @@ function userPayload(user) {
     abhaNumber: user.abhaNumber,
     hospitalId: user.hospitalId,
     department: user.department,
+    telegramChatId: user.telegramChatId || '',
   }
 }
 
@@ -43,7 +45,7 @@ function getErrorMessage(err) {
 router.post('/register', async (req, res) => {
   try {
     const {
-      firstName, lastName, email, password, role,
+      firstName, lastName, email, password, phone, role,
       age, gender, bloodType, medicalCondition, medication, testResults,
       hospitalId, department
     } = req.body
@@ -63,6 +65,7 @@ router.post('/register', async (req, res) => {
       lastName,
       email,
       password,
+      phone: phone || '9791868857',
       role: userRole,
       age: age || (userRole === 'patient' ? 30 : undefined),
       gender: gender || (userRole === 'patient' ? 'Female' : undefined),
@@ -72,6 +75,7 @@ router.post('/register', async (req, res) => {
       testResults: testResults || (userRole === 'patient' ? 'Normal' : undefined),
       hospitalId: hospitalId || undefined,
       department: department || undefined,
+      telegramChatId: req.body.telegramChatId ? String(req.body.telegramChatId).trim() : undefined,
     }
 
     const user = new User(userData)
@@ -90,15 +94,15 @@ router.post('/register', async (req, res) => {
 // LOGIN
 router.post('/login', async (req, res) => {
   try {
-    const { email, password, role } = req.body
+    const { email, password } = req.body
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' })
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() }).populate('hospitalId')
+    const user = await User.findOne({ email: email.toLowerCase().trim() }).populate('hospitalId')
     if (!user) {
-      return res.status(401).json({ message: 'No account found with this email. Please register first.' })
+      return res.status(401).json({ message: 'No account found with this email. Please check your credentials or register.' })
     }
 
     const isMatch = await user.matchPassword(password)
@@ -106,11 +110,12 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Incorrect password. Please try again.' })
     }
 
-    if (role && user.role !== role) {
-      return res.status(401).json({ message: `This account is registered as "${user.role}". Please select the correct role.` })
+    // Auto-backfill medical profile if missing for patients, and ensure phone is set
+    let shouldSave = false
+    if (!user.phone) {
+      user.phone = '9791868857'
+      shouldSave = true
     }
-
-    // Auto-backfill medical profile if missing for patients
     if (user.role === 'patient' && (!user.age || !user.gender || !user.bloodType)) {
       user.age = user.age || 28
       user.gender = user.gender || 'Female'
@@ -118,12 +123,14 @@ router.post('/login', async (req, res) => {
       user.medicalCondition = user.medicalCondition || 'None'
       user.medication = user.medication || 'None'
       user.testResults = user.testResults || 'Normal'
-      await user.save()
+      shouldSave = true
+    }
+    if (shouldSave) {
+      await user.save().catch(() => {})
     }
 
     const token = generateToken(user._id)
-
-    return res.json({ token, user: userPayload(user) })
+    return res.status(200).json({ token, user: userPayload(user) })
   } catch (err) {
     console.error('Login error:', err.message)
     return res.status(500).json({ message: getErrorMessage(err) })
@@ -133,16 +140,21 @@ router.post('/login', async (req, res) => {
 // VERIFY TOKEN
 router.get('/verify', protect, async (req, res) => {
   const user = await User.findById(req.user._id).populate('hospitalId')
+  if (user && !user.phone) {
+    user.phone = '9791868857'
+    await user.save().catch(() => {})
+  }
   res.json({ user: userPayload(user || req.user) })
 })
 
 // UPDATE MEDICAL PROFILE
 router.put('/profile', protect, async (req, res) => {
   try {
-    const { firstName, lastName, age, gender, bloodType, medicalCondition, medication, testResults, hospitalId, department } = req.body
+    const { firstName, lastName, phone, age, gender, bloodType, medicalCondition, medication, testResults, hospitalId, department } = req.body
     const updateData = {}
     if (firstName) updateData.firstName = firstName
     if (lastName) updateData.lastName = lastName
+    if (phone !== undefined) updateData.phone = phone
     if (age !== undefined) updateData.age = age
     if (gender) updateData.gender = gender
     if (bloodType) updateData.bloodType = bloodType
@@ -160,6 +172,36 @@ router.put('/profile', protect, async (req, res) => {
     return res.json({ user: userPayload(user) })
   } catch (err) {
     return res.status(500).json({ message: err.message })
+  }
+})
+
+// LINK TELEGRAM CHAT ID
+router.post('/link-telegram', protect, async (req, res) => {
+  try {
+    const { chatId } = req.body
+    if (!chatId) return res.status(400).json({ success: false, message: 'chatId is required' })
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { telegramChatId: String(chatId).trim() },
+      { new: true }
+    ).populate('hospitalId')
+    return res.json({ success: true, message: 'Telegram linked successfully', user: userPayload(user) })
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message })
+  }
+})
+
+// UNLINK TELEGRAM CHAT ID
+router.post('/unlink-telegram', protect, async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $unset: { telegramChatId: 1 } },
+      { new: true }
+    ).populate('hospitalId')
+    return res.json({ success: true, message: 'Telegram unlinked successfully', user: userPayload(user) })
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message })
   }
 })
 

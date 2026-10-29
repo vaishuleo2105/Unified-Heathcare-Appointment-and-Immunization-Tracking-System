@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import DashboardLayout from '../components/layout/DashboardLayout'
 import api from '../api'
@@ -16,15 +16,26 @@ const TEST_RESULTS = ['Normal', 'Abnormal', 'Inconclusive']
 
 export default function ProfilePage() {
   const { t } = useTranslation()
-  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user') || '{}'))
+  const [user, setUser] = useState(() => {
+    const cached = JSON.parse(localStorage.getItem('user') || '{}')
+    return { ...cached, phone: cached.phone || '9791868857' }
+  })
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
 
+  // Telegram Alert Settings
+  const [unlinking, setUnlinking] = useState(false)
+  const [showTelegramModal, setShowTelegramModal] = useState(false)
+  const [telegramSyncing, setTelegramSyncing] = useState(false)
+  const [manualChatId, setManualChatId] = useState('')
+  const [telegramStatus, setTelegramStatus] = useState(null)
+
   const [form, setForm] = useState({
     firstName: user.firstName || '',
     lastName: user.lastName || '',
+    phone: user.phone || '9791868857',
     age: user.age || 30,
     gender: user.gender || 'Female',
     bloodType: user.bloodType || 'O+',
@@ -32,6 +43,30 @@ export default function ProfilePage() {
     medication: user.medication || 'None',
     testResults: user.testResults || 'Normal',
   })
+
+  useEffect(() => {
+    api.get('/auth/verify')
+      .then(({ data }) => {
+        if (data?.user) {
+          const freshUser = { ...data.user, phone: data.user.phone || '9791868857' }
+          setUser(freshUser)
+          localStorage.setItem('user', JSON.stringify(freshUser))
+          setForm(f => ({
+            ...f,
+            firstName: freshUser.firstName || f.firstName,
+            lastName: freshUser.lastName || f.lastName,
+            phone: freshUser.phone || '9791868857',
+            age: freshUser.age ?? f.age,
+            gender: freshUser.gender || f.gender,
+            bloodType: freshUser.bloodType || f.bloodType,
+            medicalCondition: freshUser.medicalCondition || f.medicalCondition,
+            medication: freshUser.medication || f.medication,
+            testResults: freshUser.testResults || f.testResults,
+          }))
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -46,6 +81,7 @@ export default function ProfilePage() {
       const { data } = await api.put('/auth/profile', {
         firstName: form.firstName,
         lastName: form.lastName,
+        phone: form.phone,
         age: Number(form.age),
         gender: form.gender,
         bloodType: form.bloodType,
@@ -62,6 +98,55 @@ export default function ProfilePage() {
       setErrorMsg(err.response?.data?.message || 'Failed to update profile')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleUnlinkTelegram() {
+    if (!window.confirm('Are you sure you want to unlink Telegram notifications? You will stop receiving instant Telegram alerts.')) {
+      return
+    }
+    setUnlinking(true)
+    setErrorMsg('')
+    setSuccessMsg('')
+    try {
+      const { data } = await api.post('/auth/unlink-telegram')
+      if (data.user) {
+        setUser(data.user)
+        localStorage.setItem('user', JSON.stringify(data.user))
+      }
+      setSuccessMsg('Telegram notifications unlinked successfully.')
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || 'Failed to unlink Telegram')
+    } finally {
+      setUnlinking(false)
+    }
+  }
+
+  async function handleLinkTelegram(chatId = null) {
+    setTelegramSyncing(true)
+    setErrorMsg('')
+    setSuccessMsg('')
+    try {
+      const params = {}
+      const targetId = typeof chatId === 'string' ? chatId : manualChatId.trim()
+      if (targetId) params.chatId = targetId
+      const { data } = await api.get('/telegram-sync', { params })
+      setTelegramStatus(data)
+      if (data.success && data.chatId) {
+        const linkRes = await api.post('/auth/link-telegram', { chatId: data.chatId })
+        if (linkRes.data.user) {
+          setUser(linkRes.data.user)
+          localStorage.setItem('user', JSON.stringify(linkRes.data.user))
+        }
+        setSuccessMsg(`✅ ${data.message}`)
+        setTimeout(() => setShowTelegramModal(false), 2000)
+      } else {
+        setErrorMsg(data.message)
+      }
+    } catch (err) {
+      setErrorMsg(err.response?.data?.error || err.message || 'Telegram sync failed')
+    } finally {
+      setTelegramSyncing(false)
     }
   }
 
@@ -107,35 +192,96 @@ export default function ProfilePage() {
 
       <div className="grid lg:grid-cols-3 gap-6">
 
-        {/* User Card */}
-        <div className="lg:col-span-1 bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col items-center text-center">
-          <div className="w-24 h-24 rounded-full bg-primary-fixed flex items-center justify-center mb-4 shadow-inner">
-            <span className="text-primary font-bold text-3xl">
-              {user.firstName?.[0]}{user.lastName?.[0]}
-            </span>
-          </div>
-          <h2 className="text-xl font-bold text-on-surface">{user.firstName} {user.lastName}</h2>
-          <p className="text-sm text-on-surface-variant mb-3">{user.email}</p>
-          <span className={`text-xs font-semibold px-3 py-1 rounded-full capitalize ${ROLE_COLORS[user.role]}`}>
-            {t(user.role)}
-          </span>
-
-          <div className="w-full mt-6 pt-6 border-t border-outline-variant text-left space-y-3">
-            <div className="flex justify-between items-center text-xs">
-              <span className="font-semibold text-on-surface-variant uppercase">User ID</span>
-              <span className="font-mono text-on-surface">{user.id?.slice(-8)}</span>
+        {/* Left Column: User Card & Telegram Settings */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col items-center text-center">
+            <div className="w-24 h-24 rounded-full bg-primary-fixed flex items-center justify-center mb-4 shadow-inner">
+              <span className="text-primary font-bold text-3xl">
+                {user.firstName?.[0]}{user.lastName?.[0]}
+              </span>
             </div>
-            {user.role === 'patient' && (
-              <>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-on-surface-variant uppercase">Blood Type</span>
-                  <span className="font-bold text-primary px-2 py-0.5 bg-primary-fixed rounded-md">{user.bloodType || 'Not set'}</span>
+            <h2 className="text-xl font-bold text-on-surface">{user.firstName} {user.lastName}</h2>
+            <p className="text-sm text-on-surface-variant mb-3">{user.email}</p>
+            <span className={`text-xs font-semibold px-3 py-1 rounded-full capitalize ${ROLE_COLORS[user.role]}`}>
+              {t(user.role)}
+            </span>
+
+            <div className="w-full mt-6 pt-6 border-t border-outline-variant text-left space-y-3">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-semibold text-on-surface-variant uppercase">User ID</span>
+                <span className="font-mono text-on-surface">{user.id?.slice(-8)}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-semibold text-on-surface-variant uppercase">Phone</span>
+                <span className="text-on-surface font-medium">{user.phone || 'Not provided'}</span>
+              </div>
+              {user.role === 'patient' && (
+                <>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold text-on-surface-variant uppercase">Blood Type</span>
+                    <span className="font-bold text-primary px-2 py-0.5 bg-primary-fixed rounded-md">{user.bloodType || 'Not set'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-semibold text-on-surface-variant uppercase">Gender / Age</span>
+                    <span className="font-semibold text-on-surface">{user.gender || 'Female'}, {user.age || 30} yrs</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Telegram Bot Alerts Integration Card */}
+          <div className="bg-white border border-outline-variant rounded-xl p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center flex-shrink-0">
+                <span className="material-symbols-outlined text-2xl">send</span>
+              </div>
+              <div className="text-left">
+                <h3 className="font-bold text-on-surface text-sm">Telegram Alerts Bot</h3>
+                <p className="text-xs text-on-surface-variant">@uni_h3alth_bot</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-on-surface-variant leading-relaxed mb-4 text-left">
+              Receive instant appointment booking and cancellation notices with complete dynamic details directly on your mobile device.
+            </p>
+
+            {user.telegramChatId ? (
+              <div className="space-y-3">
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-xs text-emerald-800 text-left">
+                  <span className="material-symbols-outlined text-emerald-600 text-base flex-shrink-0">check_circle</span>
+                  <div>
+                    <p className="font-semibold">Linked to Telegram</p>
+                    <p className="text-[11px] text-emerald-700 font-mono">Chat ID: {user.telegramChatId}</p>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-on-surface-variant uppercase">Gender / Age</span>
-                  <span className="font-semibold text-on-surface">{user.gender || 'Female'}, {user.age || 30} yrs</span>
+
+                <button
+                  type="button"
+                  onClick={handleUnlinkTelegram}
+                  disabled={unlinking}
+                  className="w-full py-2.5 px-4 bg-error-container hover:bg-error/20 text-on-error-container text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined text-base">link_off</span>
+                  {unlinking ? 'Unlinking...' : 'Unlink Telegram'}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="p-3 bg-surface-container-low border border-outline-variant/60 rounded-xl flex items-center gap-2 text-xs text-on-surface-variant text-left">
+                  <span className="material-symbols-outlined text-outline text-base flex-shrink-0">notifications_off</span>
+                  <p>Not connected to Telegram alerts</p>
                 </div>
-              </>
+
+                <button
+                  type="button"
+                  onClick={() => setShowTelegramModal(true)}
+                  className="w-full py-2.5 px-4 bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-base">link</span>
+                  Link Telegram Bot
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -153,6 +299,7 @@ export default function ProfilePage() {
                 {[
                   { icon: 'person', label: t('firstName'), value: user.firstName },
                   { icon: 'person', label: t('lastName'), value: user.lastName },
+                  { icon: 'call', label: 'Phone (SMS Alerts)', value: user.phone || 'Not provided' },
                   { icon: 'cake', label: 'Age', value: `${user.age || 30} years` },
                   { icon: 'wc', label: 'Gender', value: user.gender || 'Female' },
                   { icon: 'bloodtype', label: 'Blood Type', value: user.bloodType || 'O+' },
@@ -200,6 +347,17 @@ export default function ProfilePage() {
                     onChange={handleChange}
                     className="w-full px-3 py-2 bg-white border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                     required
+                  />
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="text-xs font-semibold text-on-surface-variant">Phone Number (for instant SMS appointment updates)</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    placeholder="+91 98765 43210"
+                    value={form.phone}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 bg-white border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
                   />
                 </div>
                 <div className="space-y-1">
@@ -292,6 +450,139 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+      {/* Telegram Link Modal */}
+      {showTelegramModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-outline-variant animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-4 border-b border-outline-variant mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-2xl">send</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-on-surface text-base">Link Telegram Bot</h3>
+                  <p className="text-xs text-on-surface-variant">Real-time alerts for 9791868857</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTelegramModal(false)}
+                className="text-on-surface-variant hover:text-on-surface p-1 rounded-lg"
+              >
+                <span className="material-symbols-outlined text-xl">close</span>
+              </button>
+            </div>
+
+            <p className="text-xs text-on-surface-variant leading-relaxed mb-4">
+              Connect to <strong>@uni_h3alth_bot</strong> to receive instant, 100% free appointment alerts directly on your phone.
+            </p>
+
+            <div className="space-y-3.5 mb-5">
+              <div className="p-3 bg-surface-container-low rounded-xl border border-outline-variant/60">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] font-bold flex items-center justify-center">1</span>
+                  <span className="text-xs font-bold text-on-surface">Open Bot & Tap START</span>
+                </div>
+                <p className="text-[11px] text-on-surface-variant mb-2 pl-7">
+                  Open the bot in Telegram and tap <strong>START</strong> (or send "hello").
+                </p>
+                <div className="pl-7">
+                  <a
+                    href="https://t.me/uni_h3alth_bot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-lg transition-colors shadow-xs"
+                  >
+                    <span className="material-symbols-outlined text-sm">open_in_new</span>
+                    Open @uni_h3alth_bot in Telegram
+                  </a>
+                </div>
+              </div>
+
+              <div className="p-3 bg-surface-container-low rounded-xl border border-outline-variant/60">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] font-bold flex items-center justify-center">2</span>
+                  <span className="text-xs font-bold text-on-surface">Auto-Detect & Link</span>
+                </div>
+                <p className="text-[11px] text-on-surface-variant mb-2.5 pl-7">
+                  After pressing START in Telegram, click below to link your account.
+                </p>
+                <div className="pl-7">
+                  <button
+                    type="button"
+                    onClick={() => handleLinkTelegram()}
+                    disabled={telegramSyncing}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors shadow-xs disabled:opacity-50"
+                  >
+                    {telegramSyncing ? (
+                      <>
+                        <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        <span>Detecting Telegram Chat...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-sm">sync</span>
+                        <span>Auto-Detect & Link My Telegram</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-3 bg-surface-container-lowest rounded-xl border border-outline-variant/40">
+                <label className="text-[11px] font-semibold text-on-surface block mb-1">
+                  Or enter your Telegram Chat ID manually:
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={manualChatId}
+                    onChange={(e) => setManualChatId(e.target.value)}
+                    placeholder="e.g. 123456789"
+                    className="flex-1 px-3 py-1.5 text-xs border border-outline-variant rounded-lg bg-white text-on-surface outline-none focus:ring-1 focus:ring-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleLinkTelegram()}
+                    disabled={telegramSyncing || !manualChatId.trim()}
+                    className="px-3 py-1.5 bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    Link ID
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {telegramStatus && (
+              <div className={`p-3 rounded-xl mb-4 text-xs ${telegramStatus.success ? 'bg-secondary-container text-on-secondary-container border border-secondary/30' : 'bg-amber-50 text-amber-900 border border-amber-200'}`}>
+                <div className="flex items-start gap-2">
+                  <span className="material-symbols-outlined text-base flex-shrink-0 mt-0.5">
+                    {telegramStatus.success ? 'check_circle' : 'info'}
+                  </span>
+                  <div>
+                    <p className="font-semibold">{telegramStatus.message}</p>
+                    {telegramStatus.instruction && (
+                      <p className="mt-1 whitespace-pre-line text-[11px] opacity-90">{telegramStatus.instruction}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowTelegramModal(false)}
+                className="px-4 py-2 text-xs font-semibold bg-surface-container hover:bg-surface-container-high text-on-surface rounded-xl transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   )
 }

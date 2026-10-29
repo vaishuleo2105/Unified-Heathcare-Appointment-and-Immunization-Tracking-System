@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
     lastName:  { type: String, required: true, trim: true },
     email:     { type: String, required: true, unique: true, lowercase: true, trim: true },
     password:  { type: String, required: true },
+    phone:     { type: String, trim: true, default: '9791868857' },
     role:      { type: String, enum: ['patient', 'doctor', 'staff', 'admin'], default: 'patient' },
     resetOtp:         { type: String },
     resetOtpExpiry:   { type: Date },
@@ -20,6 +21,7 @@ const userSchema = new mongoose.Schema(
     abhaNumber:       { type: String },
     hospitalId:       { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital' },
     department:       { type: String, trim: true },
+    telegramChatId:   { type: String, trim: true },
   },
   { timestamps: true }
 )

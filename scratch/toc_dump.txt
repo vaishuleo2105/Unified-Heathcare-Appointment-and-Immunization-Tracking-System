@@ -1,0 +1,36 @@
+Row  0: ACKNOWLEDGEMENT                                    | i
+Row  1: SYNOPSIS                                           | ii
+Row  2: 1.  INTRODUCTION                                   | 1
+Row  3: 1.1 Project Overview                               | 1
+Row  4: 1.2 Project Objectives                             | 2
+Row  5: 1.3 Scope of the Project                           | 2
+Row  6: 1.4 Tools and Technologies Used                    | 3
+Row  7: 2.  SYSTEM ANALYSIS                                | 4
+Row  8: 2.1 Existing System                                | 4
+Row  9: 2.2 Limitations of Existing System                 | 4
+Row 10: 2.3 Proposed System                                | 4
+Row 11: 2.4 Advantages of Proposed System                  | 5
+Row 12: 2.5 Functional Requirements                        | 6
+Row 13: 2.6 Non-Functional Requirements                    | 6
+Row 14: 3.  SYSTEM DESIGN                                  | 8
+Row 15: 3.1 System Architecture                            | 8
+Row 16: 3.2 System Workflow                                | 8
+Row 17: 3.3 UML Activity Diagram                           | 9
+Row 18: 3.4 BPMN Diagram                                   | 9
+Row 19: 3.5 Database Design                                | 10
+Row 20: 3.6 Entity Description                             | 10
+Row 21: 3.7 Machine Learning Workflow                      | 10
+Row 22: 4.  SYSTEM IMPLEMENTATION                          | 12
+Row 23: 4.1 User Portals & Multilingual Presentation Layer | 12
+Row 24: 4.2 Unified EHR & Emergency Inter-Hospital Referral Engine | 12
+Row 25: 4.3 Maternal & Child Immunization Tracking Module  | 12
+Row 26: 4.4 Machine Learning Triage & Workload Risk Microservice | 13
+Row 27: 4.5 Core REST API & Security Infrastructure        | 13
+Row 28: 5.  SYSTEM TESTING                                 | 18
+Row 29: 5.1 Testing Introduction                           | 18
+Row 30: 5.2 Testing Techniques                             | 18
+Row 31: 5.3 Test Cases                                     | 18
+Row 32: 6.  CONCLUSION                                     | 20
+Row 33: 6.1 Conclusion                                     | 20
+Row 34: 6.2 Future Enhancements                            | 20
+Row 35: BIBLIOGRAPHY                                       | 22

@@ -1,0 +1,8 @@
+P42 [normal]: The system supports Patient, Doctor, Hospital Staff, and Hospital Administrator workflows. Built on the MERN stack (MongoDB, Express.js, React.js, Node.js) and integrated with a Python Flask Machine Learning microservice, it manages patient registration, digital ABHA ID authentication, online appointment booking, unified medical history tracking, inter-hospital emergency referrals, government maternal ID (RCH/PICME) tracking, and multi-language accessibility across six regional languages (English, Hindi, Tamil, Telugu, Kannada, Malayalam). Machine learning algorithms, specifically Gradient Boosting Classifiers, are implemented to predict appointment urgency types (Emergency, Consultation, Follow-up, Vaccination, General Checkup) and calculate doctor workload risk scores (0-100) for effective clinical schedule balancing.
+
+P76 [normal]: The system incorporates clinical patient datasets to train predictive models. Machine learning algorithms, including Gradient Boosting Classifiers and Random Forest models, are trained to perform two main tasks: predicting appointment urgency types (Emergency, Consultation, Follow-up, Vaccination, General Checkup) based on patient clinical parameters, and computing clinical workload risk scores (0-100) to assist in balancing doctor consultation schedules.
+
+P187 [normal]: Step 1 – Registration & Authentication: User creates account and authenticates via JWT.
+
+P303 [normal]: Feature selection is performed to identify clinical variables relevant to appointment type prediction. The resulting feature matrix is supplied to the classification algorithms during model training.
+
