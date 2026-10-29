@@ -143,10 +143,18 @@ async function resolveTelegramChatId(token, explicitChatId) {
   return null
 }
 
+function escapeTelegramHtml(str) {
+  if (!str) return ''
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
 /**
  * Dispatches an SMS message via Twilio, Fast2SMS, WhatsApp, Telegram, or Simulator
  */
-async function sendSMS(to, message) {
+async function sendSMS(to, message, targetChatId = null) {
   // Always reload directly from .env file to bypass any Node process.env caching
   const envPath = path.join(__dirname, '../.env')
   let currentEnv = { ...process.env }
@@ -173,43 +181,72 @@ async function sendSMS(to, message) {
   const twilioFrom = (currentEnv.TWILIO_PHONE_NUMBER || '').trim()
   const fast2smsKey = (currentEnv.FAST2SMS_API_KEY || '').trim()
   const telegramToken = (currentEnv.TELEGRAM_BOT_TOKEN || '').trim()
-  let telegramChatId = (currentEnv.TELEGRAM_CHAT_ID || '').trim()
 
-  if (!telegramChatId) {
+  const candidateChatIds = [
+    targetChatId,
+    (currentEnv.TELEGRAM_CHAT_ID || '').trim(),
+    cachedTelegramChatId,
+  ].filter(id => id && !String(id).includes('your_'))
+
+  if (candidateChatIds.length === 0) {
     try {
       const User = require('../models/User')
       const matched = await User.findOne({ telegramChatId: { $exists: true, $ne: '' } }).select('telegramChatId')
       if (matched && matched.telegramChatId) {
-        telegramChatId = matched.telegramChatId
+        candidateChatIds.push(matched.telegramChatId)
       }
     } catch (e) {}
   }
 
-  writeDebug(`[SMS Dispatch Start] To: ${recipients.join(', ')} | From: ${twilioFrom || 'auto'} | Msg: "${message}"`)
+  const chatIdsToSend = Array.from(new Set(candidateChatIds))
+
+  if (chatIdsToSend.length === 0 && telegramToken && !telegramToken.includes('your_')) {
+    const resolved = await resolveTelegramChatId(telegramToken, null)
+    if (resolved) chatIdsToSend.push(resolved)
+  }
+
+  writeDebug(`[SMS Dispatch Start] To: ${recipients.join(', ')} | Telegram ChatIds: ${chatIdsToSend.join(', ') || 'none'} | Msg: "${message}"`)
 
   // 1. Telegram Bot Gateway (100% Free Forever, Unlimited Custom Text Alerts)
-  if (telegramToken && !telegramToken.includes('your_')) {
-    const activeChatId = await resolveTelegramChatId(telegramToken, telegramChatId)
-    if (activeChatId) {
+  let telegramDelivered = false
+  if (telegramToken && !telegramToken.includes('your_') && chatIdsToSend.length > 0) {
+    for (const activeChatId of chatIdsToSend) {
       try {
         const url = `https://api.telegram.org/bot${telegramToken}/sendMessage`
         const response = await axios.post(
           url,
           {
             chat_id: activeChatId,
-            text: `📱 <b>Unified Health Alert (for 9791868857):</b>\n\n${message}`,
+            text: `📱 <b>Unified Health Alert:</b>\n\n${escapeTelegramHtml(message)}`,
             parse_mode: 'HTML',
           },
           { timeout: 10000 }
         )
         writeDebug(`[Telegram Gateway] SUCCESS: Delivered custom notification to chat ${activeChatId}`)
-        return { success: true, provider: 'telegram', count: 1, data: response.data }
+        telegramDelivered = true
       } catch (err) {
-        writeDebug(`[Telegram Gateway Error]: ${err.response?.data?.description || err.message} -> Falling through to Twilio`)
+        writeDebug(`[Telegram Gateway HTML Error]: ${err.response?.data?.description || err.message} -> Retrying plain format`)
+        try {
+          const plainResponse = await axios.post(
+            `https://api.telegram.org/bot${telegramToken}/sendMessage`,
+            {
+              chat_id: activeChatId,
+              text: `📱 Unified Health Alert:\n\n${message}`,
+            },
+            { timeout: 10000 }
+          )
+          writeDebug(`[Telegram Gateway] SUCCESS (Plaintext): Delivered to chat ${activeChatId}`)
+          telegramDelivered = true
+        } catch (retryErr) {
+          writeDebug(`[Telegram Gateway Error for ${activeChatId}]: ${retryErr.response?.data?.description || retryErr.message}`)
+        }
       }
-    } else {
-      writeDebug(`[Telegram Gateway] Bot token present, waiting for user to click 'Start' in t.me/uni_h3alth_bot`)
     }
+    if (telegramDelivered) {
+      return { success: true, provider: 'telegram', count: chatIdsToSend.length }
+    }
+  } else if (telegramToken && !telegramToken.includes('your_')) {
+    writeDebug(`[Telegram Gateway] Bot token present, waiting for user to click 'Start' in t.me/uni_h3alth_bot`)
   }
 
   // 2. Twilio Gateway (Secondary)

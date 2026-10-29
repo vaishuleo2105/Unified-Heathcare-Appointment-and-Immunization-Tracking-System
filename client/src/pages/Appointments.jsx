@@ -159,6 +159,9 @@ export default function AppointmentsPage() {
     try {
       const { data } = await api.patch(`/appointments/${id}/status`, { status })
       setAppointments(appointments.map(a => a._id === id ? data : a))
+      setSuccess(status === 'Confirmed'
+        ? 'Appointment confirmed successfully! Notification alerts sent to Telegram and Email.'
+        : `Appointment status updated to ${status}.`)
       fetchWorkload()
       fetchSuggestion()
     } catch (err) {

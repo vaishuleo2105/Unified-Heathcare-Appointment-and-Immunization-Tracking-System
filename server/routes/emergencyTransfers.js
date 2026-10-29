@@ -7,6 +7,7 @@ const Appointment = require('../models/Appointment')
 const Immunization = require('../models/Immunization')
 const MaternalRecord = require('../models/MaternalRecord')
 const protect = require('../middleware/auth')
+const { sendEmergencyTransferNotification } = require('../utils/reminderScheduler')
 
 const router = express.Router()
 router.use(protect)
@@ -196,11 +197,15 @@ router.post('/', async (req, res) => {
     })
 
     const populatedTransfer = await EmergencyTransfer.findById(transfer._id)
-      .populate('patientId', 'firstName lastName email age gender bloodType abhaId medicalCondition medication')
+      .populate('patientId', 'firstName lastName email age gender bloodType abhaId medicalCondition medication phone telegramChatId')
       .populate('sourceHospitalId', 'name code type district city contactNumber address')
       .populate('destinationHospitalId', 'name code type district city contactNumber address emergencyHelpline')
       .populate('initiatedBy', 'firstName lastName role email')
       .populate('receivingDoctorId', 'firstName lastName email department')
+
+    sendEmergencyTransferNotification(populatedTransfer, 'initiated').catch(err =>
+      console.error('[Emergency Transfer Notification Error]:', err.message)
+    )
 
     return res.status(201).json(populatedTransfer)
   } catch (err) {
@@ -357,12 +362,16 @@ router.patch('/:id/status', async (req, res) => {
     })
 
     const updated = await EmergencyTransfer.findById(transfer._id)
-      .populate('patientId', 'firstName lastName email age gender bloodType abhaId medicalCondition medication')
+      .populate('patientId', 'firstName lastName email age gender bloodType abhaId medicalCondition medication phone telegramChatId')
       .populate('sourceHospitalId', 'name code type district city contactNumber address')
       .populate('destinationHospitalId', 'name code type district city contactNumber address emergencyHelpline')
       .populate('initiatedBy', 'firstName lastName role email')
       .populate('receivingDoctorId', 'firstName lastName email department')
       .populate('respondedBy', 'firstName lastName role')
+
+    sendEmergencyTransferNotification(updated, status, responseNotes).catch(err =>
+      console.error('[Emergency Transfer Notification Error]:', err.message)
+    )
 
     return res.json(updated)
   } catch (err) {

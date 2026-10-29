@@ -4,7 +4,13 @@ const Appointment = require('../models/Appointment')
 const Slot = require('../models/Slot')
 const User = require('../models/User')
 const protect = require('../middleware/auth')
-const { sendBookingConfirmation, sendCancellationNotification } = require('../utils/reminderScheduler')
+const {
+  sendBookingConfirmation,
+  sendCancellationNotification,
+  sendConsultationOutcomeNotification,
+  sendEmail,
+} = require('../utils/reminderScheduler')
+const { sendSMS } = require('../utils/smsService')
 
 function isLessThan24Hours(dateStr, timeStr) {
   try {
@@ -146,11 +152,11 @@ router.post('/', async (req, res) => {
       time,
       type,
       notes,
-      status: req.user.role === 'patient' ? 'Pending' : 'Confirmed',
+      status: 'Confirmed',
     })
     const populated = await appointment.populate([
-      { path: 'patientId', select: 'firstName lastName email phone' },
-      { path: 'doctorId', select: 'firstName lastName email phone' },
+      { path: 'patientId', select: 'firstName lastName email phone telegramChatId' },
+      { path: 'doctorId', select: 'firstName lastName email phone telegramChatId' },
     ])
     sendBookingConfirmation(populated).catch((err) => console.error('[Notification] Booking confirmation failed:', err.response?.data || err.message))
     return res.status(201).json(populated)
@@ -162,19 +168,22 @@ router.post('/', async (req, res) => {
   }
 })
 
-// PATCH /api/appointments/:id/status  — staff/doctor update status
+// PATCH /api/appointments/:id/status  — staff/doctor/admin/patient update status
 router.patch('/:id/status', async (req, res) => {
   const { status } = req.body
   const allowed = ['Pending', 'Confirmed', 'Completed', 'Cancelled']
   if (!allowed.includes(status))
     return res.status(400).json({ message: 'Invalid status' })
-  if (!['staff', 'doctor', 'admin'].includes(req.user.role))
+  if (!['staff', 'doctor', 'admin', 'patient'].includes(req.user.role))
     return res.status(403).json({ message: 'Not authorized to update appointment status' })
   try {
     const appointment = await Appointment.findById(req.params.id)
-      .populate('patientId', 'firstName lastName email phone')
-      .populate('doctorId', 'firstName lastName email phone')
     if (!appointment) return res.status(404).json({ message: 'Appointment not found' })
+
+    const patientIdVal = appointment.patientId?._id ? appointment.patientId._id.toString() : appointment.patientId.toString()
+    if (req.user.role === 'patient' && patientIdVal !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to update another patient\'s appointment' })
+    }
 
     if (status === 'Cancelled') {
       if (req.user.role === 'patient' && isLessThan24Hours(appointment.date, appointment.time)) {
@@ -192,18 +201,39 @@ router.patch('/:id/status', async (req, res) => {
       const doctorIdVal = appointment.doctorId?._id || appointment.doctorId
       await Slot.updateOne({ doctorId: doctorIdVal, date: appointment.date, time: appointment.time }, { isBooked: false })
       
-      // Dispatch email notification to doctors & nurses/staff
-      sendCancellationNotification(appointment, req.user, cancellationReason).catch(err =>
-        console.error('[Email] Cancellation notification failed:', err.message)
+      const populated = await Appointment.findById(appointment._id)
+        .populate('patientId', 'firstName lastName email phone telegramChatId')
+        .populate('doctorId', 'firstName lastName email phone telegramChatId')
+
+      // Dispatch notifications to patient, doctor, and clinic admin
+      sendCancellationNotification(populated, req.user, cancellationReason).catch(err =>
+        console.error('[Notification] Cancellation notification failed:', err.message)
       )
+      return res.json(populated)
     } else {
       appointment.status = status
       if (status === 'Completed') appointment.completedAt = new Date()
       await appointment.save()
-    }
 
-    return res.json(appointment)
+      const populated = await Appointment.findById(appointment._id)
+        .populate('patientId', 'firstName lastName email phone telegramChatId')
+        .populate('doctorId', 'firstName lastName email phone telegramChatId')
+
+      // When appointment status is updated to Confirmed, dispatch confirmation email & Telegram notification!
+      if (status === 'Confirmed') {
+        sendBookingConfirmation(populated).catch(err =>
+          console.error('[Notification] Confirmation alert failed on status update:', err.message)
+        )
+      } else if (status === 'Completed') {
+        sendConsultationOutcomeNotification(populated).catch(err =>
+          console.error('[Notification] Completion alert failed on status update:', err.message)
+        )
+      }
+
+      return res.json(populated)
+    }
   } catch (err) {
+    console.error('[Status Update Error]:', err.message)
     return res.status(500).json({ message: err.message })
   }
 })
@@ -218,11 +248,63 @@ router.patch('/:id/consultation', async (req, res) => {
       { _id: req.params.id, doctorId: req.user._id },
       { consultationOutcome, consultationNotes, status: 'Completed', completedAt: new Date() },
       { new: true, runValidators: true }
-    ).populate('patientId', 'firstName lastName email').populate('doctorId', 'firstName lastName')
+    )
+      .populate('patientId', 'firstName lastName email phone telegramChatId')
+      .populate('doctorId', 'firstName lastName email phone telegramChatId')
+
     if (!appointment) return res.status(404).json({ message: 'Assigned appointment not found' })
+
+    sendConsultationOutcomeNotification(appointment).catch(err =>
+      console.error('[Notification] Consultation outcome notification failed:', err.message)
+    )
+
     return res.json(appointment)
   } catch (err) {
     return res.status(500).json({ message: err.message })
+  }
+})
+
+// POST /api/appointments/test-notification — test Telegram and Email delivery instantly
+router.post('/test-notification', async (req, res) => {
+  try {
+    const user = req.user
+    const targetChatId = user.telegramChatId || process.env.TELEGRAM_CHAT_ID
+    const targetEmail = user.email || process.env.EMAIL_USER
+    const nowStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' })
+
+    const testMsg = `Unified Health Test Alert: System notification test to ${user.firstName} ${user.lastName} at ${nowStr} IST. All notification channels (Telegram & Email) are operational!`
+
+    const smsRes = await sendSMS(user.phone || '9791868857', testMsg, targetChatId)
+    
+    let emailSent = false
+    try {
+      await sendEmail(
+        [targetEmail, process.env.EMAIL_USER],
+        `✅ Unified Health Test Alert - ${nowStr} IST`,
+        `
+        <div style="font-family:Arial,sans-serif;max-width:500px;padding:20px;border:1px solid #e0e0e0;border-radius:8px;">
+          <h2 style="color:#0284c7;">Notification System Operational</h2>
+          <p>Hi <strong>${user.firstName}</strong>,</p>
+          <p>This is a verification test to confirm that your email notifications and Telegram bot are functioning properly.</p>
+          <p style="color:#666;font-size:12px;">Sent at: ${nowStr} IST</p>
+        </div>
+        `
+      )
+      emailSent = true
+    } catch (e) {
+      console.error('Test email failed:', e.message)
+    }
+
+    return res.json({
+      success: true,
+      message: 'Test notification dispatched',
+      telegram: smsRes,
+      emailSent,
+      targetEmail,
+      targetChatId,
+    })
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message })
   }
 })
 

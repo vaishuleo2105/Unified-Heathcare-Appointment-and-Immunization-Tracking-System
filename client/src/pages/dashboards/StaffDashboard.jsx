@@ -18,6 +18,7 @@ export default function StaffDashboard() {
   const [slotForm, setSlotForm] = useState({ doctorId: '', date: '', time: '' })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   useEffect(() => {
     Promise.all([api.get('/appointments'), api.get('/immunizations'), api.get('/patients'), api.get('/appointments/doctors'), api.get('/slots')])
@@ -36,6 +37,11 @@ export default function StaffDashboard() {
       }
       const { data } = await api.patch(`/appointments/${id}/status`, body)
       setAppointments(appointments.map(a => a._id === id ? data : a))
+      setSuccess(status === 'Confirmed'
+        ? 'Appointment confirmed! Instant notification sent to Telegram and Email.'
+        : `Appointment marked as ${status}.`)
+      setError('')
+      setTimeout(() => setSuccess(''), 5000)
     } catch (err) {
       setError(err.response?.data?.message || 'Update failed')
     }
@@ -90,6 +96,12 @@ export default function StaffDashboard() {
       {error && (
         <div className="mb-4 flex items-center gap-2 bg-error-container text-on-error-container px-4 py-3 rounded-lg text-sm">
           <span className="material-symbols-outlined text-base">error</span>{error}
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-4 flex items-center gap-2 bg-secondary-container text-on-secondary-container px-4 py-3 rounded-lg text-sm">
+          <span className="material-symbols-outlined text-base">check_circle</span>{success}
         </div>
       )}
 
