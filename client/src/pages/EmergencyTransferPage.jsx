@@ -13,6 +13,7 @@ const CATEGORIES = [
   { id: 'immunizations_vaccines', label: 'Immunizations & Vaccines', icon: 'vaccines', desc: 'Full vaccination history, completed doses' },
   { id: 'recent_consultations', label: 'Recent Consultations & Clinical Notes', icon: 'clinical_notes', desc: 'Doctor examination notes, visit outcomes' },
   { id: 'maternal_record', label: 'Maternal & Child Health Record', icon: 'pregnant_woman', desc: 'Antenatal visits, ultrasound notes, delivery records' },
+  { id: 'past_checkups_attachments', label: 'Past Scans, X-Rays & Prescriptions', icon: 'radiology', desc: 'Uploaded diagnostic imaging (X-Ray, CT, MRI, Ultrasound), lab reports, and doctor prescriptions' },
   { id: 'emergency_contacts', label: 'Emergency Contact Information', icon: 'contact_phone', desc: 'Primary contact & 108 emergency helpline' },
 ]
 
@@ -79,7 +80,16 @@ export default function EmergencyTransferPage() {
     reasonDetails: '',
     priority: 'Critical',
     sharedCategories: CATEGORIES.map((c) => c.id),
+    attachments: [],
   })
+
+  // Attachment upload state
+  const [newAttachment, setNewAttachment] = useState({
+    category: 'X-Ray',
+    notes: '',
+  })
+  const [uploadError, setUploadError] = useState('')
+  const [previewModalFile, setPreviewModalFile] = useState(null)
 
   useEffect(() => {
     fetchInitialData()
@@ -165,6 +175,52 @@ export default function EmergencyTransferPage() {
     }
   }
 
+  // File Upload Handlers
+  function handleFileUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadError('')
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('File size exceeds 10MB limit. Please select a smaller scan or image.')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const base64Data = reader.result
+      const attachmentItem = {
+        fileName: file.name,
+        fileType: file.type || 'application/octet-stream',
+        category: newAttachment.category,
+        fileData: base64Data,
+        fileSize: file.size,
+        notes: newAttachment.notes || '',
+        uploadedAt: new Date().toISOString(),
+      }
+      setForm((prev) => ({
+        ...prev,
+        attachments: [...prev.attachments, attachmentItem],
+        sharedCategories: prev.sharedCategories.includes('past_checkups_attachments')
+          ? prev.sharedCategories
+          : [...prev.sharedCategories, 'past_checkups_attachments'],
+      }))
+      setNewAttachment({ category: 'X-Ray', notes: '' })
+      e.target.value = ''
+    }
+    reader.onerror = () => {
+      setUploadError('Failed to read file. Please try again.')
+    }
+    reader.readAsDataURL(file)
+  }
+
+  function handleRemoveAttachment(indexToRemove) {
+    setForm((prev) => ({
+      ...prev,
+      attachments: prev.attachments.filter((_, idx) => idx !== indexToRemove),
+    }))
+  }
+
   // Submit transfer
   async function handleSubmitTransfer(e) {
     if (e) e.preventDefault()
@@ -235,6 +291,27 @@ export default function EmergencyTransferPage() {
     }
   }
 
+  // Single file download helper (works with data URLs / base64 without opening new tabs)
+  function downloadFile(fileData, fileName) {
+    if (!fileData) return
+    const link = document.createElement('a')
+    link.href = fileData
+    link.download = fileName || 'medical_record'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  // Download all attached scans & documents separately
+  function downloadAllAttachments(attachments) {
+    if (!attachments || !attachments.length) return
+    attachments.forEach((att, index) => {
+      setTimeout(() => {
+        downloadFile(att.fileData, att.fileName)
+      }, index * 250)
+    })
+  }
+
   // PDF Export for Emergency Transfer Slip
   function exportTransferSlip(transfer) {
     if (!transfer) return
@@ -290,6 +367,15 @@ export default function EmergencyTransferPage() {
       addLine('IMMUNIZATION & VACCINATION SNAPSHOT', { bold: true, size: 11, gap: 2 })
       snap.immunizations.slice(0, 8).forEach((imm) => {
         addLine(`${imm.vaccineName} (${imm.dose || 'Standard'}) — ${imm.status} [${imm.date}]`, { gap: 2 })
+      })
+      y += 4
+    }
+
+    // Attached diagnostic scans & prescriptions
+    if (transfer.attachments?.length) {
+      addLine('ATTACHED DIAGNOSTIC SCANS & MEDICAL DOCUMENTS', { bold: true, size: 11, gap: 2 })
+      transfer.attachments.forEach((att, idx) => {
+        addLine(`${idx + 1}. [${(att.category || 'RECORD').toUpperCase()}] ${att.fileName}${att.notes ? ` — Note: ${att.notes}` : ''} (${att.fileSize ? (att.fileSize / 1024).toFixed(1) + ' KB' : 'Standard'})`, { gap: 2 })
       })
       y += 4
     }
@@ -598,13 +684,14 @@ export default function EmergencyTransferPage() {
                     <span className="material-symbols-outlined text-base">emergency</span>
                     <span>Emergency Referral & Data Transfer Workflow</span>
                   </div>
-                  <h2 className="text-lg font-bold text-on-surface">Step {step} of 7: {
+                  <h2 className="text-lg font-bold text-on-surface">Step {step} of 8: {
                     step === 1 ? 'Patient Identification' :
                     step === 2 ? 'Source Facility (Origin)' :
                     step === 3 ? 'Destination Hospital (Tamil Nadu)' :
                     step === 4 ? 'Clinical Reason for Transfer' :
                     step === 5 ? 'Select Medical Data Categories' :
-                    step === 6 ? 'Emergency Priority Level' :
+                    step === 6 ? 'Upload Medical Checkups & Scans' :
+                    step === 7 ? 'Emergency Priority Level' :
                     'Confirmation & Authorization'
                   }</h2>
                 </div>
@@ -621,7 +708,7 @@ export default function EmergencyTransferPage() {
               <div className="w-full bg-surface-container h-1.5">
                 <div
                   className="bg-primary h-full transition-all duration-300"
-                  style={{ width: `${(step / 7) * 100}%` }}
+                  style={{ width: `${(step / 8) * 100}%` }}
                 ></div>
               </div>
 
@@ -855,8 +942,145 @@ export default function EmergencyTransferPage() {
                   </div>
                 )}
 
-                {/* STEP 6: PRIORITY */}
+                {/* STEP 6: UPLOAD MEDICAL CHECKUPS & SCANS */}
                 {step === 6 && (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-bold text-on-surface">Upload Past Checkups, Diagnostic Scans & Prescriptions</h3>
+                      <p className="text-xs text-on-surface-variant mt-0.5">
+                        Attach relevant past checkup records such as X-Ray films, CT/MRI scans, lab reports, or prescriptions to transfer directly to the receiving hospital.
+                      </p>
+                    </div>
+
+                    {/* Uploader Box */}
+                    <div className="p-4 rounded-xl border border-outline-variant bg-surface-container-low/60 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-bold text-on-surface block mb-1">Document / Scan Category</label>
+                          <select
+                            value={newAttachment.category}
+                            onChange={(e) => setNewAttachment({ ...newAttachment, category: e.target.value })}
+                            className="w-full px-3 py-2 bg-white border border-outline-variant rounded-lg text-xs text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                          >
+                            <option value="X-Ray">🩻 X-Ray Film / Image</option>
+                            <option value="CT Scan">🧠 CT Scan (Computed Tomography)</option>
+                            <option value="MRI">🧲 MRI Scan</option>
+                            <option value="Ultrasound">👶 Ultrasound / Sonography</option>
+                            <option value="Lab Report">🧪 Blood / Lab Test Report</option>
+                            <option value="Prescription">💊 Doctor Prescription / Medication Order</option>
+                            <option value="Discharge Summary">📋 Prior Discharge Summary</option>
+                            <option value="Other">📄 Other Medical Document</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-on-surface block mb-1">Clinical Note / Description</label>
+                          <input
+                            type="text"
+                            value={newAttachment.notes}
+                            onChange={(e) => setNewAttachment({ ...newAttachment, notes: e.target.value })}
+                            placeholder="e.g. Chest X-Ray PA view, Brain CT with contrast..."
+                            className="w-full px-3 py-2 bg-white border border-outline-variant rounded-lg text-xs text-on-surface outline-none focus:ring-2 focus:ring-primary"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block">
+                          <span className="text-xs font-bold text-on-surface block mb-1">Select File (Images or PDF up to 10MB)</span>
+                          <div className="border-2 border-dashed border-primary/40 hover:border-primary bg-white rounded-xl p-4 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1.5">
+                            <span className="material-symbols-outlined text-3xl text-primary">cloud_upload</span>
+                            <p className="text-xs font-bold text-on-surface">Click here to upload scan or prescription</p>
+                            <p className="text-[11px] text-on-surface-variant">Supports JPG, PNG, WEBP, and PDF documents</p>
+                            <input
+                              type="file"
+                              accept="image/*,application/pdf"
+                              onChange={handleFileUpload}
+                              className="hidden"
+                            />
+                          </div>
+                        </label>
+                      </div>
+
+                      {uploadError && (
+                        <div className="p-2.5 rounded-lg bg-error-container text-on-error-container text-xs flex items-center gap-2">
+                          <span className="material-symbols-outlined text-sm">error</span>
+                          <span>{uploadError}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* List of Attached Documents */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-on-surface">
+                          Attached Medical Documents ({form.attachments.length})
+                        </h4>
+                        {form.attachments.length === 0 && (
+                          <span className="text-[11px] text-on-surface-variant italic">Optional — you can click Next if no extra files to upload</span>
+                        )}
+                      </div>
+
+                      {form.attachments.length === 0 ? (
+                        <div className="p-4 border border-dashed border-outline-variant rounded-xl text-center text-xs text-on-surface-variant">
+                          No scans or prescriptions attached yet. Upload files above to transfer them along with patient text data.
+                        </div>
+                      ) : (
+                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                          {form.attachments.map((att, idx) => {
+                            const isImage = att.fileType?.startsWith('image/') || att.fileData?.startsWith('data:image')
+                            return (
+                              <div key={idx} className="p-2.5 bg-white border border-outline-variant rounded-xl flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  {isImage ? (
+                                    <img src={att.fileData} alt={att.fileName} className="w-10 h-10 object-cover rounded-lg border border-outline-variant flex-shrink-0 cursor-pointer hover:opacity-80" onClick={() => setPreviewModalFile(att)} />
+                                  ) : (
+                                    <div className="w-10 h-10 bg-surface-container rounded-lg flex items-center justify-center text-primary flex-shrink-0">
+                                      <span className="material-symbols-outlined text-xl">description</span>
+                                    </div>
+                                  )}
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-fixed text-primary">{att.category}</span>
+                                      <span className="text-xs font-bold text-on-surface truncate">{att.fileName}</span>
+                                    </div>
+                                    <p className="text-[11px] text-on-surface-variant truncate mt-0.5">
+                                      {(att.fileSize / 1024).toFixed(1)} KB {att.notes ? `· "${att.notes}"` : ''}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  {isImage && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setPreviewModalFile(att)}
+                                      className="p-1.5 rounded-lg text-primary hover:bg-surface-container"
+                                      title="Preview Scan"
+                                    >
+                                      <span className="material-symbols-outlined text-base">visibility</span>
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveAttachment(idx)}
+                                    className="p-1.5 rounded-lg text-error hover:bg-error-container/20"
+                                    title="Delete Attachment"
+                                  >
+                                    <span className="material-symbols-outlined text-base">delete</span>
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 7: PRIORITY */}
+                {step === 7 && (
                   <div className="space-y-4">
                     <p className="text-xs text-on-surface-variant">
                       Assign emergency triage priority to notify receiving hospital duty team.
@@ -895,8 +1119,8 @@ export default function EmergencyTransferPage() {
                   </div>
                 )}
 
-                {/* STEP 7: CONFIRMATION SUMMARY */}
-                {step === 7 && (
+                {/* STEP 8: CONFIRMATION SUMMARY */}
+                {step === 8 && (
                   <div className="space-y-4">
                     <div className="p-4 rounded-xl border border-error/40 bg-error-container/20 space-y-3">
                       <div className="flex items-center gap-2 text-error font-bold text-xs uppercase tracking-wider">
@@ -936,6 +1160,22 @@ export default function EmergencyTransferPage() {
                       </div>
 
                       <div className="pt-2 border-t border-outline-variant/40">
+                        <p className="text-xs font-semibold text-on-surface-variant mb-1">Attached Diagnostic Scans & Prescriptions (${form.attachments.length}):</p>
+                        {form.attachments.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5 mb-2">
+                            {form.attachments.map((att, idx) => (
+                              <span key={idx} className="text-[10px] px-2 py-0.5 rounded-md bg-white border border-outline-variant font-medium text-on-surface flex items-center gap-1">
+                                <span className="material-symbols-outlined text-xs text-primary">attach_file</span>
+                                <span>[${att.category}] ${att.fileName}</span>
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-on-surface-variant italic mb-2">No past checkup files attached.</p>
+                        )}
+                      </div>
+
+                      <div className="pt-2 border-t border-outline-variant/40">
                         <p className="text-xs font-semibold text-on-surface-variant mb-1">Categories to be Transferred:</p>
                         <div className="flex flex-wrap gap-1.5">
                           {form.sharedCategories.map((cId) => (
@@ -972,7 +1212,7 @@ export default function EmergencyTransferPage() {
                     Cancel
                   </button>
 
-                  {step < 7 ? (
+                  {step < 8 ? (
                     <button
                       type="button"
                       onClick={() => {
@@ -1005,34 +1245,121 @@ export default function EmergencyTransferPage() {
 
         {/* ── TRANSFER SUCCESS SUMMARY MODAL ───────────────────────────── */}
         {completedTransfer && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-surface border border-outline-variant rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4 text-center">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+            <div className="bg-surface border border-outline-variant rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4 text-center my-6 max-h-[90vh] overflow-y-auto">
               <div className="w-14 h-14 rounded-full bg-secondary-fixed mx-auto flex items-center justify-center text-on-secondary-fixed">
                 <span className="material-symbols-outlined text-3xl">check_circle</span>
               </div>
               <h3 className="text-lg font-bold text-on-surface">Emergency Transfer Initiated!</h3>
-              <div className="p-3 bg-surface-container-low rounded-xl text-xs text-left space-y-1 font-mono">
+              
+              <div className="p-3.5 bg-surface-container-low rounded-xl text-xs text-left space-y-1 font-mono border border-outline-variant/60">
                 <p><strong>Transfer ID:</strong> <span className="text-primary font-bold">{completedTransfer.transferId}</span></p>
                 <p><strong>From:</strong> {completedTransfer.sourceHospitalId?.name}</p>
                 <p><strong>To:</strong> {completedTransfer.destinationHospitalId?.name}</p>
+                <p><strong>Priority:</strong> <span className="font-bold text-error uppercase">{completedTransfer.priority}</span></p>
                 <p><strong>Status:</strong> Pending Acknowledgment</p>
               </div>
+
+              {/* Uploaded Files Section: Download Separately */}
+              {completedTransfer.attachments && completedTransfer.attachments.length > 0 && (
+                <div className="text-left space-y-2.5 pt-3 border-t border-outline-variant">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold text-on-surface flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-primary text-base">folder_open</span>
+                      <span>Uploaded Medical Files ({completedTransfer.attachments.length})</span>
+                    </h4>
+                    {completedTransfer.attachments.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => downloadAllAttachments(completedTransfer.attachments)}
+                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-sm">download_for_offline</span>
+                        <span>Download All Files</span>
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-on-surface-variant">
+                    Each diagnostic scan, X-ray, or prescription can be downloaded separately below:
+                  </p>
+
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    {completedTransfer.attachments.map((att, idx) => {
+                      const isImage = att.fileType?.startsWith('image/') || att.fileData?.startsWith('data:image')
+                      return (
+                        <div key={idx} className="p-2.5 bg-surface-container-low rounded-xl border border-outline-variant flex items-center justify-between gap-3 shadow-xs">
+                          <div className="flex items-center gap-3 min-w-0">
+                            {isImage ? (
+                              <img
+                                src={att.fileData}
+                                alt={att.fileName}
+                                className="w-10 h-10 object-cover rounded-lg border border-outline-variant flex-shrink-0 cursor-pointer hover:opacity-85 transition-opacity"
+                                onClick={() => setPreviewModalFile(att)}
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-primary flex-shrink-0 border border-outline-variant">
+                                <span className="material-symbols-outlined text-xl">description</span>
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-primary-fixed text-primary">
+                                  {att.category}
+                                </span>
+                                <span className="text-xs font-bold text-on-surface truncate">{att.fileName}</span>
+                              </div>
+                              <p className="text-[10px] text-on-surface-variant mt-0.5 truncate">
+                                {att.fileSize ? `${(att.fileSize / 1024).toFixed(1)} KB` : 'Ready'} {att.notes ? `· "${att.notes}"` : ''}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {isImage && (
+                              <button
+                                type="button"
+                                onClick={() => setPreviewModalFile(att)}
+                                className="px-2 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-[11px] font-bold flex items-center gap-1"
+                                title="Preview Scan"
+                              >
+                                <span className="material-symbols-outlined text-xs">visibility</span>
+                                <span>View</span>
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => downloadFile(att.fileData, att.fileName)}
+                              className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white text-[11px] font-bold flex items-center gap-1 transition-all"
+                              title="Download this file separately"
+                            >
+                              <span className="material-symbols-outlined text-xs">download</span>
+                              <span>Download</span>
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
               <p className="text-xs text-on-surface-variant">
                 The receiving medical center has been notified via the State Emergency Transfer Network.
               </p>
-              <div className="flex gap-2">
+
+              <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t border-outline-variant">
                 <button
                   type="button"
                   onClick={() => exportTransferSlip(completedTransfer)}
-                  className="flex-1 py-2 rounded-xl border border-outline-variant text-xs font-bold text-primary hover:bg-surface-container flex items-center justify-center gap-1"
+                  className="flex-1 py-2.5 rounded-xl border border-outline-variant text-xs font-bold text-primary hover:bg-surface-container flex items-center justify-center gap-1.5"
                 >
-                  <span className="material-symbols-outlined text-base">download</span>
-                  <span>Export PDF Slip</span>
+                  <span className="material-symbols-outlined text-base">picture_as_pdf</span>
+                  <span>Export Transfer Slip (PDF)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setCompletedTransfer(null)}
-                  className="flex-1 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:opacity-90"
+                  className="flex-1 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:opacity-90 shadow-sm"
                 >
                   Done
                 </button>
@@ -1133,6 +1460,98 @@ export default function EmergencyTransferPage() {
                     {/* Shared Data Categories */}
                     <div className="space-y-3">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-primary">Disclosed Clinical Records</h3>
+
+                      {/* Attached Diagnostic Scans, X-Rays & Prescriptions */}
+                      {(selectedTransfer.attachments?.length > 0 || selectedTransfer.patientDataSnapshot?.medicalAttachments?.length > 0) && (
+                        <div className="p-4 rounded-xl border-2 border-primary/30 bg-primary-fixed/10 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-bold text-on-surface flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-primary text-base">radiology</span>
+                              <span>Attached Diagnostic Scans & Medical Prescriptions ({(selectedTransfer.attachments || selectedTransfer.patientDataSnapshot?.medicalAttachments || []).length})</span>
+                            </h4>
+                            <div className="flex items-center gap-2">
+                              {selectedTransfer.attachments?.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => downloadAllAttachments(selectedTransfer.attachments)}
+                                  className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                                >
+                                  <span className="material-symbols-outlined text-xs">download_for_offline</span>
+                                  <span>Download All ({selectedTransfer.attachments.length})</span>
+                                </button>
+                              )}
+                              <span className="text-[10px] bg-primary text-white font-bold px-2 py-0.5 rounded-full uppercase">
+                                Clinical Documents
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {(selectedTransfer.attachments || []).map((att, idx) => {
+                              const isImage = att.fileType?.startsWith('image/') || att.fileData?.startsWith('data:image')
+                              return (
+                                <div key={idx} className="p-3 bg-white rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between space-y-2">
+                                  <div className="flex items-start gap-3">
+                                    {isImage ? (
+                                      <img
+                                        src={att.fileData}
+                                        alt={att.fileName}
+                                        className="w-14 h-14 object-cover rounded-lg border border-outline-variant cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
+                                        onClick={() => setPreviewModalFile(att)}
+                                      />
+                                    ) : (
+                                      <div className="w-14 h-14 bg-surface-container rounded-lg flex items-center justify-center text-primary border border-outline-variant flex-shrink-0">
+                                        <span className="material-symbols-outlined text-2xl">description</span>
+                                      </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-fixed text-primary">
+                                          {att.category}
+                                        </span>
+                                        {att.fileSize && (
+                                          <span className="text-[10px] text-on-surface-variant">
+                                            {(att.fileSize / 1024).toFixed(1)} KB
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-xs font-bold text-on-surface truncate mt-1" title={att.fileName}>
+                                        {att.fileName}
+                                      </p>
+                                      {att.notes && (
+                                        <p className="text-[11px] text-on-surface-variant italic mt-0.5">
+                                          "{att.notes}"
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-outline-variant/40">
+                                    {isImage ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => setPreviewModalFile(att)}
+                                        className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white text-[11px] font-bold flex items-center gap-1 transition-all"
+                                      >
+                                        <span className="material-symbols-outlined text-sm">visibility</span>
+                                        <span>View Scan</span>
+                                      </button>
+                                    ) : null}
+                                    <button
+                                      type="button"
+                                      onClick={() => downloadFile(att.fileData, att.fileName)}
+                                      className="px-2.5 py-1 rounded-lg border border-outline-variant hover:bg-surface-container text-on-surface text-[11px] font-bold flex items-center gap-1 transition-all"
+                                    >
+                                      <span className="material-symbols-outlined text-sm">download</span>
+                                      <span>Download</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
 
                       {selectedTransfer.patientDataSnapshot?.basicInfo && (
                         <div className="p-3.5 rounded-xl border border-outline-variant bg-white space-y-2">
@@ -1305,6 +1724,69 @@ export default function EmergencyTransferPage() {
                   Confirm {responseAction}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── LIGHTBOX SCAN VIEWER MODAL ───────────────────────── */}
+        {previewModalFile && (
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+            onClick={() => setPreviewModalFile(null)}
+          >
+            <div
+              className="bg-surface border border-outline-variant rounded-2xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-outline-variant bg-surface-container-low flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-primary text-white">
+                    {previewModalFile.category}
+                  </span>
+                  <span className="text-sm font-bold text-on-surface truncate">
+                    {previewModalFile.fileName}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => downloadFile(previewModalFile.fileData, previewModalFile.fileName)}
+                    className="px-3 py-1.5 rounded-xl border border-outline-variant text-xs font-bold text-on-surface hover:bg-surface-container flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-sm">download</span>
+                    <span>Download</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewModalFile(null)}
+                    className="p-1.5 rounded-full hover:bg-surface-container text-on-surface-variant"
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 overflow-auto flex items-center justify-center bg-black/90 min-h-[350px]">
+                {previewModalFile.fileType?.startsWith('image/') || previewModalFile.fileData?.startsWith('data:image') ? (
+                  <img
+                    src={previewModalFile.fileData}
+                    alt={previewModalFile.fileName}
+                    className="max-h-[72vh] max-w-full object-contain rounded-lg shadow-lg"
+                  />
+                ) : (
+                  <iframe
+                    src={previewModalFile.fileData}
+                    title={previewModalFile.fileName}
+                    className="w-full h-[72vh] rounded-lg bg-white"
+                  />
+                )}
+              </div>
+
+              {previewModalFile.notes && (
+                <div className="p-3 border-t border-outline-variant bg-surface-container-low text-xs text-on-surface">
+                  <strong className="text-primary">Clinical Note:</strong> {previewModalFile.notes}
+                </div>
+              )}
             </div>
           </div>
         )}

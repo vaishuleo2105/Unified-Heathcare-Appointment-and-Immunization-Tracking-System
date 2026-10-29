@@ -5,6 +5,8 @@ echo   Starting Unified Healthcare System (UHAITS)
 echo ===================================================
 echo.
 
+set "PATH=%LOCALAPPDATA%\Programs\Python\Python311;%LOCALAPPDATA%\Programs\Python\Python311\Scripts;%USERPROFILE%\MinGit\cmd;%LOCALAPPDATA%\Microsoft\WinGet\Packages\OpenJS.NodeJS.LTS_Microsoft.Winget.Source_8wekyb3d8bbwe\node-v24.20.0-win-x64;%PATH%"
+
 cd /d "%~dp0"
 
 echo [1/3] Starting ML Microservice on port 5001...

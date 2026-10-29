@@ -72,8 +72,24 @@ const emergencyTransferSchema = new mongoose.Schema(
           'immunizations_vaccines',
           'recent_consultations',
           'maternal_record',
+          'past_checkups_attachments',
           'emergency_contacts',
         ],
+      },
+    ],
+    attachments: [
+      {
+        fileName: { type: String, required: true },
+        fileType: { type: String, default: 'application/octet-stream' },
+        category: {
+          type: String,
+          enum: ['X-Ray', 'CT Scan', 'MRI', 'Ultrasound', 'Lab Report', 'Prescription', 'Discharge Summary', 'Other'],
+          default: 'Other',
+        },
+        fileData: { type: String, required: true },
+        fileSize: { type: Number, default: 0 },
+        notes: { type: String, trim: true, default: '' },
+        uploadedAt: { type: Date, default: Date.now },
       },
     ],
     status: {

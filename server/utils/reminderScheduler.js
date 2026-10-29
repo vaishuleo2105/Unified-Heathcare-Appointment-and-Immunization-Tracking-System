@@ -489,10 +489,13 @@ async function sendEmergencyTransferNotification(transfer, eventType, extraNotes
     let subject = ''
     let body = ''
 
+    const attachCount = transfer.attachments?.length || 0
+    const attachSummary = attachCount > 0 ? ` [${attachCount} medical scan(s)/record(s) attached: ${transfer.attachments.map(a => a.category || a.fileName).join(', ')}]` : ''
+
     if (eventType === 'initiated') {
       title = '🚨 Emergency Transfer Initiated'
       subject = `🚨 URGENT: Emergency Transfer Initiated (${transfer.priority}) - ${transfer.transferId}`
-      body = `Unified Health Emergency Alert: Patient transfer ${transfer.transferId} initiated (${transfer.priority} Priority) from ${sourceHospital} to ${destHospital}. Reason: ${transfer.reason}.`
+      body = `Unified Health Emergency Alert: Patient transfer ${transfer.transferId} initiated (${transfer.priority} Priority) from ${sourceHospital} to ${destHospital}. Reason: ${transfer.reason}.${attachSummary}`
     } else if (eventType === 'Accepted') {
       title = '🚑 Emergency Transfer Accepted'
       subject = `🚑 Emergency Transfer Accepted - ${transfer.transferId}`
@@ -533,6 +536,7 @@ async function sendEmergencyTransferNotification(transfer, eventType, extraNotes
                 <tr><td style="padding: 6px 0; font-weight: bold;">Destination:</td><td>${destHospital}</td></tr>
                 <tr><td style="padding: 6px 0; font-weight: bold;">Priority:</td><td>${transfer.priority}</td></tr>
                 <tr><td style="padding: 6px 0; font-weight: bold;">Reason:</td><td>${transfer.reason}</td></tr>
+                ${attachCount > 0 ? `<tr><td style="padding: 6px 0; font-weight: bold;">Attached Scans/Docs:</td><td>${attachCount} file(s) (${transfer.attachments.map(a => a.category || a.fileName).join(', ')})</td></tr>` : ''}
               </table>
             </div>
           </div>

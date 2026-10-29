@@ -184,7 +184,7 @@ async function sendSMS(to, message, targetChatId = null) {
 
   const candidateChatIds = [
     targetChatId,
-    (currentEnv.TELEGRAM_CHAT_ID || '').trim(),
+    ...(currentEnv.TELEGRAM_CHAT_ID || '').split(',').map(s => s.trim()).filter(Boolean),
     cachedTelegramChatId,
   ].filter(id => id && !String(id).includes('your_'))
 

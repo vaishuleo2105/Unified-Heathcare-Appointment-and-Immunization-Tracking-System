@@ -13,7 +13,7 @@ const router = express.Router()
 router.use(protect)
 
 // Helper: build structured data snapshot based on selected categories
-async function buildDataSnapshot(patientId, sharedCategories) {
+async function buildDataSnapshot(patientId, sharedCategories, attachments = []) {
   const patient = await User.findById(patientId).select('-password -resetOtp -resetOtpExpiry')
   if (!patient) return null
 
@@ -105,6 +105,17 @@ async function buildDataSnapshot(patientId, sharedCategories) {
     }
   }
 
+  if (sharedCategories.includes('past_checkups_attachments') || (Array.isArray(attachments) && attachments.length > 0)) {
+    snapshot.medicalAttachments = (attachments || []).map((a) => ({
+      fileName: a.fileName,
+      fileType: a.fileType,
+      category: a.category,
+      fileSize: a.fileSize,
+      notes: a.notes,
+      uploadedAt: a.uploadedAt || new Date(),
+    }))
+  }
+
   return snapshot
 }
 
@@ -121,6 +132,7 @@ router.post('/', async (req, res) => {
       reasonDetails,
       priority,
       sharedCategories,
+      attachments = [],
     } = req.body
 
     if (!patientId || !destinationHospitalId || !reason) {
@@ -154,7 +166,12 @@ router.post('/', async (req, res) => {
       return res.status(403).json({ message: "You are not authorized to share this patient's medical history." })
     }
 
-    const patientDataSnapshot = await buildDataSnapshot(patientId, sharedCategories)
+    const finalCategories = [...sharedCategories]
+    if (Array.isArray(attachments) && attachments.length > 0 && !finalCategories.includes('past_checkups_attachments')) {
+      finalCategories.push('past_checkups_attachments')
+    }
+
+    const patientDataSnapshot = await buildDataSnapshot(patientId, finalCategories, attachments)
 
     const randomDigits = Math.floor(1000 + Math.random() * 9000)
     const transferId = `EMT-${new Date().getFullYear()}-${randomDigits}`
@@ -170,7 +187,8 @@ router.post('/', async (req, res) => {
       reason,
       reasonDetails: reasonDetails || '',
       priority: priority || 'High',
-      sharedCategories,
+      sharedCategories: finalCategories,
+      attachments: Array.isArray(attachments) ? attachments : [],
       status: 'Pending',
       patientDataSnapshot,
       statusHistory: [
@@ -191,7 +209,7 @@ router.post('/', async (req, res) => {
       destinationHospitalId,
       performedBy: req.user._id,
       action: 'TRANSFER_INITIATED',
-      details: `Emergency data transfer initiated (${priority} priority) for reason: ${reason}.`,
+      details: `Emergency data transfer initiated (${priority} priority) for reason: ${reason}.${attachments?.length ? ` Attached: ${attachments.length} past medical checkup scan(s)/document(s).` : ''}`,
       ipAddress: req.ip || req.headers['x-forwarded-for'] || '',
       userAgent: req.headers['user-agent'] || '',
     })
@@ -240,6 +258,7 @@ router.get('/', async (req, res) => {
     }
 
     const transfers = await EmergencyTransfer.find(query)
+      .select('-attachments.fileData') // omit heavy base64 strings in list view for performance
       .populate('patientId', 'firstName lastName email age gender bloodType abhaId medicalCondition medication')
       .populate('sourceHospitalId', 'name code type district city contactNumber')
       .populate('destinationHospitalId', 'name code type district city contactNumber emergencyHelpline')
