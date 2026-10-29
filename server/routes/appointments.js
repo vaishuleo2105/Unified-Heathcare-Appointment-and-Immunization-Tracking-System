@@ -26,7 +26,7 @@ function isLessThan24Hours(dateStr, timeStr) {
   }
 }
 
-const ML_SERVICE = 'http://localhost:5001'
+const ML_SERVICE = process.env.ML_SERVICE_URL || 'http://localhost:5001'
 
 const router = express.Router()
 router.use(protect)

@@ -164,4 +164,5 @@ def doctor_risk_score():
 
 
 if __name__ == '__main__':
-    app.run(port=5001, debug=False)
+    port = int(os.environ.get('PORT', 5001))
+    app.run(host='0.0.0.0', port=port, debug=False)
