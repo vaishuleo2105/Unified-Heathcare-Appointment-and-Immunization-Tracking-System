@@ -17,7 +17,6 @@ export default function AbhaPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [mockOtp, setMockOtp] = useState('')
   const [otpSentTo, setOtpSentTo] = useState('')
 
   const [govtMaternalId, setGovtMaternalId] = useState('')
@@ -50,7 +49,7 @@ export default function AbhaPage() {
   function reset() {
     setStep(0); setAadhaar(''); setOtp(''); setTxnId('')
     setHealthId(''); setAbhaResult(null); setError(''); setSuccess('')
-    setMockOtp(''); setOtpSentTo('')
+    setOtpSentTo('')
     setConfirmDisconnect(false)
   }
 
@@ -74,10 +73,6 @@ export default function AbhaPage() {
       const { data } = await api.post('/maternal/abha/generate-otp', { aadhaar: clean, email: email.trim() })
       setTxnId(data.txnId)
       setOtpSentTo(email.trim())
-      if (data.mock) {
-        const match = data.message.match(/OTP is: (\d{6})/)
-        if (match) setMockOtp(match[1])
-      }
       setStep(1)
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send OTP')
@@ -256,16 +251,6 @@ export default function AbhaPage() {
             <p className="text-xs text-on-surface-variant">
               OTP sent to <span className="font-semibold text-primary">{otpSentTo}</span> by ABDM. Valid for 10 minutes.
             </p>
-
-            {mockOtp && (
-              <div className="flex items-center gap-3 bg-primary-fixed border border-outline-variant rounded-xl p-4">
-                <span className="material-symbols-outlined text-primary text-2xl">mark_email_read</span>
-                <div>
-                  <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Demo OTP (sandbox)</p>
-                  <p className="text-2xl font-bold tracking-widest text-primary">{mockOtp}</p>
-                </div>
-              </div>
-            )}
 
             <div>
               <label className="text-xs font-semibold text-on-surface-variant">OTP *</label>

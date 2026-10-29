@@ -7,7 +7,22 @@ const protect = require('../middleware/auth')
 const router = express.Router()
 router.use(protect)
 
-const EMAIL_CONFIGURED = !!process.env.RESEND_API_KEY
+const nodemailer = require('nodemailer')
+
+function createEmailTransporter() {
+  const EMAIL_USER = process.env.EMAIL_USER || ''
+  const EMAIL_PASS = process.env.EMAIL_PASS || ''
+  const isConfigured = EMAIL_USER && !EMAIL_USER.includes('your_email') && !!EMAIL_PASS
+
+  if (!isConfigured) return null
+  return nodemailer.createTransport({
+    service: process.env.EMAIL_SERVICE || 'gmail',
+    auth: {
+      user: EMAIL_USER.trim(),
+      pass: EMAIL_PASS.replace(/\s+/g, '').trim(),
+    },
+  })
+}
 
 // ── In-memory OTP sessions { txnId -> { otp, contact, verified } } ────────────
 const sessions = {}
@@ -21,27 +36,63 @@ function genOtp() {
 }
 
 async function sendOtpEmail(to, otp) {
-  if (!EMAIL_CONFIGURED) throw new Error('Email not configured')
+  const subject = 'Your Health ID Verification OTP'
+  const html = `
+    <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;border:1px solid #e0e0e0;border-radius:12px;background:#ffffff">
+      <h2 style="color:#1a73e8;margin-bottom:8px">Health ID Verification</h2>
+      <p style="color:#555;margin-bottom:24px">Use the OTP below to verify your identity and create your Health ID.</p>
+      <div style="background:#f0f4ff;border-radius:8px;padding:20px;text-align:center;letter-spacing:8px;font-size:32px;font-weight:bold;color:#1a73e8">
+        ${otp}
+      </div>
+      <p style="color:#888;font-size:12px;margin-top:20px">This OTP is valid for 10 minutes. Do not share it with anyone.</p>
+    </div>
+  `
 
-  await axios.post(
-    'https://api.resend.com/emails',
-    {
-      from: 'Unified Health <onboarding@resend.dev>',
-      to: [to],
-      subject: 'Your Health ID Verification OTP',
-      html: `
-        <div style="font-family:sans-serif;max-width:480px;margin:auto;padding:32px;border:1px solid #e0e0e0;border-radius:12px">
-          <h2 style="color:#1a73e8;margin-bottom:8px">Health ID Verification</h2>
-          <p style="color:#555;margin-bottom:24px">Use the OTP below to verify your identity and create your Health ID.</p>
-          <div style="background:#f0f4ff;border-radius:8px;padding:20px;text-align:center;letter-spacing:8px;font-size:32px;font-weight:bold;color:#1a73e8">
-            ${otp}
-          </div>
-          <p style="color:#888;font-size:12px;margin-top:20px">This OTP is valid for 10 minutes. Do not share it with anyone.</p>
-        </div>
-      `,
-    },
-    { headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' } }
-  )
+  let sent = false
+
+  // 1. Try Resend if configured
+  if (process.env.RESEND_API_KEY) {
+    try {
+      await axios.post(
+        'https://api.resend.com/emails',
+        {
+          from: 'Unified Health <onboarding@resend.dev>',
+          to: [to],
+          subject,
+          html,
+        },
+        { headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' } }
+      )
+      sent = true
+      console.log(`[Email OTP] Delivered to ${to} via Resend`)
+    } catch (err) {
+      console.error('[Email Resend Error]:', err.response?.data || err.message)
+    }
+  }
+
+  // 2. Try Nodemailer (Gmail)
+  if (!sent) {
+    const transporter = createEmailTransporter()
+    if (transporter) {
+      try {
+        await transporter.sendMail({
+          from: `"Unified Health System" <${process.env.EMAIL_USER}>`,
+          to,
+          subject,
+          html,
+        })
+        sent = true
+        console.log(`[Email OTP] Delivered to ${to} via Nodemailer (Gmail)`)
+      } catch (err) {
+        console.error('[Email Nodemailer Error]:', err.message)
+        throw new Error(`Gmail delivery failed: ${err.message}`)
+      }
+    }
+  }
+
+  if (!sent) {
+    throw new Error('Email service not configured. Please ensure EMAIL_USER and EMAIL_PASS are set in server/.env.')
+  }
 }
 
 // POST /api/maternal/abha/generate-otp
@@ -53,48 +104,80 @@ router.post('/abha/generate-otp', async (req, res) => {
   const txnId = genTxnId()
 
   // Determine contact — use provided email, or fall back to logged-in user's email
-  const contactEmail = email || req.user.email
+  const contactEmail = (email || req.user.email || '').trim()
+  if (!contactEmail) {
+    return res.status(400).json({ message: 'Valid email address is required to receive OTP' })
+  }
 
   sessions[txnId] = { otp, aadhaar, contact: contactEmail, verified: false }
+
+  // Persist OTP and TxnId on the user record in DB as well
+  try {
+    await User.findByIdAndUpdate(req.user._id, {
+      abhaOtp: otp,
+      abhaOtpExpiry: new Date(Date.now() + 15 * 60 * 1000),
+      abhaTxnId: txnId,
+      abhaVerified: false,
+    })
+  } catch (dbErr) {
+    console.warn('[ABHA DB Session Warn]:', dbErr.message)
+  }
 
   // Clean up session after 10 minutes
   setTimeout(() => { delete sessions[txnId] }, 10 * 60 * 1000)
 
-  if (EMAIL_CONFIGURED) {
-    try {
-      await sendOtpEmail(contactEmail, otp)
-      return res.json({
-        txnId,
-        message: `OTP sent to ${contactEmail}`,
-        mock: false,
-      })
-    } catch (err) {
-      console.error('[Email OTP Error]', err.message)
-      // Fall through to demo mode if email fails
-    }
+  try {
+    await sendOtpEmail(contactEmail, otp)
+    console.log(`[HEALTH ID OTP] Dispatched to ${contactEmail} | txnId: ${txnId}`)
+    return res.json({
+      txnId,
+      message: `OTP sent successfully to ${contactEmail}`,
+      mock: false,
+    })
+  } catch (err) {
+    console.error('[Email OTP Error]', err.message)
+    return res.status(500).json({
+      message: `Failed to send OTP to ${contactEmail}: ${err.message}`,
+      mock: false,
+    })
   }
-
-  // Demo mode — return OTP in response
-  console.log(`[HEALTH ID DEMO] OTP for ${aadhaar}: ${otp} | txnId: ${txnId}`)
-  return res.json({
-    txnId,
-    message: `[Demo] OTP is: ${otp}`,
-    mock: true,
-  })
 })
 
 // POST /api/maternal/abha/verify-otp
 router.post('/abha/verify-otp', async (req, res) => {
   const { txnId, otp } = req.body
-  if (!txnId || !otp) return res.status(400).json({ message: 'txnId and otp required' })
+  if (!otp) return res.status(400).json({ message: 'OTP is required' })
 
-  const session = sessions[txnId]
-  if (!session) return res.status(400).json({ message: 'Session expired or invalid. Please start again.' })
-  if (session.otp !== otp) return res.status(400).json({ message: 'Incorrect OTP. Please try again.' })
+  const user = await User.findById(req.user._id)
+  const session = txnId ? sessions[txnId] : null
+
+  let isMatch = false
+  if (session && session.otp === otp) {
+    isMatch = true
+  } else if (user && user.abhaOtp === otp) {
+    const isNotExpired = user.abhaOtpExpiry && new Date(user.abhaOtpExpiry) > new Date()
+    if (isNotExpired) {
+      isMatch = true
+    }
+  }
+
+  if (!isMatch) {
+    return res.status(400).json({ message: 'Incorrect or expired OTP. Please try again.' })
+  }
 
   const newTxnId = genTxnId()
-  sessions[newTxnId] = { ...session, verified: true }
-  delete sessions[txnId]
+  sessions[newTxnId] = { otp, contact: user ? user.email : '', verified: true }
+  if (txnId && sessions[txnId]) delete sessions[txnId]
+
+  // Persist verified flag to DB
+  try {
+    await User.findByIdAndUpdate(req.user._id, {
+      abhaVerified: true,
+      abhaTxnId: newTxnId,
+    })
+  } catch (dbErr) {
+    console.warn('[ABHA DB Verify Warn]:', dbErr.message)
+  }
 
   return res.json({ txnId: newTxnId, message: 'OTP verified successfully' })
 })
@@ -109,7 +192,7 @@ router.get('/abha/my-abha', async (req, res) => {
       abhaId: user.abhaId,
       abhaNumber: user.abhaNumber,
       name: `${user.firstName} ${user.lastName}`,
-      yearOfBirth: new Date().getFullYear().toString(),
+      yearOfBirth: user.age ? (new Date().getFullYear() - user.age).toString() : new Date().getFullYear().toString(),
     })
   } catch (err) {
     return res.status(500).json({ message: err.message })
@@ -119,29 +202,36 @@ router.get('/abha/my-abha', async (req, res) => {
 // POST /api/maternal/abha/create-health-id
 router.post('/abha/create-health-id', async (req, res) => {
   const { txnId, healthId } = req.body
-  if (!txnId) return res.status(400).json({ message: 'txnId required' })
 
-  const session = sessions[txnId]
-  if (!session || !session.verified)
+  const user = await User.findById(req.user._id)
+  const session = txnId ? sessions[txnId] : null
+  const isVerified = (session && session.verified) || (user && user.abhaVerified)
+
+  if (!isVerified) {
     return res.status(400).json({ message: 'Session not verified. Please complete OTP verification first.' })
+  }
 
-  delete sessions[txnId]
+  if (txnId && sessions[txnId]) delete sessions[txnId]
 
-  const user = req.user
   const abhaAddress = (healthId || `${user.firstName.toLowerCase()}${user.lastName.toLowerCase()}`) + '@abdm'
   const abhaNumber = '91' + Date.now().toString().slice(-12)
 
-  // Permanently store on User profile in DB
-  await User.findByIdAndUpdate(user._id, { abhaId: abhaAddress, abhaNumber })
+  // Permanently store on User profile in DB and reset verification lock
+  await User.findByIdAndUpdate(user._id, {
+    abhaId: abhaAddress,
+    abhaNumber,
+    abhaVerified: false,
+    $unset: { abhaOtp: 1, abhaOtpExpiry: 1, abhaTxnId: 1 },
+  })
 
   return res.json({
     abhaId: abhaAddress,
     abhaNumber,
     name: `${user.firstName} ${user.lastName}`,
-    gender: 'N/A',
-    yearOfBirth: new Date().getFullYear().toString(),
+    gender: user.gender || 'Female',
+    yearOfBirth: user.age ? (new Date().getFullYear() - user.age).toString() : new Date().getFullYear().toString(),
     message: 'Health ID created successfully',
-    mock: !EMAIL_CONFIGURED,
+    mock: false,
   })
 })
 

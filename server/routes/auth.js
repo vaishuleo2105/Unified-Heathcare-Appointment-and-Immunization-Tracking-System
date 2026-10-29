@@ -2,8 +2,24 @@ const express = require('express')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
 const axios = require('axios')
+const nodemailer = require('nodemailer')
 const User = require('../models/User')
 const protect = require('../middleware/auth')
+
+function createEmailTransporter() {
+  const EMAIL_USER = process.env.EMAIL_USER || ''
+  const EMAIL_PASS = process.env.EMAIL_PASS || ''
+  const isConfigured = EMAIL_USER && !EMAIL_USER.includes('your_email') && !!EMAIL_PASS
+
+  if (!isConfigured) return null
+  return nodemailer.createTransport({
+    service: process.env.EMAIL_SERVICE || 'gmail',
+    auth: {
+      user: EMAIL_USER.trim(),
+      pass: EMAIL_PASS.replace(/\s+/g, '').trim(),
+    },
+  })
+}
 
 const router = express.Router()
 
@@ -229,23 +245,51 @@ router.post('/forgot-password', async (req, res) => {
     user.resetOtp = otp
     user.resetOtpExpiry = new Date(Date.now() + 10 * 60 * 1000)
     await user.save()
-    await axios.post(
-      'https://api.resend.com/emails',
-      {
-        from: 'Unified Health <onboarding@resend.dev>',
-        to: ['vaishuleo2105@gmail.com'],
-        subject: 'Password Reset OTP',
-        html: `<p>Hi ${user.firstName},</p><p>Your OTP to reset your password is: <strong>${otp}</strong></p><p>This OTP expires in 10 minutes.</p>`,
-      },
-      { headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' } }
-    )
+
+    let sent = false
+    const subject = 'Password Reset OTP - Unified Healthcare'
+    const html = `<p>Hi ${user.firstName},</p><p>Your OTP to reset your password is: <strong>${otp}</strong></p><p>This OTP expires in 10 minutes.</p>`
+
+    if (process.env.RESEND_API_KEY) {
+      try {
+        await axios.post(
+          'https://api.resend.com/emails',
+          {
+            from: 'Unified Health <onboarding@resend.dev>',
+            to: [user.email],
+            subject,
+            html,
+          },
+          { headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' } }
+        )
+        sent = true
+      } catch (err) {}
+    }
+
+    if (!sent) {
+      const transporter = createEmailTransporter()
+      if (transporter) {
+        await transporter.sendMail({
+          from: `"Unified Health System" <${process.env.EMAIL_USER}>`,
+          to: user.email,
+          subject,
+          html,
+        })
+        sent = true
+      }
+    }
+
+    if (!sent) {
+      throw new Error('Email delivery could not be completed')
+    }
+
     return res.json({ message: 'OTP sent to your email.' })
   } catch (err) {
     console.error('Forgot password error:', err.message)
     return res.status(500).json({
       message: process.env.NODE_ENV === 'production'
         ? 'Failed to send OTP. Please try again later.'
-        : 'Failed to send OTP. Check email configuration.'
+        : `Failed to send OTP: ${err.message}`
     })
   }
 })
