@@ -230,6 +230,15 @@ router.patch('/:id/consultation', async (req, res) => {
 router.get('/suggest-type', async (req, res) => {
   try {
     const user = req.user
+    // 1. Fetch patient's recent appointments (latest first)
+    const history = await Appointment.find({
+      patientId: user._id,
+      status: { $ne: 'Cancelled' },
+    }).sort({ createdAt: -1, date: -1 }).limit(5).select('type status date')
+
+    const latestAppointment = history.length > 0 ? history[0] : null
+    const recentType = latestAppointment ? latestAppointment.type : null
+
     const payload = {
       age: user.age || 30,
       gender: user.gender || 'Male',
@@ -237,33 +246,35 @@ router.get('/suggest-type', async (req, res) => {
       medicalCondition: user.medicalCondition || 'None',
       medication: user.medication || 'None',
       testResults: user.testResults || 'Normal',
+      recentType: recentType,
     }
 
-    // 1. Predict appointment type from ML
     let suggestedType = 'General Checkup'
     let confidence = 0
     let probabilities = {}
     let source = 'fallback'
     let historySuggestion = null
 
-    const history = await Appointment.find({
-      patientId: user._id,
-      status: { $ne: 'Cancelled' },
-    }).sort({ createdAt: -1 }).limit(5).select('type')
-
     if (history.length > 0) {
+      const latestType = history[0].type
+      // Recency-weighted scoring: recent appointments define current clinical care pathway
       const weightedTypes = {}
       history.forEach((appointment, index) => {
-        const weight = history.length - index
+        const recencyBoost = index === 0 ? 3 : (index === 1 ? 2 : 1)
+        const weight = (history.length - index) * recencyBoost
         weightedTypes[appointment.type] = (weightedTypes[appointment.type] || 0) + weight
       })
-      const [type, weight] = Object.entries(weightedTypes).sort((a, b) => b[1] - a[1])[0]
-      const occurrences = history.filter(appointment => appointment.type === type).length
+      const sortedTypes = Object.entries(weightedTypes).sort((a, b) => b[1] - a[1])
+      const [topType, topWeight] = sortedTypes[0]
+      const occurrences = history.filter(appointment => appointment.type === topType).length
       const totalWeight = Object.values(weightedTypes).reduce((sum, value) => sum + value, 0)
-      const historyConfidence = Math.round((weight / totalWeight) * 100)
+      const historyConfidence = Math.min(95, Math.round((topWeight / totalWeight) * 100))
 
-      if (occurrences >= 2 && historyConfidence >= 50) {
-        historySuggestion = { type, confidence: historyConfidence, occurrences }
+      historySuggestion = {
+        type: topType,
+        confidence: historyConfidence,
+        occurrences,
+        latestType,
       }
     }
 
@@ -276,14 +287,17 @@ router.get('/suggest-type', async (req, res) => {
 
       if (historySuggestion && suggestedType !== 'Emergency') {
         suggestedType = historySuggestion.type
-        confidence = historySuggestion.confidence
+        confidence = Math.max(confidence, historySuggestion.confidence)
         source = 'ml_model_plus_history'
       }
     } catch {
-      if (history.length > 0) {
-        const latestType = historySuggestion?.type || history[0].type
-        suggestedType = latestType
-        confidence = historySuggestion?.confidence || Math.round(100 / history.length)
+      if (historySuggestion) {
+        suggestedType = historySuggestion.type
+        confidence = historySuggestion.confidence
+        source = 'frequency'
+      } else if (history.length > 0) {
+        suggestedType = history[0].type
+        confidence = 80
         source = 'frequency'
       }
     }

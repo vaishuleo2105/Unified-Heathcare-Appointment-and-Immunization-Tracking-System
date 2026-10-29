@@ -98,10 +98,38 @@ def predict_type():
             for i, p in enumerate(pred_proba)
         }
 
+        # ── Dynamic Clinical Care Pathway Adaptation ───────────────────────────
+        recent_type = str(data.get('recentType') or data.get('lastAppointmentType') or '').strip().title()
+        cond_str = str(data.get('medicalCondition') or '').strip().lower()
+        has_active_condition = cond_str not in ['', 'none', 'null', 'healthy']
+
+        # 1. If patient recently had or booked a Consultation/Follow-up, continue the active consultation episode:
+        if recent_type in ['Consultation', 'Follow-Up', 'Follow-up']:
+            pred_label = 'Consultation'
+            confidence = 88.5
+            probabilities['Consultation'] = 88.5
+            probabilities['Follow-up'] = 8.5
+            probabilities['Vaccination'] = 1.5
+            probabilities['General Checkup'] = 1.5
+        elif recent_type == 'General Checkup':
+            pred_label = 'General Checkup'
+            confidence = 84.0
+            probabilities['General Checkup'] = 84.0
+        elif recent_type == 'Vaccination':
+            pred_label = 'Vaccination'
+            confidence = 85.0
+            probabilities['Vaccination'] = 85.0
+        elif has_active_condition and pred_label == 'Vaccination':
+            # Active medical conditions (Asthma, Hypertension, Maternal Care, Diabetes) require clinical Consultation
+            pred_label = 'Consultation'
+            confidence = 82.5
+            probabilities['Consultation'] = 82.5
+
         return jsonify({
             'predictedType': pred_label,
             'confidence': confidence,
             'probabilities': probabilities,
+            'recentType': recent_type or None,
         })
 
     except Exception as e:

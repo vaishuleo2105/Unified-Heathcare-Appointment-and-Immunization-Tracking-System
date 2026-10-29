@@ -266,11 +266,14 @@ export default function AppointmentsPage() {
     if (!showForm) {
       const sorted = doctorsSortedByWorkload()
       const lowestLoadDoc = suggestedDoctor?._id || sorted[0]?._id || ''
-      setForm(f => ({
-        ...f,
-        doctorId: f.doctorId || lowestLoadDoc,
-        type: suggestedType || f.type || 'General Checkup',
-      }))
+      setForm({
+        doctorId: lowestLoadDoc,
+        date: '',
+        time: '',
+        type: suggestedType || 'Consultation',
+        notes: '',
+      })
+      fetchSuggestion()
     }
     setShowForm(!showForm)
   }
