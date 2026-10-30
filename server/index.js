@@ -26,11 +26,7 @@ const app = express()
 const clientDist = path.join(__dirname, '../client/dist')
 
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'https://unified-heathcare-appointment-and.onrender.com',
-  ],
+  origin: true,
   credentials: true,
 }))
 app.use(express.json({ limit: '50mb' }))
