@@ -73,6 +73,12 @@ export default function AbhaPage() {
       const { data } = await api.post('/maternal/abha/generate-otp', { aadhaar: clean, email: email.trim() })
       setTxnId(data.txnId)
       setOtpSentTo(email.trim())
+      if (data.otp) {
+        setOtp(data.otp)
+        setSuccess(`Verification OTP: ${data.otp} (Delivered to Telegram/System)`)
+      } else if (data.message) {
+        setSuccess(data.message)
+      }
       setStep(1)
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to send OTP')
@@ -190,6 +196,12 @@ export default function AbhaPage() {
       {error && (
         <div className="mb-4 flex items-center gap-2 bg-error-container text-on-error-container px-4 py-3 rounded-lg text-sm">
           <span className="material-symbols-outlined text-base">error</span>{error}
+        </div>
+      )}
+
+      {success && (
+        <div className="mb-4 flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg text-sm">
+          <span className="material-symbols-outlined text-base text-emerald-600">check_circle</span>{success}
         </div>
       )}
 

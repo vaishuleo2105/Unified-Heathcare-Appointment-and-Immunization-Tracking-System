@@ -1,89 +1,9 @@
 const cron = require('node-cron')
 const axios = require('axios')
-const nodemailer = require('nodemailer')
 const Appointment = require('../models/Appointment')
 const User = require('../models/User')
 const { sendSMS } = require('./smsService')
-
-function createTransporter() {
-  const EMAIL_USER = (process.env.EMAIL_USER || '').trim()
-  const EMAIL_PASS = (process.env.EMAIL_PASS || '').trim()
-  const isConfigured = EMAIL_USER && !EMAIL_USER.includes('your_email') && !!EMAIL_PASS
-
-  if (!isConfigured) return null
-  return nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail',
-    auth: {
-      user: EMAIL_USER,
-      pass: EMAIL_PASS.replace(/\s+/g, ''),
-    },
-  })
-}
-
-async function sendEmail(to, subject, html) {
-  const rawRecipients = Array.isArray(to) ? to : [to]
-  // Filter out empty and unreachable placeholder domain emails (@unifiedhealth.com)
-  const recipients = Array.from(new Set(
-    rawRecipients
-      .map(e => (typeof e === 'string' ? e.trim() : ''))
-      .filter(e => e && e.includes('@') && !e.endsWith('@unifiedhealth.com'))
-  ))
-
-  if (recipients.length === 0) {
-    console.log(`[Email Notification] No external recipient for: "${subject}"`)
-    return
-  }
-
-  let sent = false
-
-  if (process.env.RESEND_API_KEY) {
-    try {
-      await axios.post(
-        'https://api.resend.com/emails',
-        {
-          from: 'Unified Health <onboarding@resend.dev>',
-          to: recipients,
-          subject,
-          html,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      )
-      sent = true
-      console.log(`[Email Notification] Delivered via Resend to: ${recipients.join(', ')}`)
-    } catch (err) {
-      console.error('[Email Resend Error]:', err.response?.data || err.message)
-    }
-  }
-
-  if (!sent) {
-    const transporter = createTransporter()
-    if (transporter) {
-      for (const recipient of recipients) {
-        try {
-          await transporter.sendMail({
-            from: `"Unified Health System" <${process.env.EMAIL_USER}>`,
-            to: recipient,
-            subject,
-            html,
-          })
-          sent = true
-          console.log(`[Email Notification] Delivered via Gmail to: ${recipient}`)
-        } catch (err) {
-          console.error(`[Email Nodemailer Error for ${recipient}]:`, err.message)
-        }
-      }
-    }
-  }
-
-  if (!sent) {
-    console.log(`[Email Notification] Could not deliver: "${subject}" to ${recipients.join(', ')}`)
-  }
-}
+const { sendEmail } = require('./emailService')
 
 function getDateString(offsetDays = 0) {
   const d = new Date()

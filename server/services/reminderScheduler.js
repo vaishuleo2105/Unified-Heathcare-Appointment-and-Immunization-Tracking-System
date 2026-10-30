@@ -1,26 +1,8 @@
 const cron = require('node-cron')
-const nodemailer = require('nodemailer')
 const User = require('../models/User')
 const Hospital = require('../models/Hospital')
 const Appointment = require('../models/Appointment')
-
-function createTransporter() {
-  const EMAIL_USER = process.env.EMAIL_USER || ''
-  const EMAIL_PASS = process.env.EMAIL_PASS || ''
-  const isConfigured = EMAIL_USER && EMAIL_USER !== 'your_email@gmail.com' && EMAIL_USER !== 'your_gmail@gmail.com'
-
-  if (!isConfigured) {
-    return null
-  }
-
-  return nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail',
-    auth: {
-      user: EMAIL_USER.trim(),
-      pass: EMAIL_PASS.replace(/\s+/g, '').trim(),
-    },
-  })
-}
+const { sendEmail } = require('../utils/emailService')
 
 /**
  * Returns tomorrow's date formatted as YYYY-MM-DD
@@ -49,22 +31,24 @@ function generateReminderEmailHTML(appointment) {
   const appointmentTime = appointment.time || 'Scheduled Slot'
   const appointmentType = appointment.type || 'General Checkup'
   const status = appointment.status || 'Confirmed'
-  const notes = appointment.notes || 'None'
+  const notes = appointment.notes || 'None provided'
 
   return `
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8fafc; padding: 24px; border-radius: 12px;">
-      <div style="background-color: #0284c7; color: #ffffff; padding: 24px; border-top-left-radius: 12px; border-top-right-radius: 12px; text-align: center;">
-        <h1 style="margin: 0; font-size: 22px; font-weight: bold; letter-spacing: 0.5px;">Appointment Reminder</h1>
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background-color: #ffffff;">
+      <div style="background-color: #0284c7; color: #ffffff; padding: 24px; text-align: center;">
+        <h2 style="margin: 0; font-size: 22px; font-weight: bold;">🏥 Appointment Reminder</h2>
         <p style="margin: 6px 0 0 0; font-size: 14px; opacity: 0.9;">Unified Healthcare System</p>
       </div>
 
-      <div style="background-color: #ffffff; padding: 28px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
-        <p style="font-size: 16px; color: #1e293b; margin-top: 0;">Dear <strong>${patientName}</strong>,</p>
+      <div style="padding: 28px; background-color: #ffffff;">
+        <p style="font-size: 15px; color: #1e293b; margin-top: 0;">
+          Dear <strong>${patientName}</strong>,
+        </p>
         <p style="font-size: 15px; color: #334155; line-height: 1.6;">
-          This is an automated notification to remind you of your upcoming medical appointment scheduled for <strong>tomorrow (${appointmentDate})</strong>.
+          This is an automated reminder that you have an upcoming medical appointment scheduled for <strong>tomorrow</strong>.
         </p>
 
-        <div style="background-color: #f0f9ff; border-left: 4px solid #0284c7; padding: 18px; margin: 24px 0; border-radius: 6px;">
+        <div style="background-color: #f0f9ff; border-left: 4px solid #0284c7; padding: 20px; margin: 24px 0; border-radius: 6px;">
           <h3 style="margin: 0 0 14px 0; color: #0369a1; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px;">Appointment Details</h3>
           <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #334155;">
             <tr style="border-bottom: 1px solid #e0f2fe;">
@@ -130,7 +114,6 @@ async function checkAndSendReminders() {
       return { count: 0, sent: 0, tomorrowStr }
     }
 
-    const transporter = createTransporter()
     let sentCount = 0
 
     for (const appt of appointments) {
@@ -142,61 +125,53 @@ async function checkAndSendReminders() {
 
       const emailHtml = generateReminderEmailHTML(appt)
       const doctorTitle = appt.doctorId ? `Dr. ${appt.doctorId.firstName} ${appt.doctorId.lastName}` : 'your doctor'
+      const emailSubject = `Reminder: Your Appointment Tomorrow (${appt.date}) at ${appt.time} with ${doctorTitle}`
 
-      if (transporter) {
-        try {
-          await transporter.sendMail({
-            from: `"Unified Health System" <${process.env.EMAIL_USER}>`,
-            to: patientEmail,
-            subject: `Reminder: Your Appointment Tomorrow (${appt.date}) at ${appt.time} with ${doctorTitle}`,
-            html: emailHtml,
-          })
-          console.log(`[Reminder System] Email successfully sent to ${patientEmail} for appointment ${appt._id}`)
-        } catch (mailErr) {
-          console.error(`[Reminder System] Failed to send email to ${patientEmail}:`, mailErr.message)
-        }
-      } else {
-        console.log(`[Reminder System] [DEV / SIMULATION] Email prepared for ${patientEmail} (Appointment ID: ${appt._id}). Add valid EMAIL_USER & EMAIL_PASS to .env to deliver live emails.`)
+      try {
+        await sendEmail(patientEmail, emailSubject, emailHtml)
+        console.log(`[Reminder System] Email successfully sent to ${patientEmail} for appointment ${appt._id}`)
+        sentCount++
+      } catch (mailErr) {
+        console.error(`[Reminder System] Failed to send email to ${patientEmail}:`, mailErr.message)
       }
 
       // Mark reminder as sent in database to avoid duplicate emails
       appt.reminderSent = true
       appt.reminderSentAt = new Date()
       await appt.save()
-      sentCount++
     }
 
     return { count: appointments.length, sent: sentCount, tomorrowStr }
   } catch (err) {
-    console.error('[Reminder System] Error during reminder execution:', err)
+    console.error('[Reminder System] Error during reminder scan:', err.message)
     throw err
   }
 }
 
 /**
- * Initializes the node-cron scheduled job
+ * Schedules a daily cron job to run at 8:00 AM Indian Standard Time (Asia/Kolkata)
  */
-function initReminderScheduler() {
-  console.log('[Reminder System] Initializing automated appointment reminder cron service...')
+function startReminderCronJob() {
+  const cronSchedule = '0 8 * * *'
 
-  // Run initial check upon server startup
-  checkAndSendReminders().catch((err) => {
-    console.error('[Reminder System] Startup reminder check error:', err.message)
-  })
+  console.log(`[Reminder System] Initializing Daily Scheduler. Configured for 08:00 AM IST daily.`)
 
-  // Schedule to run every hour at minute 0 (0 * * * *) so next-day appointments are automatically processed
-  cron.schedule('0 * * * *', async () => {
-    console.log('[Reminder System] Executing hourly scheduled reminder check...')
-    try {
+  cron.schedule(
+    cronSchedule,
+    async () => {
+      console.log(`[Reminder System] Cron trigger activated at: ${new Date().toISOString()}`)
       await checkAndSendReminders()
-    } catch (err) {
-      console.error('[Reminder System] Scheduled cron job error:', err.message)
+    },
+    {
+      timezone: 'Asia/Kolkata',
     }
-  })
+  )
+
+  console.log('[Reminder System] Daily cron job registered successfully with timezone Asia/Kolkata.')
 }
 
 module.exports = {
   checkAndSendReminders,
-  initReminderScheduler,
-  getTomorrowDateString,
+  startReminderCronJob,
+  generateReminderEmailHTML,
 }

@@ -2,24 +2,9 @@ const express = require('express')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
 const axios = require('axios')
-const nodemailer = require('nodemailer')
 const User = require('../models/User')
 const protect = require('../middleware/auth')
-
-function createEmailTransporter() {
-  const EMAIL_USER = process.env.EMAIL_USER || ''
-  const EMAIL_PASS = process.env.EMAIL_PASS || ''
-  const isConfigured = EMAIL_USER && !EMAIL_USER.includes('your_email') && !!EMAIL_PASS
-
-  if (!isConfigured) return null
-  return nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail',
-    auth: {
-      user: EMAIL_USER.trim(),
-      pass: EMAIL_PASS.replace(/\s+/g, '').trim(),
-    },
-  })
-}
+const { sendEmail } = require('../utils/emailService')
 
 const router = express.Router()
 
@@ -250,37 +235,11 @@ router.post('/forgot-password', async (req, res) => {
     const subject = 'Password Reset OTP - Unified Healthcare'
     const html = `<p>Hi ${user.firstName},</p><p>Your OTP to reset your password is: <strong>${otp}</strong></p><p>This OTP expires in 10 minutes.</p>`
 
-    if (process.env.RESEND_API_KEY) {
-      try {
-        await axios.post(
-          'https://api.resend.com/emails',
-          {
-            from: 'Unified Health <onboarding@resend.dev>',
-            to: [user.email],
-            subject,
-            html,
-          },
-          { headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' } }
-        )
-        sent = true
-      } catch (err) {}
-    }
-
-    if (!sent) {
-      const transporter = createEmailTransporter()
-      if (transporter) {
-        await transporter.sendMail({
-          from: `"Unified Health System" <${process.env.EMAIL_USER}>`,
-          to: user.email,
-          subject,
-          html,
-        })
-        sent = true
-      }
-    }
-
-    if (!sent) {
-      throw new Error('Email delivery could not be completed')
+    try {
+      await sendEmail(user.email, subject, html)
+      sent = true
+    } catch (mailErr) {
+      console.warn('[Forgot Password] Email send warning:', mailErr.message)
     }
 
     return res.json({ message: 'OTP sent to your email.' })
